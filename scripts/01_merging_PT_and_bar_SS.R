@@ -8,7 +8,9 @@
 #### Packages ####
 ##################
 
-library(googledrive) 
+library(googledrive)
+library(ggplot2)
+library(lubridate)
 
 ####################################
 ## Clear folders that we will use ##
@@ -22,7 +24,7 @@ file.remove(files)
 #################################
 #### Load data from Google drive ####
 # This is the inuse folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/14x-d5gB7V9Y78gOR4L1p_56wNZ4WBO2F")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/194hsX_kF8xMs-9Uzq_yyaxoh_ywh6HMm")
 
 # List all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
@@ -69,49 +71,56 @@ for (i in seq_along(pt_list)) {
 ####################################################
 #### Prep data for merging PT with Air pressure ####
 ####################################################
+# All sites will be merged with the one air data that South Sandy has
 
-# List of folder names
-uppersites <- c("USF21", "USF13", "USF14", "USF16", "USF19")
-
-# Create an empty list to store the files
-upper_list <- list()
-
-# Loop through each site name in the list
-for (site in uppersites) {
-  # Construct the file path and use a pattern to match files with the specific site
-  folder_path <- "googledrive/"
-  pattern <- paste0("^[0-9-]+_", site, "_WaterLevel")
-  
-  # Find the file matching the pattern (assuming only one match per site)
-  files <- list.files(folder_path, pattern = pattern, full.names = TRUE)
-  
-  # Read the first matching file for each site
-  upper_list[[site]] <- read.csv(files[1])
-}
-
-# Load the Air2 data
-air_data <- read.csv("googledrive/2024-10-29_Air2.csv")
+# Load the baro data
+air_data <- read.csv("googledrive/09-16-2024_SSM20_PTSbaro_SN2191067.csv")
 
 ################################
 #### Format DateTime column ####
 ################################
 
 # Loop through each data frame in the list
-for (i in seq_along(upper_list)) {
+for (i in seq_along(pt_list)) {
   # Access the current data frame
-  df <- upper_list[[i]]
+  df <- pt_list[[i]]
   
   # Convert the DateTime column to POSIXct
   df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
+  # Convert the Time column to POSIXct (assuming it's a character time without date)
+  
+  df$Time <- as.POSIXct(df$Time, format = "%I:%M:%S %p")
+  
+  # Format the Time column to a unified time format (e.g., "HH:MM:SS")
+  df$Time <- format(df$Time, format = "%H:%M:%S")
   # Update the data frame in the list
-  upper_list[[i]] <- df
+  pt_list[[i]] <- df
 }
 
 # Check the contents of the list and make sure there are no NAs
-str(upper_list)
+str(pt_list)
 
 # Now check datetime format for air data
 air_data$DateTime <- as.POSIXct(air_data$DateTime)
+
+###########################
+#### Rounding the time ####
+###########################
+# Rounding the time up or down to the nearest consistent interval 
+# example: 10:04 gets converted to 10:05 for this we use the lubridate package
+# 
+
+pt_list[["09-16-2024_SST07_PTS_SN2192880.csv"]]$DateTimeNotRounded <- pt_list[["09-16-2024_SST07_PTS_SN2192880.csv"]]$DateTime
+
+pt_list[["09-16-2024_SST07_PTS_SN2192880.csv"]]$DateTime <- round_date(pt_list[["09-16-2024_SST07_PTS_SN2192880.csv"]]$DateTime, unit="15 mins")
+
+str(pt_list)
+
+
+# Round DateTime to the nearest 15-minute interval across all files in pt_list
+for (i in seq_along(pt_list)) {
+  pt_list[[i]]$DateTime <- round_date(pt_list[[i]]$DateTime, unit = "15 mins")
+}
 
 ######################################
 #### Merging PT with Air pressure ####
@@ -120,18 +129,18 @@ air_data$DateTime <- as.POSIXct(air_data$DateTime)
 # Create a list to store merged results
 merged_list <- list()
 
-# Loop through each site file in upper_list
-for (site in names(upper_list)) {
+# Loop through each site file in pt_list
+for (i in names(pt_list)) {
   # Merge each site data with air_data on the DateTime column
-  merged_list[[site]] <- merge(upper_list[[site]], air_data, by = "DateTime", all.x = TRUE)
+  merged_list[[i]] <- merge(pt_list[[i]], air_data, by = "DateTime", all.x = TRUE)
 }
 
 # Check the contents of the list
 str(merged_list)
 
-###################################
-#### Format names to match YSI ####
-###################################
+##################################
+#### Format some column names ####
+##################################
 for (i in seq_along(merged_list)) {
   # Access the current data frame
   df <- merged_list[[i]]
@@ -161,7 +170,7 @@ for (i in seq_along(merged_list)) {
   # Define the local folder path and the target folder ID in Google Drive
   file <- paste0("merged/", names(merged_list)[i])
   # this is the in use folder
-  drive_folder_id <- "1orEmVMeuqL1oNwaJ3I9ONJQJ93mt7Tms"
+  drive_folder_id <- "1SAtC_CJd6KC2yWtJB_VdTebMBDSjy-Pk"
   
   # Upload file to the specified Google Drive folder
   drive_put(

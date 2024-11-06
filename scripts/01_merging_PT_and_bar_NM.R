@@ -9,6 +9,7 @@
 ##################
 
 library(googledrive) 
+library(ggplot2)
 
 ####################################
 ## Clear folders that we will use ##
@@ -70,7 +71,7 @@ for (i in seq_along(pt_list)) {
 #### Prep data for merging PT with Air pressure ####
 ####################################################
 
-# List of folder names
+# List of site names
 uppersites <- c("USF21", "USF13", "USF14", "USF16", "USF19")
 
 # Create an empty list to store the files
