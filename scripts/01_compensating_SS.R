@@ -1,16 +1,16 @@
 ##==============================================================================
 ## Project: QuEST
 ## This script is to merge PT and barometric (air pressure) data for SS sites
-## press Command+Option+O to collapse all sections and get an overview of the workflow!
+## press Command+Option+O to collapse all sections and get an overview of the workflow
 ##==============================================================================
 
 ##################
 #### Packages ####
 ##################
-
 library(googledrive)
 library(ggplot2)
 library(lubridate)
+library(dplyr)
 
 ####################################
 ## Clear folders that we will use ##
@@ -19,16 +19,19 @@ library(lubridate)
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
 
+files <- list.files(path = "merged", full.names = TRUE)
+file.remove(files)
+
 #################################
 #### Import & Visualize Data ####
 #################################
 #### Load data from Google drive ####
-# This is the inuse folder
+# This is the "inuse" folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/194hsX_kF8xMs-9Uzq_yyaxoh_ywh6HMm")
 
 # List all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
-
+3
 ## Call all the files in the salt slugs folder ##
 # Create empty list to store data frames
 pt_list <- list()
@@ -50,6 +53,10 @@ for (i in seq_along(pt_csvs$id)) {
 
 # Check the contents of the list
 str(pt_list)
+
+#### Remove baro file from pt list ####
+# remove second item in this case, check position of baro file
+pt_list = pt_list[-2]
 
 #####################
 #### Plot curves ####
@@ -103,6 +110,9 @@ str(pt_list)
 # Now check datetime format for air data
 air_data$DateTime <- as.POSIXct(air_data$DateTime)
 
+# Convert baro DateTime column to POSIXct
+air_data$DateTime <- as.POSIXct(air_data$DateTime, format = "%Y/%m/%d %H:%M:%S")
+
 ###########################
 #### Rounding the time ####
 ###########################
@@ -115,7 +125,6 @@ pt_list[["09-16-2024_SST07_PTS_SN2192880.csv"]]$DateTimeNotRounded <- pt_list[["
 pt_list[["09-16-2024_SST07_PTS_SN2192880.csv"]]$DateTime <- round_date(pt_list[["09-16-2024_SST07_PTS_SN2192880.csv"]]$DateTime, unit="15 mins")
 
 str(pt_list)
-
 
 # Round DateTime to the nearest 15-minute interval across all files in pt_list
 for (i in seq_along(pt_list)) {
@@ -141,6 +150,7 @@ str(merged_list)
 ##################################
 #### Format some column names ####
 ##################################
+
 for (i in seq_along(merged_list)) {
   # Access the current data frame
   df <- merged_list[[i]]
@@ -152,24 +162,45 @@ for (i in seq_along(merged_list)) {
                   TEMPERATURE.air = TEMPERATURE.y)
   merged_list[[i]] <-  df
 }
-
+[[pt_csvs$name[i]]]
 # Check the contents of the list
 str(merged_list)
 
-####################################
-#### Save merged slugs to Drive ####
-####################################
-# Loop through each data frame in the list
-for (i in seq_along(merged_list)) {
+########################################
+#### Manual Barometric Compensation ####
+########################################
+
+#Create empty compensated list
+compensated_list <- list()
+
+for (i in names(pt_list)) {
   # Access the current data frame
   df <- merged_list[[i]]
   
+  # Compensate
+  df <- df %>%
+  mutate(Baro_Cor_Lvl = (.[[5]] - .[[10]]))
+  
+  compensated_list[[i]] <-  df
+}
+    
+## Once the units for each column are the same, subtract the barometric column from the Levelogger data 
+# to get the true net water level recorded by the Levelogger.
+
+#########################################
+#### Save compensated files to Drive ####
+#########################################
+# Loop through each data frame in the list
+for (i in seq_along(compensated_list)) {
+  # Access the current data frame
+  df <- compensated_list[[i]]
+  
   # Save new data frame
-  write.csv(df, paste0("merged/", names(merged_list)[i]), row.names=FALSE, quote=FALSE)
+  write.csv(df, paste0("data/", names(compensated_list)[i]), row.names=FALSE, quote=FALSE)
   
   # Define the local folder path and the target folder ID in Google Drive
-  file <- paste0("merged/", names(merged_list)[i])
-  # this is the in use folder
+  file <- paste0("data/", names(compensated_list)[i])
+  # this is the "compensated" folder
   drive_folder_id <- "1SAtC_CJd6KC2yWtJB_VdTebMBDSjy-Pk"
   
   # Upload file to the specified Google Drive folder
@@ -178,3 +209,4 @@ for (i in seq_along(merged_list)) {
     path = as_id(drive_folder_id)
   )
 }
+

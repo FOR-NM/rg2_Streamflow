@@ -18,6 +18,9 @@ library(ggplot2)
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
 
+files <- list.files(path = "merged", full.names = TRUE)
+file.remove(files)
+
 #################################
 #### Import & Visualize Data ####
 #################################
@@ -50,6 +53,10 @@ for (i in seq_along(pt_csvs$id)) {
 # Check the contents of the list
 str(pt_list)
 
+#### Remove baro file from pt list ####
+# remove second item in this case, check position of baro file
+pt_list = pt_list[-13]
+
 #####################
 #### Plot curves ####
 #####################
@@ -73,6 +80,8 @@ for (i in seq_along(pt_list)) {
 
 # List of site names
 uppersites <- c("USF21", "USF13", "USF14", "USF16", "USF19")
+middlesites <- c("USF09", "USF10", "USF11")
+lowersites <- c("USF03", "USF04", "USF05", "USF07", "USF20")
 
 # Create an empty list to store the files
 upper_list <- list()
@@ -90,8 +99,8 @@ for (site in uppersites) {
   upper_list[[site]] <- read.csv(files[1])
 }
 
-# Load the Air2 data
-air_data <- read.csv("googledrive/2024-10-29_Air2.csv")
+# Load the Air2 data for the upper sites
+air_upper <- read.csv("googledrive/2024-10-29_Air2.csv")
 
 ################################
 #### Format DateTime column ####
@@ -112,8 +121,19 @@ for (i in seq_along(upper_list)) {
 str(upper_list)
 
 # Now check datetime format for air data
-air_data$DateTime <- as.POSIXct(air_data$DateTime)
+air_upper$DateTime <- as.POSIXct(air_upper$DateTime)
 
+########################################################
+#### Convert barometric pressure to the same units  ####
+########################################################
+
+ vas aqui!!!! convertir unidades de bar a unidades del level. Estan en kpa? el level esta en cm
+
+air_upper <- air_upper %>%
+  mutate(Level.m = (.[[4]] * 0.101972))
+
+#1 kPa = 0.101972 m
+  
 ######################################
 #### Merging PT with Air pressure ####
 ######################################
@@ -123,16 +143,16 @@ merged_list <- list()
 
 # Loop through each site file in upper_list
 for (site in names(upper_list)) {
-  # Merge each site data with air_data on the DateTime column
-  merged_list[[site]] <- merge(upper_list[[site]], air_data, by = "DateTime", all.x = TRUE)
+  # Merge each site data with air_upper on the DateTime column
+  merged_list[[site]] <- merge(upper_list[[site]], air_upper, by = "DateTime", all.x = TRUE)
 }
 
 # Check the contents of the list
 str(merged_list)
 
-###################################
-#### Format names to match YSI ####
-###################################
+##################################
+#### Format some column names ####
+##################################
 for (i in seq_along(merged_list)) {
   # Access the current data frame
   df <- merged_list[[i]]
@@ -147,6 +167,27 @@ for (i in seq_along(merged_list)) {
 
 # Check the contents of the list
 str(merged_list)
+
+########################################
+#### Manual Barometric Compensation ####
+########################################
+
+#Create empty compensated list
+compensated_list <- list()
+
+for (i in names(pt_list)) {
+  # Access the current data frame
+  df <- merged_list[[i]]
+  
+  # Compensate
+  df <- df %>%
+    mutate(Baro_Cor_Lvl = (.[[5]] - .[[10]]))
+  
+  compensated_list[[i]] <-  df
+}
+
+## Once the units for each column are the same, subtract the barometric column from the Levelogger data 
+# to get the true net water level recorded by the Levelogger.
 
 ####################################
 #### Save merged slugs to Drive ####
