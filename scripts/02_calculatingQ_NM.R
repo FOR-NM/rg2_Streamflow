@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to calculate discharge from compensated pressure data for South Sandy sites
+## This script is to calculate discharge from compensated pressure data for New Mexico sites
 ## press Command+Option+O to collapse all sections and get an overview of the workflow
 ##==============================================================================
 
@@ -27,7 +27,7 @@ file.remove(files)
 #################################
 #### Load data from Google drive ####
 # This is the "compensated" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1SAtC_CJd6KC2yWtJB_VdTebMBDSjy-Pk")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1VsT7hirl5OHIGhrrc3b7dxPpSqr1wNC0")
 
 # List all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
@@ -72,7 +72,7 @@ for (i in names(pt_list)) {
       55.528*.[[12]]^4.545, 
       3.5837*.[[12]]^2-0.7562*.[[12]]+0.0425)
     )
-
+  
   rating_list[[i]] <-  df
 }
 
@@ -90,7 +90,6 @@ for (i in names(rating_list)) {
   # Calculate and creat discharge column
   df <- df %>%
     mutate(Q.mm = .[[15]]/(??????????*1000000))*1000*60*5)
-  
-  discharge_list[[i]] <-  df
-}
 
+discharge_list[[i]] <-  df
+}

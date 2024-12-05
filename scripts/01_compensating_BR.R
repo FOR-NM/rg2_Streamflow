@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to merge PT and barometric (air pressure) data for the South Sandy sites
+## This script is to merge PT and barometric data for the Brush Creek sites
 ## press Command+Option+O to collapse all sections and get an overview of the workflow
 ##==============================================================================
 
@@ -27,7 +27,7 @@ file.remove(files)
 #################################
 #### Load data from Google drive ####
 # This is the "inuse" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/194hsX_kF8xMs-9Uzq_yyaxoh_ywh6HMm")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1E2jjd84l36SsY3jXqHiI-fybS3415Ug8")
 
 # List all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
@@ -56,11 +56,11 @@ str(pt_list)
 
 #### Remove baro file from pt list ####
 # remove second item in this case, check position of baro file
-pt_list = pt_list[-2]
+# pt_list = pt_list[-?]
 
 # Load the baro data separately
 # All sites will be merged with the one air data that South Sandy has
-air_data <- read.csv("googledrive/09-16-2024_SSM20_PTSbaro_SN2191067.csv")
+air_data <- read.csv("googledrive/get_baro.csv")
 
 #####################
 #### Plot curves ####
@@ -201,7 +201,7 @@ for (i in names(merged_list)) {
   
   # Compensate
   df <- df %>%
-  mutate(Baro_Cor_Lvl = (.[[7]] - .[[13]]))
+    mutate(Baro_Cor_Lvl = (.[[7]] - .[[13]]))
   
   compensated_list[[i]] <-  df
 }
@@ -228,4 +228,3 @@ for (i in seq_along(compensated_list)) {
     path = as_id(drive_folder_id)
   )
 }
-

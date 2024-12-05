@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to merge PT and barometric (air pressure) data for the NM sites
+## This script is to merge PT and barometric (air pressure) data for the New Mexico sites
 ## press Command+Option+O to collapse all sections and get an overview of the workflow!
 ##==============================================================================
 
@@ -62,7 +62,6 @@ pt_list = pt_list[-13]
 #####################
 #just for fun
 
-# Visualize
 # Loop through each data frame in the list
 for (i in seq_along(pt_list)) {
   # Access the current data frame
@@ -83,9 +82,12 @@ uppersites <- c("USF21", "USF13", "USF14", "USF16", "USF19")
 middlesites <- c("USF09", "USF10", "USF11")
 lowersites <- c("USF03", "USF04", "USF05", "USF07", "USF20")
 
-# Create an empty list to store the files
+# Create an empty lists to store the files
 upper_list <- list()
+upper_middle <- list()
+upper_lower <- list()
 
+## UPPER
 # Loop through each site name in the list
 for (site in uppersites) {
   # Construct the file path and use a pattern to match files with the specific site
@@ -99,8 +101,38 @@ for (site in uppersites) {
   upper_list[[site]] <- read.csv(files[1])
 }
 
+# ## MIDDLE
+# # Loop through each site name in the list
+# for (site in middlesites) {
+#   # Construct the file path and use a pattern to match files with the specific site
+#   folder_path <- "googledrive/"
+#   pattern <- paste0("^[0-9-]+_", site, "_WaterLevel")
+#   
+#   # Find the file matching the pattern (assuming only one match per site)
+#   files <- list.files(folder_path, pattern = pattern, full.names = TRUE)
+#   
+#   # Read the first matching file for each site
+#   upper_list[[site]] <- read.csv(files[1])
+# }
+# 
+# ## LOWER
+# # Loop through each site name in the list
+# for (site in upper_lower) {
+#   # Construct the file path and use a pattern to match files with the specific site
+#   folder_path <- "googledrive/"
+#   pattern <- paste0("^[0-9-]+_", site, "_WaterLevel")
+#   
+#   # Find the file matching the pattern (assuming only one match per site)
+#   files <- list.files(folder_path, pattern = pattern, full.names = TRUE)
+#   
+#   # Read the first matching file for each site
+#   upper_list[[site]] <- read.csv(files[1])
+# }
+
 # Load the Air2 data for the upper sites
 air_upper <- read.csv("googledrive/2024-10-29_Air2.csv")
+air_middle
+air_lower
 
 ################################
 #### Format DateTime column ####
@@ -123,16 +155,31 @@ str(upper_list)
 # Now check datetime format for air data
 air_upper$DateTime <- as.POSIXct(air_upper$DateTime)
 
-########################################################
-#### Convert barometric pressure to the same units  ####
-########################################################
+#####################################
+#### Change all units to meters  ####
+#####################################
 
- vas aqui!!!! convertir unidades de bar a unidades del level. Estan en kpa? el level esta en cm
-
+## Air pressure in kpa to m
 air_upper <- air_upper %>%
-  mutate(Level.m = (.[[4]] * 0.101972))
+  mutate(Level_air.m = (.[[4]] * 0.101972))
 
 #1 kPa = 0.101972 m
+
+## water level is in cm, change to m
+# Loop through each data frame in the list
+for (i in seq_along(upper_list)) {
+  # Access the current data frame
+  df <- upper_list[[i]]
+  
+  #cm to m
+  df <- df %>%
+    mutate(LELVEL.m = (.[[4]] * 0.01))
+  # Update the data frame in the list
+  upper_list[[i]] <- df
+}
+
+# Check the contents of the list and make sure there are no NAs
+str(upper_list)
   
 ######################################
 #### Merging PT with Air pressure ####
@@ -160,7 +207,7 @@ for (i in seq_along(merged_list)) {
   # Rename columns
   df <- df %>%
     dplyr::rename(Pres.abs.kPa = LEVEL.y,
-                  Water.level.m_sensor = LEVEL.x,
+                  LEVEL.cm = LEVEL.x,
                   TEMPERATURE.air = TEMPERATURE.y)
   merged_list[[i]] <-  df
   }
@@ -172,38 +219,38 @@ str(merged_list)
 #### Manual Barometric Compensation ####
 ########################################
 
+## Once the units for each column are the same, subtract the barometric column from the Levelogger data 
+# to get the true net water level recorded by the Levelogger.
+
 #Create empty compensated list
 compensated_list <- list()
 
-for (i in names(pt_list)) {
+for (i in names(merged_list)) {
   # Access the current data frame
   df <- merged_list[[i]]
   
   # Compensate
   df <- df %>%
-    mutate(Baro_Cor_Lvl = (.[[5]] - .[[10]]))
+    mutate(Baro_Cor_Lvl = (.[[7]] - .[[13]]))
   
   compensated_list[[i]] <-  df
 }
 
-## Once the units for each column are the same, subtract the barometric column from the Levelogger data 
-# to get the true net water level recorded by the Levelogger.
-
-####################################
-#### Save merged slugs to Drive ####
-####################################
+####################################################
+#### Save merged and compensated slugs to Drive ####
+####################################################
 # Loop through each data frame in the list
-for (i in seq_along(merged_list)) {
+for (i in seq_along(compensated_list)) {
   # Access the current data frame
-  df <- merged_list[[i]]
+  df <- compensated_list[[i]]
   
   # Save new data frame
-  write.csv(df, paste0("merged/", names(merged_list)[i]), row.names=FALSE, quote=FALSE)
+  write.csv(df, paste0("data/", names(compensated_list)[i], ".csv"), row.names=FALSE, quote=FALSE)
   
   # Define the local folder path and the target folder ID in Google Drive
-  file <- paste0("merged/", names(merged_list)[i])
-  # this is the in use folder
-  drive_folder_id <- "1orEmVMeuqL1oNwaJ3I9ONJQJ93mt7Tms"
+  file <- paste0("data/", names(compensated_list)[i], ".csv")
+  # this is the "in use"compensated" folder
+  drive_folder_id <- "1VsT7hirl5OHIGhrrc3b7dxPpSqr1wNC0"
   
   # Upload file to the specified Google Drive folder
   drive_put(
