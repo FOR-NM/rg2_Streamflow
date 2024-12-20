@@ -7,7 +7,7 @@
 ##############
 ## Packages ##
 ##############
-library(googledrive) 
+library(googledrive)
 library(tidyverse)
 
 ###################################
@@ -23,6 +23,7 @@ file.remove(files)
 #####################
 
 # Set up Google Drive folder
+# This is the "inuse" folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1i7G-q7FV0_bszqeCdJ6Otz8b9xhpU1cx")
 
 # List and filter CSV files with "pt" in their names
@@ -38,7 +39,7 @@ pt_list <- lapply(seq_along(pt_files$name), function(i) {
   )
   
   # Read the CSV file, skipping the first 11 rows (header is on row 12)
-  read.csv(paste0("googledrive/", pt_files$name[i]), skip = 11, header = TRUE)
+  read.csv(paste0("googledrive/", pt_files$name[i]), header = TRUE)
 })
 
 # Assign names to the list elements based on the file names
@@ -56,7 +57,7 @@ for (i in seq_along(pt_list)) {
   df <- pt_list[[i]]
   
   # Make date into date fomat
-  df$Date <- as.Date(df$Date, format = "%m/%d/%Y")
+  df$Date <- as.Date(df$Date, format = "%m/%d/%y")
   # Update the data frame in the list
   pt_list[[i]] <- df
 }
@@ -72,7 +73,7 @@ for (i in seq_along(pt_list)) {
   df$DateTime <- paste(df$Date, df$Time, sep = " ")
   
   # Convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
   # Update the data frame in the list
   pt_list[[i]] <- df
   
@@ -98,7 +99,7 @@ for (i in seq_along(pt_list)) {
   
   # Define the local folder path and the target folder ID in Google Drive
   file <- paste0("googledrive/", pt_files$name[i])
-  # this is the in use folder
+  # this is the "in use" folder
   drive_folder_id <- "1i7G-q7FV0_bszqeCdJ6Otz8b9xhpU1cx"
   
   # Upload file to the specified Google Drive folder

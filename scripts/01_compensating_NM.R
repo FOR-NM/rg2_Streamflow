@@ -10,6 +10,7 @@
 
 library(googledrive) 
 library(ggplot2)
+library(dplyr)
 
 ####################################
 ## Clear folders that we will use ##
@@ -54,14 +55,13 @@ for (i in seq_along(pt_csvs$id)) {
 str(pt_list)
 
 #### Remove baro file from pt list ####
-# remove second item in this case, check position of baro file
-pt_list = pt_list[-13]
+# remove 7th item in this case, check position of baro file
+pt_list = pt_list[-7]
 
 #####################
 #### Plot curves ####
 #####################
 #just for fun
-
 # Loop through each data frame in the list
 for (i in seq_along(pt_list)) {
   # Access the current data frame
@@ -153,7 +153,7 @@ for (i in seq_along(upper_list)) {
 str(upper_list)
 
 # Now check datetime format for air data
-air_upper$DateTime <- as.POSIXct(air_upper$DateTime)
+air_upper$DateTime <- as.POSIXct(air_upper$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 #####################################
 #### Change all units to meters  ####
@@ -249,7 +249,7 @@ for (i in seq_along(compensated_list)) {
   
   # Define the local folder path and the target folder ID in Google Drive
   file <- paste0("data/", names(compensated_list)[i], ".csv")
-  # this is the "in use"compensated" folder
+  # this is the "compensated" folder
   drive_folder_id <- "1VsT7hirl5OHIGhrrc3b7dxPpSqr1wNC0"
   
   # Upload file to the specified Google Drive folder
