@@ -59,7 +59,7 @@ head(rating_data)
 
 ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q)) +
   geom_point(color = "blue") +
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.cm)", y = "Discharge (Q)") +
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.m)", y = "Discharge (Q)") +
   theme_minimal()
 
 ###########################################
@@ -76,15 +76,8 @@ ggplot(rating_data, aes(x = log(Baro_Cor_Lvl), y = log(Q))) +
 #### Model? ####
 ################
 
-sum(is.na(USF21$Baro_Cor_Lvl))     # Count NA values in LEVEL.m
+sum(is.na(USF21$Baro_Cor_Lvl)) # Count NA values in LEVEL.m
 sum(is.na(USF21$Pres.abs.kPa)) # Count NA values in Pres.abs.kPa
-
-# Constants
-density_water <- 1000  # kg/m³
-g <- 9.81  # m/s²
-
-USF21 <- USF21 %>%
-  mutate(WaterDepth = (Baro_Cor_Lvl - Pres.abs.kPa) / (density_water * g))
 
 # Stage-Discharge dataset
 stage_discharge <- data.frame(

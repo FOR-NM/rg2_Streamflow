@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to 
+## This script is to merge discharge data from salt slugs with pt data
 ## press Command+Option+O to collapse all sections and get an overview of the workflow!
 ##==============================================================================
 
@@ -232,6 +232,11 @@ USF21 <- depth_merged[["USF21.csv"]]
 USF16 <- depth_merged[["USF16.csv"]]
 USF14 <- depth_merged[["USF14.csv"]]
 USF13 <- depth_merged[["USF13.csv"]]
+USF03 <- depth_merged[["USF03.csv"]]
+USF04 <- depth_merged[["USF04.csv"]]
+USF05 <- depth_merged[["USF05.csv"]]
+USF07 <- depth_merged[["USF07.csv"]]
+USF20 <- depth_merged[["USF20.csv"]]
 
 #### Remove duplicates... why are there duplicates? ####
 USF19 <- USF19[!duplicated(USF19), ]
