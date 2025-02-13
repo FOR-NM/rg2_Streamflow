@@ -1,2 +1,2 @@
 # Streamflow
-Data management for continuous flow estimates using Pressure Transducer (Level Logger) data
+Management for continuous flow estimates using Pressure Transducer (Level Logger) data
