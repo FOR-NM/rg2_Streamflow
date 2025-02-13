@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to calculate discharge from compensated pressure data for Santa Fe USF20 site
+## This script is to calculate discharge from compensated pressure data for South Sandy SST07 site
 ## press Command+Option+O to collapse all sections and get an overview of the workflow
 ##==============================================================================
 
@@ -27,27 +27,27 @@ file.remove(files)
 #################################
 #### Load data from Google drive ####
 # This is the "depth" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1EswIfUWCK6bsdcs-ZrAMGW1oYKs4B0Eh")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/11vn2jsiB7YEsrhjI5_NnOSTA579NMtK4")
 
 # List all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
-#USF20
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="offset_USF20.csv"], 
-                            path = "googledrive/offset_USF20.csv",
+#SST07
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="09-16-2024_SST07_PTS_SN2192880.csv"], 
+                            path = "googledrive/09-16-2024_SST07_PTS_SN2192880.csv",
                             overwrite = T)
 # Load file
-USF20 <- read.csv("googledrive/offset_USF20.csv")
+SST07 <- read.csv("googledrive/09-16-2024_SST07_PTS_SN2192880.csv")
 
 # Convert Date column to Date type if not already
-USF20$Date <- as.Date(USF20$Date)
-USF20$DateTime <- as.POSIXct(USF20$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "MST")
-head(USF20)
+SST07$Date <- as.Date(SST07$Date.x)
+SST07$DateTime <- as.POSIXct(SST07$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "MST")
+head(SST07)
 
 # Filter out rows with missing stage or discharge
-rating_data <- USF20 %>% 
-  filter(!is.na(Baro_Cor_Lvl), !is.na(Q))
+rating_data <- SST07 %>% 
+  filter(!is.na(Baro_Cor_Lvl.m), !is.na(Q..L.s.))
 
 # Check the structure of the cleaned data
 head(rating_data)
@@ -56,23 +56,18 @@ head(rating_data)
 #### Plot Stage vs. Discharge ####
 ##################################
 
-ggplot(rating_data, aes(x = Baro_Cor_offset, y = Q)) +
-  geom_point(color = "blue") +
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.m)", y = "Discharge (Q)") +
-  theme_minimal()
-
 # discharge from L/s to m3/s
 rating_data <- rating_data %>%
-  mutate(Q.m3s = Q/1000)
+  mutate(Q.m3s = Q..L.s./1000)
 
-ggplot(rating_data, aes(x = Baro_Cor_offset, y = Q.m3s)) +
+ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
   geom_point(color = "blue") +
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
   theme_minimal()
 
 # pt depth from cm to m
 rating_data <- rating_data %>%
-  mutate(pt_depth_m = pt_depth_cm/100)
+  mutate(pt_depth_m = Depth.above.PT..cm....7/100)
 
 # Plot discharge vs manual stage measurement
 ggplot(rating_data, aes(x = pt_depth_m, y = Q.m3s)) +
@@ -84,7 +79,7 @@ ggplot(rating_data, aes(x = pt_depth_m, y = Q.m3s)) +
 #### Check for Log-Linear Relationship ####
 ###########################################
 
-ggplot(rating_data, aes(x = log(Baro_Cor_offset), y = log(Q))) +
+ggplot(rating_data, aes(x = log(Baro_Cor_Lvl.m), y = log(Q.m3s))) +
   geom_point(color = "blue") +
   labs(title = "Log-Log Plot of Water Level vs. Discharge", 
        x = "Log(Water Level)", y = "Log(Discharge)") +
@@ -95,7 +90,7 @@ ggplot(rating_data, aes(x = log(Baro_Cor_offset), y = log(Q))) +
 ####################
 
 rating_data <- rating_data %>%
-  mutate(Log_Stage = log(Baro_Cor_offset),
+  mutate(Log_Stage = log(Baro_Cor_Lvl.m),
          Log_Discharge = log(Q.m3s))
 
 log_model <- lm(Log_Discharge ~ Log_Stage, data = rating_data)
@@ -109,7 +104,7 @@ b <- coef(log_model)[2]       # Slope
 #### Linear model? ####
 #######################
 
-linear_model <- lm(Q.m3s ~ Baro_Cor_offset, data = rating_data)
+linear_model <- lm(Q.m3s ~ Baro_Cor_Lvl.m, data = rating_data)
 
 summary(linear_model)
 
@@ -117,7 +112,7 @@ summary(linear_model)
 #### Polynomial model? ####
 ###########################
 
-poly_model <- lm(Q.m3s ~ poly(Baro_Cor_offset, 2), data = rating_data)
+poly_model <- lm(Q.m3s ~ poly(Baro_Cor_Lvl.m, 2), data = rating_data)
 
 summary(poly_model)
 
@@ -126,22 +121,22 @@ summary(poly_model)
 ###########################
 
 # Observed data
-plot(rating_data$Baro_Cor_offset, rating_data$Q.m3s,
+plot(rating_data$Baro_Cor_Lvl.m, rating_data$Q.m3s,
      main = "Stage vs. Discharge",
      xlab = "Water Level (m)", ylab = "Discharge (m³/s)",
      pch = 19, col = "blue")
 
 # Log-transformed model predictions
 pred_log <- exp(predict(log_model, newdata = rating_data))
-lines(rating_data$Baro_Cor_offset, pred_log, col = "red", lwd = 2)
+lines(rating_data$Baro_Cor_Lvl.m, pred_log, col = "red", lwd = 2)
 
 # Linear model predictions
 pred_linear <- predict(linear_model, newdata = rating_data)
-lines(rating_data$Baro_Cor_offset, pred_linear, col = "green", lwd = 2)
+lines(rating_data$Baro_Cor_Lvl.m, pred_linear, col = "green", lwd = 2)
 
 # Polynomial model predictions
 pred_poly <- predict(poly_model, newdata = rating_data)
-lines(rating_data$Baro_Cor_offset, pred_poly, col = "purple", lwd = 2)
+lines(rating_data$Baro_Cor_Lvl.m, pred_poly, col = "purple", lwd = 2)
 
 # Legend
 legend("topleft", legend = c("Observed", "Log-Transformed", "Linear", "Polynomial"),
@@ -159,7 +154,7 @@ legend("topleft", legend = c("Observed", "Log-Transformed", "Linear", "Polynomia
 # 
 # # Apply the power-law equation to the LEVEL.cm data in the dataset
 # USF21 <- USF21 %>%
-#   mutate(Discharge = a * (Baro_Cor_Lvl - h0)^b)
+#   mutate(Discharge = a * (Baro_Cor_Lvl.m - h0)^b)
 # 
 # # Check the first few rows with computed Discharge
 # head(USF21)
@@ -183,8 +178,8 @@ a_log <- exp(coef(log_model)[1])  # Intercept
 b_log <- coef(log_model)[2]       # Slope
 
 # Predict discharge for the entire dataset
-USF20 <- USF20 %>%
-  mutate(Predicted_Discharge_Log = a_log * (Baro_Cor_offset ^ b_log))
+SST07 <- SST07 %>%
+  mutate(Predicted_Discharge_Log = a_log * (Baro_Cor_Lvl.m ^ b_log))
 
 ##########################
 #### Predicted linear ####
@@ -194,8 +189,8 @@ a_linear <- coef(linear_model)[1]  # Intercept
 b_linear <- coef(linear_model)[2]  # Slope
 
 # Predict discharge for the entire dataset
-USF20 <- USF20 %>%
-  mutate(Predicted_Discharge_Linear = a_linear + b_linear * Baro_Cor_offset)
+SST07 <- SST07 %>%
+  mutate(Predicted_Discharge_Linear = a_linear + b_linear * Baro_Cor_Lvl.m)
 
 ##############################
 #### Predicted Polynomial ####
@@ -206,27 +201,27 @@ b1_poly <- coef(poly_model)[2]     # Linear term
 b2_poly <- coef(poly_model)[3]     # Quadratic term
 
 # Predict discharge for the entire dataset
-USF20 <- USF20 %>%
-  mutate(Predicted_Discharge_Poly = a_poly + b1_poly * Baro_Cor_offset + b2_poly * Baro_Cor_offset^2)
+SST07 <- SST07 %>%
+  mutate(Predicted_Discharge_Poly = a_poly + b1_poly * Baro_Cor_Lvl.m + b2_poly * Baro_Cor_Lvl.m^2)
 
 #############################
 #### Compare predictions ####
 #############################
 
 # Visualize predictions
-plot(USF20$Baro_Cor_offset, USF20$Predicted_Discharge_Log, col = "red", type = "l", lwd = 2,
+plot(SST07$Baro_Cor_Lvl.m, SST07$Predicted_Discharge_Log, col = "red", type = "l", lwd = 2,
      xlab = "Stage (m)", ylab = "Discharge (m³/s)", main = "Discharge Predictions")
-lines(USF20$Baro_Cor_offset, USF20$Predicted_Discharge_Linear, col = "green", lwd = 2)
-lines(USF20$Baro_Cor_offset, USF20$Predicted_Discharge_Poly, col = "purple", lwd = 2)
+lines(SST07$Baro_Cor_Lvl.m, SST07$Predicted_Discharge_Linear, col = "green", lwd = 2)
+lines(SST07$Baro_Cor_Lvl.m, SST07$Predicted_Discharge_Poly, col = "purple", lwd = 2)
 legend("topleft", legend = c("Log-Transformed", "Linear", "Polynomial"),
        col = c("red", "green", "purple"), lty = 1, lwd = 2)
 
-# discharge from L/s to m3/s
-USF20 <- USF20 %>%
-  mutate(Q.m3s = Q/1000)
+# discharge from L/s to m3/s for entire dataset
+SST07 <- SST07 %>%
+  mutate(Q.m3s = Q..L.s./1000)
 
 # Compare Predicted vs. Observed Discharge
-ggplot(USF20, aes(x = Q.m3s)) +
+ggplot(SST07, aes(x = Q.m3s)) +
   geom_point(aes(y = Predicted_Discharge_Log, color = "Log Model")) +
   geom_point(aes(y = Predicted_Discharge_Linear, color = "Linear Model")) +
   geom_point(aes(y = Predicted_Discharge_Poly, color = "Polynomial Model")) +
@@ -239,14 +234,14 @@ ggplot(USF20, aes(x = Q.m3s)) +
   theme_minimal()
 
 # Residuals
-USF20 <- USF20 %>%
+SST07 <- SST07 %>%
   mutate(
     Residual_Log = Q.m3s - Predicted_Discharge_Log,
     Residual_Linear = Q.m3s - Predicted_Discharge_Linear,
     Residual_Poly = Q.m3s - Predicted_Discharge_Poly
   )
 
-ggplot(USF20, aes(x = Baro_Cor_offset)) +
+ggplot(SST07, aes(x = Baro_Cor_Lvl.m)) +
   geom_point(aes(y = Residual_Log, color = "Log Model")) +
   geom_point(aes(y = Residual_Linear, color = "Linear Model")) +
   geom_point(aes(y = Residual_Poly, color = "Polynomial Model")) +
@@ -262,21 +257,21 @@ ggplot(USF20, aes(x = Baro_Cor_offset)) +
 #### Plot and compare predictions ####
 ######################################
 
-USF20$DateTime <- as.POSIXct(USF20$DateTime)
+SST07$DateTime <- as.POSIXct(SST07$DateTime)
 
-ggplot(USF20, aes(x = DateTime, y = Predicted_Discharge_Log)) +
+ggplot(SST07, aes(x = DateTime, y = Predicted_Discharge_Log)) +
   geom_point(color = "blue") +
   labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "1 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggplot(USF20, aes(x = DateTime, y = Predicted_Discharge_Linear)) +
+ggplot(SST07, aes(x = DateTime, y = Predicted_Discharge_Linear)) +
   geom_point(color = "blue") +
   labs(title = "Predicted Discharge (Linear)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "1 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggplot(USF20, aes(x = DateTime, y = Predicted_Discharge_Poly)) +
+ggplot(SST07, aes(x = DateTime, y = Predicted_Discharge_Poly)) +
   geom_point(color = "blue") +
   labs(title = "Predicted Discharge (Poly)", x = "DateTime", y = "Discharge (m3/s)")  +
   scale_x_datetime(date_breaks = "1 week") +
@@ -286,12 +281,12 @@ ggplot(USF20, aes(x = DateTime, y = Predicted_Discharge_Poly)) +
 #### Save file ####
 ###################
 
-write.csv(USF20, "data/discharge_USF20.csv")
+write.csv(SST07, "data/discharge_SST07.csv")
 
-drive_folder_id <- "1krhGD6TkA7nf6xb3EXD-MRUhBCDpkfhz"
+drive_folder_id <- "1tkYDtcrI_wgbb16zufLJizcjfMzePtkw"
 
 # Upload file to the specified Google Drive folder
 drive_put(
-  media = "data/discharge_USF20.csv",
+  media = "data/discharge_SST07.csv",
   path = as_id(drive_folder_id)
 )

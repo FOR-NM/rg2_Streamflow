@@ -201,7 +201,7 @@ for (i in names(merged_list)) {
   
   # Compensate
   df <- df %>%
-  mutate(Baro_Cor_Lvl = (.[[7]] - .[[13]]))
+  mutate(Baro_Cor_Lvl.m = (.[[7]] - .[[13]]))
   
   compensated_list[[i]] <-  df
 }
