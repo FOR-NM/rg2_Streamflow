@@ -56,11 +56,11 @@ str(pt_list)
 
 #### Remove baro file from pt list ####
 # remove second item in this case, check position of baro file
-pt_list = pt_list[-2]
+pt_list = pt_list[-1]
 
 # Load the baro data separately
 # All sites will be merged with the one air data that South Sandy has
-air_data <- read.csv("googledrive/09-16-2024_SSM20_PTSbaro_SN2191067.csv")
+air_data <- read.csv("googledrive/2024-12-16_SSM20_PTS_SN2191067_baro.csv")
 
 #####################
 #### Plot curves ####
@@ -104,7 +104,7 @@ for (i in seq_along(pt_list)) {
 str(pt_list)
 
 # Now check datetime format for air data
-air_data$DateTime <- as.POSIXct(air_data$DateTime)
+air_data$DateTime <- as.POSIXct(air_data$DateTime, format = "%Y-%m-%d %H:%M:%S")
 # Convert baro DateTime column to POSIXct
 air_data$DateTime <- as.POSIXct(air_data$DateTime, format = "%Y/%m/%d %H:%M:%S")
 
@@ -141,7 +141,7 @@ for (i in seq_along(pt_list)) {
   # Access the current data frame
   df <- pt_list[[i]]
   
-  #cm to m
+  #kPa to m
   df <- df %>%
     mutate(LELVEL.m = (.[[4]] * 0.101972))
   # Update the data frame in the list

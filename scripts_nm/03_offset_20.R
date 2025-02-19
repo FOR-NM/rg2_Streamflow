@@ -122,6 +122,44 @@ ggplot(USF20, aes(x = DateTime, y = Baro_Cor_offset)) +
   #geom_vline(xintercept = as.POSIXct("2024-07-30"), linetype="dashed", color="red") +
   labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
 
+###########################################################################
+#### Find the average Baro_Cor_Lvl TWO HOURS before and after the move ####
+###########################################################################
+
+# Define the move time
+move_time <- as.POSIXct("2024-07-30 16:30:00")  # Adjust time as needed
+
+# Compute mean water level in the two hours before the move
+before_move <- USF20 %>%
+  filter(DateTime >= (move_time - hours(2)) & DateTime < move_time) %>%
+  summarize(mean_before = mean(Baro_Cor_Lvl, na.rm = TRUE))
+
+# Compute mean water level in the two hours after the move
+after_move <- USF20 %>%
+  filter(DateTime >= move_time & DateTime < (move_time + hours(2))) %>%
+  summarize(mean_after = mean(Baro_Cor_Lvl, na.rm = TRUE))
+
+# Compute offset
+offset2 <- after_move$mean_after - before_move$mean_before
+print(offset2)
+
+#################################################
+####  Apply the Correction for the two hours ####
+#################################################
+
+USF20 <- USF20 %>%
+  mutate(Baro_Cor_offset2 = if_else(DateTime >= "2024-07-30 17:30:00", Baro_Cor_Lvl - offset2, Baro_Cor_Lvl))
+
+###############################
+####  Plot with Correction ####
+###############################
+
+ggplot(USF20, aes(x = DateTime, y = Baro_Cor_offset2)) +
+  geom_line() +
+  #geom_vline(xintercept = as.POSIXct("2024-07-30"), linetype="dashed", color="red") +
+  labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
+
+
 ###################
 #### Save file ####
 ###################

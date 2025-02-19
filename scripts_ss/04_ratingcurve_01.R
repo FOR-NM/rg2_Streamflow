@@ -34,15 +34,15 @@ pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
 #SSM01
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="09-16-2024_SSM01_PTS_SN2192882.csv"], 
-                            path = "googledrive/09-16-2024_SSM01_PTS_SN2192882.csv",
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="2024-12-16_SSM01_PTS_SN2192882.csv"], 
+                            path = "googledrive/2024-12-16_SSM01_PTS_SN2192882.csv",
                             overwrite = T)
 # Load file
-SSM01 <- read.csv("googledrive/09-16-2024_SSM01_PTS_SN2192882.csv")
+SSM01 <- read.csv("googledrive/2024-12-16_SSM01_PTS_SN2192882.csv")
 
 # Convert Date column to Date type if not already
 SSM01$Date <- as.Date(SSM01$Date.x)
-SSM01$DateTime <- as.POSIXct(SSM01$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "MST")
+SSM01$DateTime <- as.POSIXct(SSM01$DateTime, format = "%Y-%m-%d %H:%M:%S")
 head(SSM01)
 
 # Filter out rows with missing stage or discharge

@@ -23,11 +23,11 @@ file.remove(files)
 #####################
 
 # Set up Google Drive folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/14x-d5gB7V9Y78gOR4L1p_56wNZ4WBO2F")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/194hsX_kF8xMs-9Uzq_yyaxoh_ywh6HMm")
 
 # List and filter CSV files with "pt" in their names
 pt_files <- googledrive::drive_ls(path = pt, type = "csv")
-pt_files <- pt_files[!grepl("PTSbaro", pt_files$name), ]
+pt_files <- pt_files[!grepl("baro", pt_files$name), ]
 
 # Create an empty list to store the cleaned data frames
 pt_list <- lapply(seq_along(pt_files$name), function(i) {
@@ -55,7 +55,7 @@ for (i in seq_along(pt_list)) {
   # Access the current data frame
   df <- pt_list[[i]]
   
-  # Make date into date fomat
+  # Make date into date format
   df$Date <- as.Date(df$Date, format = "%m/%d/%Y")
   # Update the data frame in the list
   pt_list[[i]] <- df
@@ -112,7 +112,7 @@ for (i in seq_along(pt_list)) {
 #### Single excel that I had to edit on it's own ####
 
 # Read the CSV file
-SST05 <- read.csv("10-04-2024_SST05_PTS_SN2192883.csv")
+SST05 <- read.csv("googledrive/2024-12-16_SSM20_PTS_SN2191067_baro.csv")
 
 # Combine Date and Time columns into a new DateTime column
 SST05$DateTime <- paste(SST05$Date, SST05$Time, sep = " ")
@@ -127,5 +127,5 @@ str(SST05)
 SST05$X <- NULL  # Alternatively, you can use SST05 <- SST05[, -which(names(SST05) == "X")]
 
 # Save the data frame to a CSV file
-write.csv(SST05, file = "SST05_cleaned.csv", row.names = FALSE, quote = FALSE)
+write.csv(SST05, file = "2024-12-16_SSM20_PTS_SN2191067_baro.csv", row.names = FALSE, quote = FALSE)
 

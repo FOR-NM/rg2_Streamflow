@@ -22,15 +22,15 @@ file.remove(files)
 files <- list.files(path = "merged", full.names = TRUE)
 file.remove(files)
 
-##############################################
-#### Load PT depth data from Google drive ####
-##############################################
+###############################################
+#### Load discharge data from Google drive ####
+###############################################
 
-(depth <- drive_get("https://docs.google.com/spreadsheets/d/1JVDwzSoHetQGHhYPoeoTOHzlmRrcWNPs-i5b8t2U754/edit?gid=584354365#gid=584354365"))
+(disch <- drive_get("https://docs.google.com/spreadsheets/d/1JVDwzSoHetQGHhYPoeoTOHzlmRrcWNPs-i5b8t2U754/edit?gid=893974061#gid=893974061"))
 3
 
 # Download the file as a xlsx file
-drive_download(as_id(depth$id), path = "googledrive/discharge.xlsx", type = "xlsx", overwrite = T)
+drive_download(as_id(disch$id), path = "googledrive/discharge.xlsx", type = "xlsx", overwrite = T)
 
 # Fetch the file
 discharge <- readxl::read_xlsx("googledrive/discharge.xlsx", sheet = "Master Q", skip = 1)
@@ -50,13 +50,13 @@ discharge$Time <- format(as.POSIXct(discharge$`Measurement Time`, format = "%Y-%
 discharge$DateTime <- paste(discharge$Date, discharge$Time, sep = " ")
 
 # Convert the DateTime column to POSIXct
-discharge$DateTime <- as.POSIXct(discharge$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "MST")
+discharge$DateTime <- as.POSIXct(discharge$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 ###########################
 #### Rounding the time ####
 ###########################
 
-# Create extra columns so you don't errase original time               
+# Create extra columns so you don't erase original time               
 discharge$DateTimeNotRounded <- discharge$DateTime
 
 # Transform to datetime format
@@ -135,7 +135,7 @@ for (i in seq_along(pt_list)) {
   df <- pt_list[[i]]
   
   # Convert the DateTime column to POSIXct
-  df$Date.x <- as.Date(df$Date.x, format = "%Y-%m-%d")
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
   # Update the data frame in the list
   pt_list[[i]] <- df
 }
@@ -156,7 +156,7 @@ head(pt_list[[1]]$DateTime)
 
 # Convert DateTime in pt_list
 pt_list <- lapply(pt_list, function(df) {
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "MST")
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
   df
 })
 
@@ -182,16 +182,39 @@ non_na_counts <- sapply(depth_merged, function(df) {
 # Print the counts
 print(non_na_counts)
 
-SSM01 <- depth_merged[["09-16-2024_SSM01_PTS_SN2192882.csv"]]
-SSM20 <- depth_merged[["09-16-2024_SSM20_PTS_SN2192885.csv"]]
-SST03 <- depth_merged[["09-16-2024_SST03_PTS_SN2192627.csv"]]
-SST04 <- depth_merged[["09-16-2024_SST04_PTS_SN2192624.csv"]]
-SST05 <- depth_merged[["10-04-2024_SST05_PTS_SN2192883..csv"]]
-SST07 <- depth_merged[["09-16-2024_SST07_PTS_SN2192880.csv"]]
-SST08 <- depth_merged[["09-16-2024_SST08_PTS_SN2192632.csv"]]
-SST09 <- depth_merged[["09-16-2024_SST09_PTS_SN2192621.csv"]]
-SST13 <- depth_merged[["09-16-2024_SST13_PTS_SN2192886.csv"]]
-SST06 <- depth_merged[["09-17-2024_SST06_PTS_SN2186356.csv"]]
+SSM01 <- depth_merged[["2024-12-16_SSM01_PTS_SN2192882.csv"]]
+SSM20 <- depth_merged[["2024-12-16_SSM20_PTS_SN2192885.csv "]]
+SST03 <- depth_merged[["2024-12-16_SST03_PTS_SN2192627.csv"]]
+SST04 <- depth_merged[["2024-12-16_SST04_PTS_SN2192624.csv"]]
+SST05 <- depth_merged[["2024-12-16_SST05_PTS_SN2192883.csv"]]
+SST07 <- depth_merged[["2024-12-16_SST07_PTS_SN2192880.csv"]]
+SST08 <- depth_merged[["2024-12-16_SST08_PTS_SN2192632.csv"]]
+SST09 <- depth_merged[["2024-12-16_SST09_PTS_SN2192621.csv"]]
+SST13 <- depth_merged[["2024-12-16_SST13_PTS_SN2192886.csv"]]
+SST06 <- depth_merged[["2024-12-17_SST06_PTS_SN2186356.csv"]]
+
+#######################################################
+#### Remove duplicates.. why are there duplicates? ####
+#######################################################
+
+# For one file
+SST06 <- SST06[!duplicated(SST06$DateTime), ]
+SSM01 <- SSM01[!duplicated(SSM01$DateTime), ]
+SST13 <- SST13[!duplicated(SST13$DateTime), ]
+
+# Loop through each data frame in the list
+for (i in seq_along(depth_merged)) {
+  # Access the current data frame
+  df <- depth_merged[[i]]
+  
+  # Remove duplicates 
+  df <- df[!duplicated(df$DateTime), ]
+  # Update the data frame in the list
+  depth_merged[[i]] <- df
+}
+
+# Check the contents of the list and make sure there are no NAs
+str(depth_merged)
 
 #######################################
 #### Save merged PT files to Drive ####
