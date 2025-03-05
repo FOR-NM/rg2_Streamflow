@@ -56,7 +56,7 @@ str(pt_list)
 
 #### Remove baro file from pt list ####
 # remove second item in this case, check position of baro file
-pt_list = pt_list[-1]
+pt_list = pt_list[-6]
 
 # Load the baro data separately
 # All sites will be merged with the one air data that South Sandy has
@@ -113,11 +113,10 @@ air_data$DateTime <- as.POSIXct(air_data$DateTime, format = "%Y/%m/%d %H:%M:%S")
 ###########################
 # Rounding the time up or down to the nearest consistent interval 
 # example: 10:04 gets converted to 10:05 for this we use the lubridate package
-# 
 
-pt_list[["09-16-2024_SST07_PTS_SN2192880.csv"]]$DateTimeNotRounded <- pt_list[["09-16-2024_SST07_PTS_SN2192880.csv"]]$DateTime
+pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTimeNotRounded <- pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTime
 
-pt_list[["09-16-2024_SST07_PTS_SN2192880.csv"]]$DateTime <- round_date(pt_list[["09-16-2024_SST07_PTS_SN2192880.csv"]]$DateTime, unit="15 mins")
+pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTime <- round_date(pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTime, unit="15 mins")
 
 str(pt_list)
 
@@ -228,4 +227,3 @@ for (i in seq_along(compensated_list)) {
     path = as_id(drive_folder_id)
   )
 }
-

@@ -7,7 +7,6 @@
 ##################
 #### Packages ####
 ##################
-
 library(googledrive) 
 library(ggplot2)
 library(dplyr)
@@ -56,12 +55,39 @@ str(pt_list)
 
 #### Remove baro file from pt list ####
 # remove 7th item in this case, check position of baro file
-pt_list = pt_list[-7]
+pt_list = pt_list[-6]
+
+# Look at it
+USF21 <- pt_list[["2024-10-29_USF21_WaterLevel.csv"]]
+
+##########################################################
+#### Combine and format Date and Time into one column #### 
+##########################################################
+# Loop through each data frame in the list
+for (i in seq_along(pt_list)) {
+  # Access the current data frame
+  df <- pt_list[[i]]
+  # Combine Date and Time columns into a new DateTime column
+  df$DateTime <- paste(df$Date, df$Time, sep = " ")
+  
+  # Convert the DateTime column to POSIXct
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+  # Update the data frame in the list
+  pt_list[[i]] <- df
+  
+  # Make date into date fomat
+  df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
+  # Update the data frame in the list
+  pt_list[[i]] <- df
+}
+
+# Look at it
+USF21 <- pt_list[["2024-10-29_USF21_WaterLevel.csv"]]
+USF20 <- pt_list[["2024-10-24_USF20_WaterLevel.csv"]]
 
 #####################
 #### Plot curves ####
 #####################
-#just for fun
 # Loop through each data frame in the list
 for (i in seq_along(pt_list)) {
   # Access the current data frame
@@ -115,8 +141,8 @@ for (site in uppersites) {
 #   upper_list[[site]] <- read.csv(files[1])
 # }
 # 
-## LOWER
 
+## LOWER
 # Loop through each site name in the list
 for (site in lowersites) {
   # Construct the file path and use a pattern to match files with the specific site
@@ -144,9 +170,11 @@ air_lower <- read.csv("googledrive/2024-10-29_Air2.csv") # For now :(
 for (i in seq_along(upper_list)) {
   # Access the current data frame
   df <- upper_list[[i]]
+  # Combine Date and Time columns into a new DateTime column
+  df$DateTime <- paste(df$Date, df$Time, sep = " ")
   
   # Convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
   # Update the data frame in the list
   upper_list[[i]] <- df
 }
@@ -154,17 +182,21 @@ for (i in seq_along(upper_list)) {
 # Check the contents of the list and make sure there are no NAs
 str(upper_list)
 
-# Now check datetime format for air data
-air_upper$DateTime <- as.POSIXct(air_upper$DateTime, format = "%Y-%m-%d %H:%M:%S")
+# Now check datetime format for upper air data
+air_upper$DateTime <- paste(air_upper$Date, air_upper$Time, sep = " ")
+# Convert the DateTime column to POSIXct
+air_upper$DateTime <- as.POSIXct(air_upper$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
 
 ## Lower
 # Loop through each data frame in the list
 for (i in seq_along(lower_list)) {
   # Access the current data frame
   df <- lower_list[[i]]
+  # Combine Date and Time columns into a new DateTime column
+  df$DateTime <- paste(df$Date, df$Time, sep = " ")
   
   # Convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
   # Update the data frame in the list
   lower_list[[i]] <- df
 }
@@ -172,8 +204,10 @@ for (i in seq_along(lower_list)) {
 # Check the contents of the list and make sure there are no NAs
 str(lower_list)
 
-# Now check datetime format for air data
-air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d %H:%M:%S")
+# Now check datetime format for lower air data
+air_lower$DateTime <- paste(air_lower$Date, air_lower$Time, sep = " ")
+# Convert the DateTime column to POSIXct
+air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
 
 #####################################
 #### Change all units to meters  ####
@@ -201,6 +235,9 @@ for (i in seq_along(upper_list)) {
 
 # Check the contents of the list and make sure there are no NAs
 str(upper_list)
+
+# Look at it
+USF21 <- upper_list[["USF21"]]
 
 ### Lower site
 ## Air pressure in kpa to m
@@ -254,6 +291,9 @@ for (site in names(lower_list)) {
 
 # Check the contents of the list
 str(merged_lower)
+
+# Look at it
+USF21 <- merged_upper[["USF21"]]
 
 ##################################
 #### Format some column names ####
@@ -335,15 +375,15 @@ isna <- is.na(compensated_lower$USF20)
 ####################################################
 ## Upper
 # Loop through each data frame in the list
-for (i in seq_along(compensated_list)) {
+for (i in seq_along(compensated_upper)) {
   # Access the current data frame
-  df <- compensated_list[[i]]
+  df <- compensated_upper[[i]]
   
   # Save new data frame
-  write.csv(df, paste0("data/", names(compensated_list)[i], ".csv"), row.names=FALSE, quote=FALSE)
+  write.csv(df, paste0("data/", names(compensated_upper)[i], ".csv"), row.names=FALSE, quote=FALSE)
   
   # Define the local folder path and the target folder ID in Google Drive
-  file <- paste0("data/", names(compensated_list)[i], ".csv")
+  file <- paste0("data/", names(compensated_upper)[i], ".csv")
   # this is the "compensated" folder
   drive_folder_id <- "1VsT7hirl5OHIGhrrc3b7dxPpSqr1wNC0"
   

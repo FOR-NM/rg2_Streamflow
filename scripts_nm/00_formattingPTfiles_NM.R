@@ -57,7 +57,7 @@ for (i in seq_along(pt_list)) {
   df <- pt_list[[i]]
   
   # Make date into date fomat
-  df$Date <- as.Date(df$Date, format = "%m/%d/%y")
+  df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
   # Update the data frame in the list
   pt_list[[i]] <- df
 }

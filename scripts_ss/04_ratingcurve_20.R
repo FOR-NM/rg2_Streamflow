@@ -34,11 +34,11 @@ pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
 #SSM20
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="09-16-2024_SSM20_PTS_SN2192885.csv"], 
-                            path = "googledrive/09-16-2024_SSM20_PTS_SN2192885.csv",
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="2024-12-16_SSM20_PTS_SN2192885.csv"], 
+                            path = "googledrive/2024-12-16_SSM20_PTS_SN2192885.csv",
                             overwrite = T)
 # Load file
-SSM20 <- read.csv("googledrive/09-16-2024_SSM20_PTS_SN2192885.csv")
+SSM20 <- read.csv("googledrive/2024-12-16_SSM20_PTS_SN2192885.csv")
 
 # Convert Date column to Date type if not already
 SSM20$Date <- as.Date(SSM20$Date.x)
@@ -52,6 +52,13 @@ rating_data <- SSM20 %>%
 # Check the structure of the cleaned data
 head(rating_data)
 
+########################################
+#### Plot pressure compensated data ####
+########################################
+
+ggplot(data = SSM20, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
+  geom_point() + ggtitle("SSM20 compensated level data")
+
 ##################################
 #### Plot Stage vs. Discharge ####
 ##################################
@@ -63,6 +70,13 @@ rating_data <- rating_data %>%
 ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
   geom_point(color = "blue") +
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+  theme_minimal()
+
+# Plot with date info
+ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
 
 # pt depth from cm to m

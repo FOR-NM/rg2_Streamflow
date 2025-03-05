@@ -37,19 +37,20 @@ pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="USF20.csv"], 
                             path = "googledrive/USF20.csv",
                             overwrite = T)
-# Load file
+# load file
 USF20 <- read.csv("googledrive/USF20.csv")
 
-# Convert Date column to Date type if not already
-USF20$Date <- as.Date(USF20$Date)
-USF20$DateTime <- as.POSIXct(USF20$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "MST")
-head(USF20)
+# combine Date and Time columns into a new DateTime column
+USF20$DateTime <- paste(USF20$Date.x, USF20$Time.x, sep = " ")
 
-# Filter out rows with missing stage or discharge
+# convert the DateTime column to POSIXct
+USF20$DateTime <- as.POSIXct(USF20$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+
+# filter out rows with missing stage or discharge
 rating_data <- USF20 %>% 
   filter(!is.na(Baro_Cor_Lvl), !is.na(Q))
 
-# Check the structure of the cleaned data
+# check the structure of the cleaned data
 head(rating_data)
 
 ##################################
@@ -86,60 +87,60 @@ ggplot(rating_data, aes(x = pt_depth_m, y = Q.m3s)) +
 
 ggplot(USF20, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_line() +
-  #geom_vline(xintercept = as.POSIXct("2024-07-30"), linetype="dashed", color="red") +
+  geom_vline(xintercept = as.POSIXct("2024-07-30 15:15:00"), linetype="dashed", color="red") +
   labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
 
-#################################################################
-#### Find the average Baro_Cor_Lvl before and after the move ####
-#################################################################
-## Here we calculate the offset!!
-# Compute mean water level before and after the move
-before_move <- USF20 %>%
-  filter(DateTime < "2024-07-30") %>%
-  summarize(mean_before = mean(Baro_Cor_Lvl, na.rm = TRUE))
-
-after_move <- USF20 %>%
-  filter(DateTime >= "2024-07-31") %>%
-  summarize(mean_after = mean(Baro_Cor_Lvl, na.rm = TRUE))
-
-# Compute offset
-offset <- after_move$mean_after - before_move$mean_before
-print(offset)
-
-###############################
-####  Apply the Correction ####
-###############################
-
-USF20 <- USF20 %>%
-  mutate(Baro_Cor_offset = if_else(DateTime >= "2024-07-30 17:30:00", Baro_Cor_Lvl - offset, Baro_Cor_Lvl))
-
-###############################
-####  Plot with Correction ####
-###############################
-
-ggplot(USF20, aes(x = DateTime, y = Baro_Cor_offset)) +
-  geom_line() +
-  #geom_vline(xintercept = as.POSIXct("2024-07-30"), linetype="dashed", color="red") +
-  labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
+# #################################################################
+# #### Find the average Baro_Cor_Lvl before and after the move ####
+# #################################################################
+# ## Here we calculate the offset!!
+# # Compute mean water level before and after the move
+# before_move <- USF20 %>%
+#   filter(DateTime < "2024-07-30") %>%
+#   summarize(mean_before = mean(Baro_Cor_Lvl, na.rm = TRUE))
+# 
+# after_move <- USF20 %>%
+#   filter(DateTime >= "2024-07-31") %>%
+#   summarize(mean_after = mean(Baro_Cor_Lvl, na.rm = TRUE))
+# 
+# # Compute offset
+# offset <- after_move$mean_after - before_move$mean_before
+# print(offset)
+# 
+# ###############################
+# ####  Apply the Correction ####
+# ###############################
+# 
+# USF20 <- USF20 %>%
+#   mutate(Baro_Cor_offset = if_else(DateTime >= "2024-07-30 15:15:00", Baro_Cor_Lvl - offset, Baro_Cor_Lvl))
+# 
+# ###############################
+# ####  Plot with Correction ####
+# ###############################
+# 
+# ggplot(USF20, aes(x = DateTime, y = Baro_Cor_offset)) +
+#   geom_line() +
+#   #geom_vline(xintercept = as.POSIXct("2024-07-30"), linetype="dashed", color="red") +
+#   labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
 
 ###########################################################################
 #### Find the average Baro_Cor_Lvl TWO HOURS before and after the move ####
 ###########################################################################
 
-# Define the move time
-move_time <- as.POSIXct("2024-07-30 16:30:00")  # Adjust time as needed
+# define the move time
+move_time <- as.POSIXct("2024-07-30 15:30:00")  # Adjust time as needed
 
-# Compute mean water level in the two hours before the move
+# compute mean water level in the two hours before the move
 before_move <- USF20 %>%
   filter(DateTime >= (move_time - hours(2)) & DateTime < move_time) %>%
   summarize(mean_before = mean(Baro_Cor_Lvl, na.rm = TRUE))
 
-# Compute mean water level in the two hours after the move
+# compute mean water level in the two hours after the move
 after_move <- USF20 %>%
   filter(DateTime >= move_time & DateTime < (move_time + hours(2))) %>%
   summarize(mean_after = mean(Baro_Cor_Lvl, na.rm = TRUE))
 
-# Compute offset
+# compute offset
 offset2 <- after_move$mean_after - before_move$mean_before
 print(offset2)
 
@@ -147,24 +148,43 @@ print(offset2)
 ####  Apply the Correction for the two hours ####
 #################################################
 
-USF20 <- USF20 %>%
-  mutate(Baro_Cor_offset2 = if_else(DateTime >= "2024-07-30 17:30:00", Baro_Cor_Lvl - offset2, Baro_Cor_Lvl))
+USF20_offset <- USF20 %>%
+  mutate(Baro_Cor_offset2 = if_else(DateTime >= "2024-07-30 15:30:00", Baro_Cor_Lvl - offset2, Baro_Cor_Lvl))
 
 ###############################
 ####  Plot with Correction ####
 ###############################
 
-ggplot(USF20, aes(x = DateTime, y = Baro_Cor_offset2)) +
+ggplot(USF20_offset, aes(x = DateTime, y = Baro_Cor_offset2)) +
   geom_line() +
-  #geom_vline(xintercept = as.POSIXct("2024-07-30"), linetype="dashed", color="red") +
+  #geom_vline(xintercept = as.POSIXct("2024-07-30 15:30:00"), linetype="dashed", color="red") +
   labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
 
+###################################################
+#### Plot Stage vs. Discharge after correction ####
+###################################################
+
+# filter out rows with missing stage or discharge
+rating_data_offset <- USF20_offset %>% 
+  filter(!is.na(Baro_Cor_Lvl), !is.na(Q))
+
+ggplot(rating_data_offset, aes(x = Baro_Cor_offset2, y = Q)) +
+  geom_point(color = "blue") +
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.m)", y = "Discharge (Q)") +
+  theme_minimal()
+
+# plot with date info
+ggplot(rating_data_offset, aes(x = Baro_Cor_offset2, y = Q)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+  theme_minimal()
 
 ###################
 #### Save file ####
 ###################
 
-write.csv(USF20, "data/offset_USF20.csv")
+write.csv(USF20_offset, "data/offset_USF20.csv")
 
 drive_folder_id <- "1EswIfUWCK6bsdcs-ZrAMGW1oYKs4B0Eh"
 

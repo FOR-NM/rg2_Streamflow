@@ -34,16 +34,19 @@ pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
 #SST06
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="09-17-2024_SST06_PTS_SN2186356.csv"], 
-                            path = "googledrive/09-17-2024_SST06_PTS_SN2186356.csv",
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="2024-12-17_SST06_PTS_SN2186356.csv"], 
+                            path = "googledrive/2024-12-17_SST06_PTS_SN2186356.csv",
                             overwrite = T)
 # Load file
-SST06 <- read.csv("googledrive/09-17-2024_SST06_PTS_SN2186356.csv")
+SST06 <- read.csv("googledrive/2024-12-17_SST06_PTS_SN2186356.csv")
 
 # Convert Date column to Date type if not already
 SST06$Date <- as.Date(SST06$Date.x)
 SST06$DateTime <- as.POSIXct(SST06$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "MST")
 head(SST06)
+
+# Remove rows from before deployment
+SST06 <- SST06[-c(1:33), ]
 
 # Filter out rows with missing stage or discharge
 rating_data <- SST06 %>% 
@@ -63,6 +66,13 @@ rating_data <- rating_data %>%
 ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
   geom_point(color = "blue") +
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+  theme_minimal()
+
+# Plot with date info
+ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
 
 # pt depth from cm to m

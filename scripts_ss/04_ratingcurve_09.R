@@ -34,16 +34,19 @@ pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
 #SST09
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="09-16-2024_SST09_PTS_SN2192621.csv"], 
-                            path = "googledrive/09-16-2024_SST09_PTS_SN2192621.csv",
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="2024-12-16_SST09_PTS_SN2192621.csv"], 
+                            path = "googledrive/2024-12-16_SST09_PTS_SN2192621.csv",
                             overwrite = T)
 # Load file
-SST09 <- read.csv("googledrive/09-16-2024_SST09_PTS_SN2192621.csv")
+SST09 <- read.csv("googledrive/2024-12-16_SST09_PTS_SN2192621.csv")
 
 # Convert Date column to Date type if not already
 SST09$Date <- as.Date(SST09$Date.x)
 SST09$DateTime <- as.POSIXct(SST09$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "MST")
 head(SST09)
+
+# Remove rows from before deployment
+SST09 <- SST09[-c(1:23), ]
 
 # Filter out rows with missing stage or discharge
 rating_data <- SST09 %>% 
@@ -51,6 +54,13 @@ rating_data <- SST09 %>%
 
 # Check the structure of the cleaned data
 head(rating_data)
+
+########################################
+#### Plot pressure compensated data ####
+########################################
+
+ggplot(data = SST09, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
+  geom_point() + ggtitle("SST09 compensated level data")
 
 ##################################
 #### Plot Stage vs. Discharge ####
@@ -63,6 +73,13 @@ rating_data <- rating_data %>%
 ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
   geom_point(color = "blue") +
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+  theme_minimal()
+
+# Plot with date info
+ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
 
 # pt depth from cm to m

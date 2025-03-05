@@ -62,7 +62,14 @@ rating_data <- rating_data %>%
 
 ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
   geom_point(color = "blue") +
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL cm)", y = "Discharge (Q m3/s)") +
+  theme_minimal()
+
+# Plot with date info
+ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
 
 # pt depth from cm to m
@@ -179,7 +186,7 @@ b_log <- coef(log_model)[2]       # Slope
 
 # Predict discharge for the entire dataset
 SSM01 <- SSM01 %>%
-  mutate(Predicted_Discharge_Log = a_log * (Baro_Cor_Lvl.m ^ b_log))
+  mutate(Predicted_Discharge_Log.m3s = a_log * (Baro_Cor_Lvl.m ^ b_log))
 
 ##########################
 #### Predicted linear ####
@@ -190,7 +197,7 @@ b_linear <- coef(linear_model)[2]  # Slope
 
 # Predict discharge for the entire dataset
 SSM01 <- SSM01 %>%
-  mutate(Predicted_Discharge_Linear = a_linear + b_linear * Baro_Cor_Lvl.m)
+  mutate(Predicted_Discharge_Linear.m3s = a_linear + b_linear * Baro_Cor_Lvl.m)
 
 ##############################
 #### Predicted Polynomial ####
@@ -202,7 +209,7 @@ b2_poly <- coef(poly_model)[3]     # Quadratic term
 
 # Predict discharge for the entire dataset
 SSM01 <- SSM01 %>%
-  mutate(Predicted_Discharge_Poly = a_poly + b1_poly * Baro_Cor_Lvl.m + b2_poly * Baro_Cor_Lvl.m^2)
+  mutate(Predicted_Discharge_Poly.m3s = a_poly + b1_poly * Baro_Cor_Lvl.m + b2_poly * Baro_Cor_Lvl.m^2)
 
 #############################
 #### Compare predictions ####

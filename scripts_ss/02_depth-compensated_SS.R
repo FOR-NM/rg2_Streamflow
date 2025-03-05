@@ -183,15 +183,15 @@ non_na_counts <- sapply(depth_merged, function(df) {
 print(non_na_counts)
 
 SSM01 <- depth_merged[["2024-12-16_SSM01_PTS_SN2192882.csv"]]
-SSM20 <- depth_merged[["2024-12-16_SSM20_PTS_SN2192885.csv "]]
-SST03 <- depth_merged[["2024-12-16_SST03_PTS_SN2192627.csv"]]
-SST04 <- depth_merged[["2024-12-16_SST04_PTS_SN2192624.csv"]]
-SST05 <- depth_merged[["2024-12-16_SST05_PTS_SN2192883.csv"]]
-SST07 <- depth_merged[["2024-12-16_SST07_PTS_SN2192880.csv"]]
+SSM20 <- depth_merged[["2024-12-16_SSM20_PTS_SN2192885.csv"]]
+SST13 <- depth_merged[["2024-12-16_SST13_PTS_SN2192886.csv"]]
+SST03 <- depth_merged[["2024-12-16_SST03_PTS_SN2192627.csv"]] # MOVED
+SST04 <- depth_merged[["2024-12-16_SST04_PTS_SN2192624.csv"]] # MOVED
+SST05 <- depth_merged[["2024-12-16_SST05_PTS_SN2192883.csv"]] # MOVED
+SST06 <- depth_merged[["2024-12-17_SST06_PTS_SN2186356.csv"]]
+SST07 <- depth_merged[["2024-12-16_SST07_PTS_SN2192880.csv"]] # MOVED?
 SST08 <- depth_merged[["2024-12-16_SST08_PTS_SN2192632.csv"]]
 SST09 <- depth_merged[["2024-12-16_SST09_PTS_SN2192621.csv"]]
-SST13 <- depth_merged[["2024-12-16_SST13_PTS_SN2192886.csv"]]
-SST06 <- depth_merged[["2024-12-17_SST06_PTS_SN2186356.csv"]]
 
 #######################################################
 #### Remove duplicates.. why are there duplicates? ####
@@ -201,6 +201,8 @@ SST06 <- depth_merged[["2024-12-17_SST06_PTS_SN2186356.csv"]]
 SST06 <- SST06[!duplicated(SST06$DateTime), ]
 SSM01 <- SSM01[!duplicated(SSM01$DateTime), ]
 SST13 <- SST13[!duplicated(SST13$DateTime), ]
+SSM20 <- SSM20[!duplicated(SSM20$DateTime), ]
+SST07 <- SST07[!duplicated(SST07$DateTime), ]
 
 # Loop through each data frame in the list
 for (i in seq_along(depth_merged)) {
@@ -238,5 +240,3 @@ for (i in seq_along(depth_merged)) {
     path = as_id(drive_folder_id)
   )
 }
-
-

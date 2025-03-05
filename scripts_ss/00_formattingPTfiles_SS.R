@@ -72,7 +72,7 @@ for (i in seq_along(pt_list)) {
   df$DateTime <- paste(df$Date, df$Time, sep = " ")
   
   # Convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
   # Update the data frame in the list
   pt_list[[i]] <- df
   
@@ -112,19 +112,19 @@ for (i in seq_along(pt_list)) {
 #### Single excel that I had to edit on it's own ####
 
 # Read the CSV file
-SST05 <- read.csv("googledrive/2024-12-16_SSM20_PTS_SN2191067_baro.csv")
+SST05 <- read.csv("googledrive/2024-12-16_SSM20_PTS_SN2191067_baro.csv", skip = 10)
+
+# Convert the Date column to POSIXct
+SST05$Date <- as.Date(SST05$Date, format = "%m/%d/%Y")
 
 # Combine Date and Time columns into a new DateTime column
 SST05$DateTime <- paste(SST05$Date, SST05$Time, sep = " ")
 
 # Convert the DateTime column to POSIXct
-SST05$DateTime <- as.POSIXct(SST05$DateTime, format = "%m/%d/%y %I:%M:%S %p")
+SST05$DateTime <- as.POSIXct(SST05$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
 
 # Check the structure of the data frame to confirm the DateTime column
 str(SST05)
-
-# Remove the unwanted X column
-SST05$X <- NULL  # Alternatively, you can use SST05 <- SST05[, -which(names(SST05) == "X")]
 
 # Save the data frame to a CSV file
 write.csv(SST05, file = "2024-12-16_SSM20_PTS_SN2191067_baro.csv", row.names = FALSE, quote = FALSE)

@@ -14,7 +14,7 @@ library(dplyr)
 ####################################
 ## Clear folders that we will use ##
 ####################################
-# List and delete all files in the folder
+# list and delete all files in the folder
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
 
@@ -31,14 +31,14 @@ file.remove(files)
 # Download the file as a csv file
 drive_download(as_id(depth$id), path = "googledrive/salt.csv", type = "csv", overwrite = T)
 
-# Fetch the file
+# fetch the file
 salt <- read.csv("googledrive/salt.csv")
 
-# Clean the column names (this removes spaces, special characters, etc.)
+# clean the column names (this removes spaces, special characters, etc.)
 salt <- salt %>%
   janitor::clean_names()
 
-# Rename columns and convert types
+# rename columns and convert types
 salt <- salt %>%
   # Rename columns
   dplyr::rename(
@@ -59,15 +59,15 @@ salt <- salt %>%
 
 colnames(salt)
 
-# Remove rows that I don't want
+# remove rows that I don't want
 salt <- salt[ , -c(1:3, 8, 9, 12:14, 18)]
 
-# Replace empties with NA
+# replace empties with NA
 salt["relevant_notes"][salt["relevant_notes"] == ''] <- NA
 salt["flag_notes"][salt["flag_notes"] == ''] <- NA
 
 
-#### Filter to only sites with PT ####
+#### filter to only sites with PT ####
 PT_sites <- salt
 # PT_sites <- salt %>% filter(pt == "Yes" )
 
@@ -75,21 +75,21 @@ PT_sites <- salt
 #### Combine and format Date and Time in one column ####
 ########################################################
 
-# Combine Date and Time columns into a new DateTime column
+# combine Date and Time columns into a new DateTime column
 PT_sites$DateTime <- paste(PT_sites$Date, PT_sites$Time24h, sep = " ")
 
-# Convert the DateTime column to POSIXct
-PT_sites$DateTime <- as.POSIXct(PT_sites$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "MST")
+# convert the DateTime column to POSIXct
+PT_sites$DateTime <- as.POSIXct(PT_sites$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 #######################################
 #### Load Q data from Google drive ####
 #######################################
 
 #### Load chem data ####
-# Chem data is for all the sites
+# chem data is for all the sites
 discharge <- googledrive::as_id("https://drive.google.com/drive/folders/1UkRaYRBePgY9XU90_3DvURNGGEWbCew0")
 
-# List all CSV files in the folder
+# list all CSV files in the folder
 discharge_csv <- googledrive::drive_ls(path = discharge, type = "csv")
 3
 
@@ -101,10 +101,10 @@ googledrive::drive_download(file = discharge_csv$id[discharge_csv$name=="Q.csv"]
 # load it into R
 Q = read.csv("googledrive/Q.csv")
 
-# Convert the Date column to Date
+# convert the Date column to Date
 Q$Date <- as.Date(Q$Date, format = "%Y-%m-%d", tz = "MST")
 
-# Remove duplicate rows
+# remove duplicate rows
 Q <- Q[ , -c(3, 7, 8)]
 
 colnames(Q)
@@ -118,17 +118,17 @@ discharge_depth <- merge(Q, PT_sites, by = c("DataID", "Date"), all.x = TRUE)
 #### Load PT compensated data from Google drive ####
 ####################################################
 
-# This is the compensated folder
+# this is the compensated folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1VsT7hirl5OHIGhrrc3b7dxPpSqr1wNC0")
 
-# List all CSV files in the folder
+# list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 
-## Call all the files in the salt slugs folder ##
-# Create empty list to store data frames
+## call all the files in the salt slugs folder ##
+# create empty list to store data frames
 pt_list <- list()
 
-# Loop over each file in the `pt_csvs` data frame
+# loop over each file in the `pt_csvs` data frame
 for (i in seq_along(pt_csvs$id)) {
   # Define the local file path
   local_path <- file.path("googledrive", pt_csvs$name[i])
@@ -146,64 +146,64 @@ for (i in seq_along(pt_csvs$id)) {
 # Check the contents of the list
 str(pt_list)
 
+# Look at it
+USF21 <- pt_list[["USF21.csv"]]
+USF20 <- pt_list[["USF20.csv"]]
+
 ###################################
 #### Add DataID column to csvs ####
 ###################################
 for (i in seq_along(pt_list)) {
-  # Access the current data frame
+  # access the current data frame
   df <- pt_list[[i]]
   
-  # Extract the file name without the .csv extension
+  # extract the file name without the .csv extension
   data_id <- tools::file_path_sans_ext(pt_csvs$name[[i]])
   
-  # Add the DataID column
+  # add the DataID column
   df <- df %>%
     dplyr::mutate(DataID = data_id)
   
-  # Save the modified data frame back to the list
+  # save the modified data frame back to the list
   pt_list[[i]] <- df
 }
 
-# Check the contents of the list
+# check the contents of the list
 str(pt_list)
 
-# Check individual data frame
+# check individual data frame
 USF19 <- pt_list[["USF19.csv"]]
 
 ###################################
 #### Change to DateTime format ####
 ###################################
 
-# Loop through each data frame in the list
+# loop through each data frame in the list
 for (i in seq_along(pt_list)) {
-  # Access the current data frame
+  # access the current data frame
   df <- pt_list[[i]]
+  # combine Date and Time columns into a new DateTime column
+  df$DateTime <- paste(df$Date.x, df$Time.x, sep = " ")
   
-  # Convert the DateTime column to POSIXct
-  df$Date.x <- as.Date(df$Date.x, format = "%Y-%m-%d")
-  # Update the data frame in the list
+  # convert the DateTime column to POSIXct
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+  # update the data frame in the list
   pt_list[[i]] <- df
 }
 
-# Check the contents of the list and make sure there are no NAs
+# check the contents of the list and make sure there are no NAs
 str(pt_list)
 
 #######################################
 #### Combine depth info to PT data ####
 #######################################
-# Check unique DataID values
+# check unique DataID values
 unique(discharge_depth$DataID)
 unique(pt_list[[1]]$DataID)
 
 # Check example DateTime values
 head(discharge_depth$DateTime)
 head(pt_list[[1]]$DateTime)
-
-# Convert DateTime in pt_list
-pt_list <- lapply(pt_list, function(df) {
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "MST")
-  df
-})
 
 # Merge discharge_depth with each data frame in csvs list
 depth_merged <- lapply(pt_list, function(df) {
@@ -240,7 +240,7 @@ USF20 <- depth_merged[["USF20.csv"]]
 
 #### Remove duplicates... why are there duplicates? ####
 USF19 <- USF19[!duplicated(USF19), ]
-USF19 <- USF19[-6063,]
+USF19 <- USF19[-6130,]
 
 #######################################
 #### Save merged PT files to Drive ####
