@@ -26,7 +26,7 @@ file.remove(files)
 #### Import & Visualize Data ####
 #################################
 #### Load data from Google drive ####
-# This is the "depth" folder
+# this is the "depth" folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1EswIfUWCK6bsdcs-ZrAMGW1oYKs4B0Eh")
 
 # List all CSV files in the folder
@@ -126,7 +126,6 @@ ggplot(USF20, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 ###########################################################################
 #### Find the average Baro_Cor_Lvl TWO HOURS before and after the move ####
 ###########################################################################
-
 # define the move time
 move_time <- as.POSIXct("2024-07-30 15:30:00")  # Adjust time as needed
 
@@ -147,14 +146,12 @@ print(offset2)
 #################################################
 ####  Apply the Correction for the two hours ####
 #################################################
-
 USF20_offset <- USF20 %>%
   mutate(Baro_Cor_offset2 = if_else(DateTime >= "2024-07-30 15:30:00", Baro_Cor_Lvl - offset2, Baro_Cor_Lvl))
 
 ###############################
 ####  Plot with Correction ####
 ###############################
-
 ggplot(USF20_offset, aes(x = DateTime, y = Baro_Cor_offset2)) +
   geom_line() +
   #geom_vline(xintercept = as.POSIXct("2024-07-30 15:30:00"), linetype="dashed", color="red") +
@@ -163,7 +160,6 @@ ggplot(USF20_offset, aes(x = DateTime, y = Baro_Cor_offset2)) +
 ###################################################
 #### Plot Stage vs. Discharge after correction ####
 ###################################################
-
 # filter out rows with missing stage or discharge
 rating_data_offset <- USF20_offset %>% 
   filter(!is.na(Baro_Cor_Lvl), !is.na(Q))
@@ -188,7 +184,7 @@ write.csv(USF20_offset, "data/offset_USF20.csv")
 
 drive_folder_id <- "1EswIfUWCK6bsdcs-ZrAMGW1oYKs4B0Eh"
 
-# Upload file to the specified Google Drive folder
+# upload file to the specified Google Drive folder
 drive_put(
   media = "data/offset_USF20.csv",
   path = as_id(drive_folder_id)
