@@ -1,0 +1,98 @@
+##==============================================================================
+## Project: QuEST
+## Script to merge same site PT files in one (using timestamp) for Brush Creek watershed
+##==============================================================================
+
+library(readxl) #to read excel 
+library(googledrive)
+library(dplyr)
+
+########################################
+#### Clear folders that we will use ####
+########################################
+# list and delete all files in the folder
+files <- list.files(path = "googledrive", full.names = TRUE)
+file.remove(files)
+
+##########################
+#### Import scan data ####
+##########################
+#### list and download all files in the folder ####
+# this is the "02_inuse" folder
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1q_HNENGb8tyHmWTA-TP5sOM8APgxKRxI")
+# list all CSV files in the folder
+pt_files <- googledrive::drive_ls(path = pt)
+3
+
+# create an empty list to store the cleaned data frames
+pt_list <- lapply(seq_along(pt_files$name), function(i) {
+  googledrive::drive_download(
+    file = pt_files$id[i],
+    path = paste0("googledrive/", pt_files$name[i]),
+    overwrite = TRUE
+  )
+  
+  # read the CSV file, skipping the first 11 rows (header is on row 12)
+  read.csv(paste0("googledrive/", pt_files$name[i]), header = TRUE)
+})
+
+# assign names to the list elements based on the file names
+names(pt_list) <- pt_files$name
+
+####################################
+#### Combine data for each site ####
+####################################
+# site names
+site_names <- c("BRM01", "BRMQ1", "BRAA1", "BRM02", "BRM03", "BRD01", "BRM05", "BRF01", "BRM07", "BRA01")
+
+# group files in `pt_list` by matching `site_names` in file names
+pt_list_by_site <- lapply(site_names, function(site) {
+  # names(pt_list) gives the names of all files in pt_list
+  site_files <- names(pt_list)[grepl(site, names(pt_list))] 
+  # grep checks if the current site (e.g., BRM01) appears in each file name in pt_list 
+  # this returns a logical vector (TRUE for matches, FALSE otherwise).
+  pt_list[site_files] # select only the files for this site
+  # the [ ] indexing selects only the file names where the match is TRUE.
+})
+
+# name the list by site
+names(pt_list_by_site) <- site_names
+
+# combine data for each site
+combined_by_site <- lapply(pt_list_by_site, function(site_data_list) {
+  # bind rows of all data frames for the site
+  bind_rows(site_data_list) %>%
+    arrange(DateTime) %>%  # ensure chronological order if 'DateTime' exists
+    distinct(DateTime, .keep_all = TRUE) # remove duplicates
+})
+
+################################
+#### Format DateTime column ####
+################################
+# loop through each data frame in the list
+for (i in seq_along(combined_by_site)) {
+  # access the current data frame
+  df <- combined_by_site[[i]]
+  # combine Date and Time columns into a new DateTime column
+  df$DateTime <- paste(df$Date, df$Time, sep = " ")
+  
+  # convert the DateTime column to POSIXct
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+  # update the data frame in the list
+  combined_by_site[[i]] <- df
+}
+
+##############################
+#### Save combined files  ####
+##############################
+# write files to local data folder
+lapply(names(combined_by_site), function(site) {
+  file <- paste0("data/", site, ".csv")
+  # this is the "merged_days" folder
+  drive_folder_id <- "1SbXzLapTIa_dt02JVba4PcsbQaJeFZtD"
+  # Upload file to the specified Google Drive folder
+  drive_put(
+    media = file,
+    path = as_id(drive_folder_id)
+  )
+})

@@ -8,27 +8,25 @@
 ##################
 #### Packages ####
 ##################
-
 library(lubridate) 
 
 ###########################
 #### Rounding the time ####
 ###########################
-
-# Load your file
+# load your file
 pt <- read.csv("googledrive/09-16-2024_SST07_PTS_SN2192880.csv")
                
-# Create extra columns so you don't errase original time               
+# create extra columns so you don't errase original time               
 pt$DateTimeNotRounded <- pt$DateTime
 
-# Transform to datetime format
+# transform to datetime format
 pt$DateTime <- as.POSIXct(pt$DateTime,format = "%Y-%m-%d %H:%M:%S")
 pt$DateTimeNotRounded <- as.POSIXct(pt$DateTimeNotRounded,format = "%Y-%m-%d %H:%M:%S")
 
-# Round DateTime to the nearest 15-minute interval 
+# round DateTime to the nearest 15-minute interval 
 pt$DateTime <- round_date(pt$DateTime, unit="15 mins")
 
-# Check if it worked!
+# check if it worked!
 str(pt)
 
 
