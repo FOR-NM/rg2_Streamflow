@@ -82,15 +82,20 @@ for (i in seq_along(combined_by_site)) {
   combined_by_site[[i]] <- df
 }
 
+BRMQ1 <- combined_by_site[["BRMQ1"]]
+
 ##############################
 #### Save combined files  ####
 ##############################
 # write files to local data folder
 lapply(names(combined_by_site), function(site) {
+  # define file path
   file <- paste0("data/", site, ".csv")
+  # save each data frame
+  write.csv(combined_by_site[[site]], file, row.names = FALSE, quote = FALSE)
   # this is the "merged_days" folder
   drive_folder_id <- "1SbXzLapTIa_dt02JVba4PcsbQaJeFZtD"
-  # Upload file to the specified Google Drive folder
+  # upload the file to Google Drive
   drive_put(
     media = file,
     path = as_id(drive_folder_id)

@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to merge discharge data with pt data for SS
+## This script is to merge discharge data with pt data for Brush Creek
 ## press Command+Option+O to collapse all sections and get an overview of the workflow!
 ##==============================================================================
 
@@ -11,6 +11,7 @@ library(googledrive)
 library(ggplot2)
 library(dplyr)
 library(lubridate)
+library(tools)
 
 ####################################
 ## Clear folders that we will use ##
@@ -19,21 +20,18 @@ library(lubridate)
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
 
-files <- list.files(path = "merged", full.names = TRUE)
+files <- list.files(path = "data", full.names = TRUE)
 file.remove(files)
 
 ###############################################
 #### Load discharge data from Google drive ####
 ###############################################
-(disch <- drive_get("https://docs.google.com/spreadsheets/d/1JVDwzSoHetQGHhYPoeoTOHzlmRrcWNPs-i5b8t2U754/edit?gid=893974061#gid=893974061"))
+(disch <- drive_get("https://docs.google.com/spreadsheets/d/1a09kFxDMyko_1BcsWNKd7H3-0jQKPEmvAKzAC4P9leg/edit?gid=0#gid=0"))
 3
-
 # download the file as a xlsx file
 drive_download(as_id(disch$id), path = "googledrive/discharge.xlsx", type = "xlsx", overwrite = T)
-
 # fetch the file
-discharge <- readxl::read_xlsx("googledrive/discharge.xlsx", sheet = "Master Q", skip = 1)
-
+discharge <- readxl::read_xlsx("googledrive/discharge.xlsx")
 # rename column to match all other data
 discharge <- discharge %>% 
   rename( "DataID" = "Site" ) 
@@ -42,7 +40,7 @@ discharge <- discharge %>%
 #### Format Date and Time columns ####
 ######################################
 # fix Time column 
-discharge$Time <- format(as.POSIXct(discharge$`Measurement Time`, format = "%Y-%m-%d %H:%M:%S"), format = "%H:%M:%S")
+discharge$Time <- format(as.POSIXct(discharge$Time, format = "%Y-%m-%d %H:%M:%S"), format = "%H:%M:%S")
 
 # combine Date and Time columns into a new DateTime column
 discharge$DateTime <- paste(discharge$Date, discharge$Time, sep = " ")
@@ -70,7 +68,7 @@ str(discharge)
 #### Load PT compensated data from Google drive ####
 ####################################################
 # this is the compensated folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1SAtC_CJd6KC2yWtJB_VdTebMBDSjy-Pk")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1Ix6n94e2pkKTyojz4SDQKe5MV7WbkH0C")
 
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
@@ -101,15 +99,11 @@ for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
   
-  # extract the file name
-  filename <- tools::file_path_sans_ext(pt_csvs$name[[i]])
-  
-  # extract the site identifier (text between the first two underscores)
-  site_id <- stringr::str_extract(filename, "(?<=_)[A-Za-z0-9]+(?=_PTS_)")
-  
+  # extract the file name without extension
+  site_id <- file_path_sans_ext(pt_csvs$name[[i]])
   # add the DataID column
   df <- df %>%
-    dplyr::mutate(DataID = site_id)
+    mutate(DataID = site_id)
   
   # save the modified data frame back to the list
   pt_list[[i]] <- df
@@ -132,23 +126,6 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
 }
 
-#################################
-#### Rounding time for SST07 ####
-#################################
-# rounding the time up or down to the nearest consistent interval 
-# example: 10:04 gets converted to 10:05 for this we use the lubridate package
-
-pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTimeNotRounded <- pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTime
-
-pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTime <- round_date(pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTime, unit="15 mins")
-
-str(pt_list)
-
-# round DateTime to the nearest 15-minute interval across all files in pt_list
-for (i in seq_along(pt_list)) {
-  pt_list[[i]]$DateTime <- round_date(pt_list[[i]]$DateTime, unit = "15 mins")
-}
-
 #######################################
 #### Combine depth info to PT data ####
 #######################################
@@ -159,12 +136,6 @@ unique(pt_list[[1]]$DataID)
 # check example DateTime values
 head(discharge$DateTime)
 head(pt_list[[1]]$DateTime)
-
-# convert DateTime in pt_list
-pt_list <- lapply(pt_list, function(df) {
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
-  df
-})
 
 # merge discharge_depth with each data frame in csvs list
 depth_merged <- lapply(pt_list, function(df) {
@@ -185,16 +156,16 @@ non_na_counts <- sapply(depth_merged, function(df) {
 # print the counts
 print(non_na_counts)
 
-SSM01 <- depth_merged[["2024-12-16_SSM01_PTS_SN2192882.csv"]]
-SSM20 <- depth_merged[["2024-12-16_SSM20_PTS_SN2192885.csv"]]
-SST13 <- depth_merged[["2024-12-16_SST13_PTS_SN2192886.csv"]]
-SST03 <- depth_merged[["2024-12-16_SST03_PTS_SN2192627.csv"]] # MOVED
-SST04 <- depth_merged[["2024-12-16_SST04_PTS_SN2192624.csv"]] # MOVED
-SST05 <- depth_merged[["2024-12-16_SST05_PTS_SN2192883.csv"]] # MOVED
-SST06 <- depth_merged[["2024-12-17_SST06_PTS_SN2186356.csv"]]
-SST07 <- depth_merged[["2024-12-16_SST07_PTS_SN2192880.csv"]] # MOVED?
-SST08 <- depth_merged[["2024-12-16_SST08_PTS_SN2192632.csv"]]
-SST09 <- depth_merged[["2024-12-16_SST09_PTS_SN2192621.csv"]]
+BRM01 <- depth_merged[["BRM01.csv"]]
+BRMQ1 <- depth_merged[["BRMQ1.csv"]]
+BRAA1 <- depth_merged[["BRAA1.csv"]]
+BRM02 <- depth_merged[["BRM02.csv"]]
+BRM03 <- depth_merged[["BRM03.csv"]]
+BRD01 <- depth_merged[["BRD01.csv"]]
+BRM05 <- depth_merged[["BRM05.csv"]]
+BRF01 <- depth_merged[["BRF01.csv"]]
+BRM07 <- depth_merged[["BRM07.csv"]]
+BRA01 <- depth_merged[["BRA01.csv"]]
 
 #######################################
 #### Save merged PT files to Drive ####
@@ -210,7 +181,7 @@ for (i in seq_along(depth_merged)) {
   # define the local folder path and the target folder ID in Google Drive
   file <- paste0("data/", names(depth_merged)[i])
   # this is the "depth" folder
-  drive_folder_id <- "11vn2jsiB7YEsrhjI5_NnOSTA579NMtK4"
+  drive_folder_id <- "1n17b_9yf5DCO_h6uPya5vBPz2dh13L3v"
   
   # upload file to the specified Google Drive folder
   drive_put(

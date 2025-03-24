@@ -64,12 +64,13 @@ for (i in seq_along(pt_list)) {
   df <- pt_list[[i]]
   # combine Date and Time columns into a new DateTime column
   df$DateTime <- paste(df$Date, df$Time, sep = " ")
-  
   # convert the DateTime column to POSIXct
   df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
   # update the data frame in the list
   pt_list[[i]] <- df
 }
+
+BRMQ1 <- pt_list[["BRMQ1.csv"]]
 
 #####################
 #### Plot curves ####
@@ -94,6 +95,10 @@ for (i in seq_along(pt_list)) {
 # I downloaded it and calculated station pressure in a separate script
 air_data <- read.csv("googledrive/fdf_stationpressure.csv")
 
+# convert the DateTime column to POSIXct
+air_data$DateTime <- paste(air_data$Date, air_data$Time, sep = " ")
+air_data$DateTime <- as.POSIXct(air_data$DateTime, format = "%Y-%m-%d %H:%M:%S")
+
 ######################################
 #### Merging PT with Air pressure ####
 ######################################
@@ -117,33 +122,30 @@ for (i in seq_along(merged_list)) {
   
   # rename columns
   df <- df %>%
-    dplyr::rename(TEMPERATURE = LEVEL.y,
-                  LEVEL.m = LEVEL)
+    dplyr::rename(LEVEL.m = LEVEL,
+                  TEMPERATURE.C = TEMPERATURE)
   merged_list[[i]] <-  df
 }
-
-# check the contents of the list
-str(merged_list)
 
 ########################################
 #### Manual Barometric Compensation ####
 ########################################
-## once the units for each column are the same, subtract the barometric column from the Levelogger data 
-# to get the true net water level recorded by the Levelogger.
-
-#Create empty compensated list
+## the compensation is done by subtracting the barometric column from the Levelogger data 
+# to get the true net water level recorded by the Levelogger, make sure the units for each are the same (in m)
+# create empty compensated list 
 compensated_list <- list()
 
 for (i in names(merged_list)) {
   # access the current data frame
   df <- merged_list[[i]]
-  
   # compensate
   df <- df %>%
-    mutate(Baro_Cor_Lvl = (.[[7]] - .[[13]]))
+    mutate(Baro_Cor_Lvl.m = (.[["LEVEL.m"]] - .[["Pstn.m"]]))
   
   compensated_list[[i]] <-  df
 }
+
+BRMQ1 <- compensated_list[["BRMQ1.csv"]]
 
 #########################################
 #### Save compensated files to Drive ####
@@ -159,7 +161,7 @@ for (i in seq_along(compensated_list)) {
   # define the local folder path and the target folder ID in Google Drive
   file <- paste0("data/", names(compensated_list)[i])
   # this is the "compensated" folder
-  drive_folder_id <- "1SAtC_CJd6KC2yWtJB_VdTebMBDSjy-Pk"
+  drive_folder_id <- "1Ix6n94e2pkKTyojz4SDQKe5MV7WbkH0C"
   
   # upload file to the specified Google Drive folder
   drive_put(
@@ -167,3 +169,4 @@ for (i in seq_along(compensated_list)) {
     path = as_id(drive_folder_id)
   )
 }
+

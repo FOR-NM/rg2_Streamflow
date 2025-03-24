@@ -41,8 +41,7 @@ pt_list <- lapply(seq_along(pt_files$name), function(i) {
 # assign names to the list elements based on the file names
 names(pt_list) <- pt_files$name
 
-# check the contents of the list
-str(pt_list)
+BRMQ1 <- pt_list[["2024-11-17_BRMQ1_PT20240830-20241011.csv"]]
 
 ############################
 #### Format date column ####
@@ -58,6 +57,8 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
 }
 
+BRMQ1 <- pt_list[["2024-11-17_BRMQ1_PT20240830-20241011.csv"]]
+
 ##########################################################
 #### Combine and format Date and Time into one column #### 
 ##########################################################
@@ -69,18 +70,12 @@ for (i in seq_along(pt_list)) {
   df$DateTime <- paste(df$Date, df$Time, sep = " ")
   
   # convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
-  # update the data frame in the list
-  pt_list[[i]] <- df
-  
-  # make date into date fomat
-  df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
   # update the data frame in the list
   pt_list[[i]] <- df
 }
 
-# check the contents of the list and make sure there are no NAs
-str(pt_list)
+BRMQ1 <- pt_list[["2024-11-17_BRMQ1_PT20240830-20241011.csv"]]
 
 #########################################
 #### Save edited files back to Drive ####
@@ -104,7 +99,7 @@ for (i in seq_along(pt_list)) {
   )
 }
 
-#### If you have to edit a single file ####
+#### if you have to edit a single file ####
 
 # # read the CSV file
 # SST05 <- read.csv("10-04-2024_SST05_PTS_SN2192883.csv")
