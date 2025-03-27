@@ -26,22 +26,23 @@ file.remove(files)
 ###############################################
 #### Load discharge data from Google drive ####
 ###############################################
-(disch <- drive_get("https://docs.google.com/spreadsheets/d/1a09kFxDMyko_1BcsWNKd7H3-0jQKPEmvAKzAC4P9leg/edit?gid=0#gid=0"))
+# this is the general BR discharge synoptic folder
+Q <- googledrive::as_id("https://drive.google.com/drive/folders/1E3DklQjXkkJGxTyZJTVDkPGABJIQOiTh")
+# list all CSV files in the folder
+q <- googledrive::drive_ls(path = Q)
 3
-# download the file as a xlsx file
-drive_download(as_id(disch$id), path = "googledrive/discharge.xlsx", type = "xlsx", overwrite = T)
+# choose the specific file by name
+q  <- q  %>% filter(name == "discharge_BR_full.csv")
+
+# download the most recent CSV file
+drive_download(as_id(q$id), path = "data/discharge_BR_full.csv", overwrite = TRUE)
+
 # fetch the file
-discharge <- readxl::read_xlsx("googledrive/discharge.xlsx")
-# rename column to match all other data
-discharge <- discharge %>% 
-  rename( "DataID" = "Site" ) 
+discharge <- read.csv("data/discharge_BR_full.csv")
 
 ######################################
 #### Format Date and Time columns ####
 ######################################
-# fix Time column 
-discharge$Time <- format(as.POSIXct(discharge$Time, format = "%Y-%m-%d %H:%M:%S"), format = "%H:%M:%S")
-
 # combine Date and Time columns into a new DateTime column
 discharge$DateTime <- paste(discharge$Date, discharge$Time, sep = " ")
 
@@ -59,7 +60,7 @@ discharge$DateTime <- as.POSIXct(discharge$DateTime,format = "%Y-%m-%d %H:%M:%S"
 discharge$DateTimeNotRounded <- as.POSIXct(discharge$DateTimeNotRounded,format = "%Y-%m-%d %H:%M:%S")
 
 # round DateTime to the nearest 15-minute interval 
-discharge$DateTime <- round_date(discharge$DateTime, unit="15 mins")
+discharge$DateTime <- round_date(discharge$DateTime, unit="10 mins")
 
 # check if it worked!
 str(discharge)

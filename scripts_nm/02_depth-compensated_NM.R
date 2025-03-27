@@ -24,11 +24,10 @@ file.remove(files)
 ##############################################
 #### Load PT depth data from Google drive ####
 ##############################################
-
 (depth <- drive_get("https://docs.google.com/spreadsheets/d/1rIWYWFUoF6UtzTcvN-WpIw2Cw4u9NjI_HuhThoDOvv4/edit?gid=0#gid=0"))
 3
 
-# Download the file as a csv file
+# download the file as a csv file
 drive_download(as_id(depth$id), path = "googledrive/salt.csv", type = "csv", overwrite = T)
 
 # fetch the file
@@ -40,7 +39,7 @@ salt <- salt %>%
 
 # rename columns and convert types
 salt <- salt %>%
-  # Rename columns
+  # rename columns
   dplyr::rename(
     DataID = site,
     Date = date,
@@ -50,10 +49,10 @@ salt <- salt %>%
     pt = is_there_a_pt_at_this_site,
     pt_depth_cm = pt_depth_cm_at_the_time_of_the_discharge_measurement_numbers_only
   ) %>%
-  # Convert
+  # convert
   mutate(
     pt_depth_cm = as.numeric(as.character(pt_depth_cm)),
-    # Change date format
+    # change date format
     Date = as.Date(Date, format = "%m/%d/%Y"),
   )
 
@@ -66,7 +65,6 @@ salt <- salt[ , -c(1:3, 8, 9, 12:14, 18)]
 salt["relevant_notes"][salt["relevant_notes"] == ''] <- NA
 salt["flag_notes"][salt["flag_notes"] == ''] <- NA
 
-
 #### filter to only sites with PT ####
 PT_sites <- salt
 # PT_sites <- salt %>% filter(pt == "Yes" )
@@ -74,7 +72,6 @@ PT_sites <- salt
 ########################################################
 #### Combine and format Date and Time in one column ####
 ########################################################
-
 # combine Date and Time columns into a new DateTime column
 PT_sites$DateTime <- paste(PT_sites$Date, PT_sites$Time24h, sep = " ")
 
@@ -84,8 +81,7 @@ PT_sites$DateTime <- as.POSIXct(PT_sites$DateTime, format = "%Y-%m-%d %H:%M:%S")
 #######################################
 #### Load Q data from Google drive ####
 #######################################
-
-#### Load chem data ####
+#### load chem data ####
 # chem data is for all the sites
 discharge <- googledrive::as_id("https://drive.google.com/drive/folders/1UkRaYRBePgY9XU90_3DvURNGGEWbCew0")
 
@@ -117,7 +113,6 @@ discharge_depth <- merge(Q, PT_sites, by = c("DataID", "Date"), all.x = TRUE)
 ####################################################
 #### Load PT compensated data from Google drive ####
 ####################################################
-
 # this is the compensated folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1VsT7hirl5OHIGhrrc3b7dxPpSqr1wNC0")
 
@@ -130,20 +125,20 @@ pt_list <- list()
 
 # loop over each file in the `pt_csvs` data frame
 for (i in seq_along(pt_csvs$id)) {
-  # Define the local file path
+  # define the local file path
   local_path <- file.path("googledrive", pt_csvs$name[i])
   
-  # Download the file
+  # download the file
   googledrive::drive_download(
     file = pt_csvs$id[i],
     path = local_path,
     overwrite = T
   )
-  # Read the CSV file and add it to the list
+  # read the CSV file and add it to the list
   pt_list[[pt_csvs$name[i]]] <- read.csv(local_path)
 }
 
-# Check the contents of the list
+# check the contents of the list
 str(pt_list)
 
 # Look at it
@@ -200,21 +195,21 @@ str(pt_list)
 unique(discharge_depth$DataID)
 unique(pt_list[[1]]$DataID)
 
-# Check example DateTime values
+# check example DateTime values
 head(discharge_depth$DateTime)
 head(pt_list[[1]]$DateTime)
 
-# Merge discharge_depth with each data frame in csvs list
+# merge discharge_depth with each data frame in csvs list
 depth_merged <- lapply(pt_list, function(df) {
   # Perform the merge by DataID and DateTime
   merged_df <- merge(df, discharge_depth, by = c("DataID", "DateTime"), all.x = TRUE)
   return(merged_df)
 })
 
-# Check the structure of the merged list
+# check the structure of the merged list
 str(depth_merged)
 
-# Count non-NA values in the 'pt' column for each data frame
+# count non-NA values in the 'pt' column for each data frame
 non_na_counts <- sapply(depth_merged, function(df) {
   if ("pt" %in% colnames(df)) {
     sum(!is.na(df$pt))
@@ -223,7 +218,7 @@ non_na_counts <- sapply(depth_merged, function(df) {
   }
 })
 
-# Print the counts
+# print the counts
 print(non_na_counts)
 
 USF19 <- depth_merged[["USF19.csv"]]
@@ -237,39 +232,39 @@ USF05 <- depth_merged[["USF05.csv"]]
 USF07 <- depth_merged[["USF07.csv"]]
 USF20 <- depth_merged[["USF20.csv"]]
 
-#### Remove duplicates... why are there duplicates? ####
+#### remove duplicates... why are there duplicates? ####
 USF19 <- USF19[!duplicated(USF19), ]
 USF19 <- USF19[-6130,]
 
 #######################################
 #### Save merged PT files to Drive ####
 #######################################
-# Loop through each data frame in the list
+# loop through each data frame in the list
 for (i in seq_along(depth_merged)) {
   # Access the current data frame
   df <- depth_merged[[i]]
   
-  # Save new data frame
+  # save new data frame
   write.csv(df, paste0("data/", names(depth_merged)[i]), row.names=FALSE, quote=FALSE)
   
-  # Define the local folder path and the target folder ID in Google Drive
+  # define the local folder path and the target folder ID in Google Drive
   file <- paste0("data/", names(depth_merged)[i])
   # this is the "depth" folder
   drive_folder_id <- "1EswIfUWCK6bsdcs-ZrAMGW1oYKs4B0Eh"
   
-  # Upload file to the specified Google Drive folder
+  # upload file to the specified Google Drive folder
   drive_put(
     media = file,
     path = as_id(drive_folder_id)
   )
 }
 
-#### Then have to save USF19 separate because we edited that one ####
+#### then have to save USF19 separate because we edited that one ####
 write.csv(USF19, "data/USF19.csv") 
 
 drive_folder_id <- "1EswIfUWCK6bsdcs-ZrAMGW1oYKs4B0Eh"
 
-# Upload file to the specified Google Drive folder
+# upload file to the specified Google Drive folder
 drive_put(
   media = "data/USF19.csv",
   path = as_id(drive_folder_id)
