@@ -15,7 +15,7 @@ library(dplyr)
 ####################################
 ## Clear folders that we will use ##
 ####################################
-# List and delete all files in the folder
+# list and delete all files in the folder
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
 
@@ -25,11 +25,11 @@ file.remove(files)
 #################################
 #### Import & Visualize Data ####
 #################################
-#### Load data from Google drive ####
-# This is the "depth" folder
+#### load data from Google drive ####
+# this is the "depth" folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1EswIfUWCK6bsdcs-ZrAMGW1oYKs4B0Eh")
 
-# List all CSV files in the folder
+# list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
@@ -37,25 +37,24 @@ pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="USF03.csv"], 
                             path = "googledrive/USF03.csv",
                             overwrite = T)
-# Load file
+# load file
 USF03 <- read.csv("googledrive/USF03.csv")
 
-# Convert Date column to Date type if not already
+# convert Date column to Date type if not already
 USF03$Date <- as.Date(USF03$Date.x)
 USF03$DateTime <- as.POSIXct(USF03$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "MST")
 head(USF03)
 
-# Filter out rows with missing stage or discharge
+# filter out rows with missing stage or discharge
 rating_data <- USF03 %>% 
   filter(!is.na(Baro_Cor_Lvl), !is.na(Q))
 
-# Check the structure of the cleaned data
+# check the structure of the cleaned data
 head(rating_data)
 
 ##################################
 #### Plot Stage vs. Discharge ####
 ##################################
-
 ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q)) +
   geom_point(color = "blue") +
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.m)", y = "Discharge (L/s)") +
@@ -74,7 +73,7 @@ ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
 rating_data <- rating_data %>%
   mutate(pt_depth_m = pt_depth_cm/100)
 
-# Plot discharge vs manual stage measurement
+# plot discharge vs manual stage measurement
 ggplot(rating_data, aes(x = pt_depth_m, y = Q.m3s)) +
   geom_point(color = "blue") +
   labs(title = "Manual Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
@@ -83,7 +82,6 @@ ggplot(rating_data, aes(x = pt_depth_m, y = Q.m3s)) +
 ###########################################
 #### Check for Log-Linear Relationship ####
 ###########################################
-
 ggplot(rating_data, aes(x = log(Baro_Cor_Lvl), y = log(Q.m3s))) +
   geom_point(color = "blue") +
   labs(title = "Log-Log Plot of Water Level vs. Discharge", 
@@ -93,7 +91,6 @@ ggplot(rating_data, aes(x = log(Baro_Cor_Lvl), y = log(Q.m3s))) +
 ####################
 #### Log model? ####
 ####################
-
 rating_data <- rating_data %>%
   mutate(Log_Stage = log(Baro_Cor_Lvl),
          Log_Discharge = log(Q.m3s))
@@ -108,7 +105,6 @@ b <- coef(log_model)[2]       # Slope
 #######################
 #### Linear model? ####
 #######################
-
 linear_model <- lm(Q.m3s ~ Baro_Cor_Lvl, data = rating_data)
 
 summary(linear_model)
@@ -116,7 +112,6 @@ summary(linear_model)
 ###########################
 #### Polynomial model? ####
 ###########################
-
 poly_model <- lm(Q.m3s ~ poly(Baro_Cor_Lvl, 2), data = rating_data)
 
 summary(poly_model)
@@ -124,34 +119,32 @@ summary(poly_model)
 ###########################
 #### Visualize models  ####
 ###########################
-
-# Observed data
+# observed data
 plot(rating_data$Baro_Cor_Lvl, rating_data$Q.m3s,
      main = "Stage vs. Discharge",
      xlab = "Water Level (m)", ylab = "Discharge (m³/s)",
      pch = 19, col = "blue")
 
-# Log-transformed model predictions
+# log-transformed model predictions
 pred_log <- exp(predict(log_model, newdata = rating_data))
 lines(rating_data$Baro_Cor_Lvl, pred_log, col = "red", lwd = 2)
 
-# Linear model predictions
+# linear model predictions
 pred_linear <- predict(linear_model, newdata = rating_data)
 lines(rating_data$Baro_Cor_Lvl, pred_linear, col = "green", lwd = 2)
 
-# Polynomial model predictions
+# polynomial model predictions
 pred_poly <- predict(poly_model, newdata = rating_data)
 lines(rating_data$Baro_Cor_Lvl, pred_poly, col = "purple", lwd = 2)
 
-# Legend
+# legend
 legend("topleft", legend = c("Observed", "Log-Transformed", "Linear", "Polynomial"),
        col = c("blue", "red", "green", "purple"), pch = c(19, NA, NA, NA), lty = c(NA, 1, 1, 1), lwd = c(NA, 2, 2, 2))
 
 ###################################################
 #### Extrapolate model to calculate discharge? ####
 ###################################################
-
-# # Extract parameters from the fitted model
+# # extract parameters from the fitted model
 # params <- coef(rating_curve)
 # a <- params["a"]
 # b <- params["b"]
@@ -161,59 +154,57 @@ legend("topleft", legend = c("Observed", "Log-Transformed", "Linear", "Polynomia
 # USF21 <- USF21 %>%
 #   mutate(Discharge = a * (Baro_Cor_Lvl - h0)^b)
 # 
-# # Check the first few rows with computed Discharge
+# # check the first few rows with computed Discharge
 # head(USF21)
 # 
-# # Plot 
+# # plot 
 # ggplot(USF21, aes(x = DateTime, y = Discharge)) +
 #   geom_point(color = "blue") +
 #   labs(title = "Discharge", x = "DateTime", y = "Discharge (Q)") +
 #   theme_minimal()
 # 
 # 
-# # Check the first few rows with computed discharge in m³/s
+# # check the first few rows with computed discharge in m³/s
 # head(USF21)
 
 #######################
 #### Predicted log ####
 #######################
-
-# Log-transformed model parameters
+# log-transformed model parameters
 a_log <- exp(coef(log_model)[1])  # Intercept
 b_log <- coef(log_model)[2]       # Slope
 
-# Predict discharge for the entire dataset
+# predict discharge for the entire dataset
 USF03 <- USF03 %>%
   mutate(Predicted_Discharge_Log = a_log * (Baro_Cor_Lvl ^ b_log))
 
 ##########################
 #### Predicted linear ####
 ##########################
-# Linear model parameters
+# linear model parameters
 a_linear <- coef(linear_model)[1]  # Intercept
 b_linear <- coef(linear_model)[2]  # Slope
 
-# Predict discharge for the entire dataset
+# predict discharge for the entire dataset
 USF03 <- USF03 %>%
   mutate(Predicted_Discharge_Linear = a_linear + b_linear * Baro_Cor_Lvl)
 
 ##############################
 #### Predicted Polynomial ####
 ##############################
-# Polynomial model parameters
-a_poly <- coef(poly_model)[1]      # Intercept
-b1_poly <- coef(poly_model)[2]     # Linear term
-b2_poly <- coef(poly_model)[3]     # Quadratic term
+# polynomial model parameters
+a_poly <- coef(poly_model)[1]      # intercept
+b1_poly <- coef(poly_model)[2]     # linear term
+b2_poly <- coef(poly_model)[3]     # quadratic term
 
-# Predict discharge for the entire dataset
+# predict discharge for the entire dataset
 USF03 <- USF03 %>%
   mutate(Predicted_Discharge_Poly = a_poly + b1_poly * Baro_Cor_Lvl + b2_poly * Baro_Cor_Lvl^2)
 
 #############################
 #### Compare predictions ####
 #############################
-
-# Visualize predictions
+# visualize predictions
 plot(USF03$Baro_Cor_Lvl, USF03$Predicted_Discharge_Log, col = "red", type = "l", lwd = 2,
      xlab = "Stage (m)", ylab = "Discharge (m³/s)", main = "Discharge Predictions")
 lines(USF03$Baro_Cor_Lvl, USF03$Predicted_Discharge_Linear, col = "green", lwd = 2)
@@ -225,7 +216,7 @@ legend("topleft", legend = c("Log-Transformed", "Linear", "Polynomial"),
 USF03 <- USF03 %>%
   mutate(Q.m3s = Q/1000)
 
-# Compare Predicted vs. Observed Discharge
+# compare Predicted vs. Observed Discharge
 ggplot(USF03, aes(x = Q.m3s)) +
   geom_point(aes(y = Predicted_Discharge_Log, color = "Log Model")) +
   geom_point(aes(y = Predicted_Discharge_Linear, color = "Linear Model")) +
@@ -238,7 +229,7 @@ ggplot(USF03, aes(x = Q.m3s)) +
   scale_color_manual(values = c("red", "green", "purple")) +
   theme_minimal()
 
-# Residuals
+# residuals
 USF03 <- USF03 %>%
   mutate(
     Residual_Log = Q.m3s - Predicted_Discharge_Log,
@@ -261,7 +252,6 @@ ggplot(USF03, aes(x = Baro_Cor_Lvl)) +
 ######################################
 #### Plot and compare predictions ####
 ######################################
-
 USF03$DateTime <- as.POSIXct(USF03$DateTime)
 
 ggplot(USF03, aes(x = DateTime, y = Predicted_Discharge_Log)) +
@@ -285,12 +275,11 @@ ggplot(USF03, aes(x = DateTime, y = Predicted_Discharge_Poly)) +
 ###################
 #### Save file ####
 ###################
-
 write.csv(USF03, "data/discharge_USF03.csv")
 
 drive_folder_id <- "1fPDNinUQ3pCFFQXJ1dtLGbqEawyTmPUx"
 
-# Upload file to the specified Google Drive folder
+# upload file to the specified Google Drive folder
 drive_put(
   media = "data/discharge_USF03.csv",
   path = as_id(drive_folder_id)

@@ -56,7 +56,6 @@ head(rating_data)
 ##################################
 #### Plot Stage vs. Discharge ####
 ##################################
-
 ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q)) +
   geom_point(color = "blue") +
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.m)", y = "Discharge (Q)") +
@@ -84,59 +83,26 @@ ggplot(rating_data, aes(x = pt_depth_m, y = Q.m3s)) +
 #################################################
 #### Find offset, when did the change happen ####
 #################################################
-
 ggplot(USF20, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-07-30 15:15:00"), linetype="dashed", color="red") +
+  geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
   labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
-
-# #################################################################
-# #### Find the average Baro_Cor_Lvl before and after the move ####
-# #################################################################
-# ## Here we calculate the offset!!
-# # Compute mean water level before and after the move
-# before_move <- USF20 %>%
-#   filter(DateTime < "2024-07-30") %>%
-#   summarize(mean_before = mean(Baro_Cor_Lvl, na.rm = TRUE))
-# 
-# after_move <- USF20 %>%
-#   filter(DateTime >= "2024-07-31") %>%
-#   summarize(mean_after = mean(Baro_Cor_Lvl, na.rm = TRUE))
-# 
-# # Compute offset
-# offset <- after_move$mean_after - before_move$mean_before
-# print(offset)
-# 
-# ###############################
-# ####  Apply the Correction ####
-# ###############################
-# 
-# USF20 <- USF20 %>%
-#   mutate(Baro_Cor_offset = if_else(DateTime >= "2024-07-30 15:15:00", Baro_Cor_Lvl - offset, Baro_Cor_Lvl))
-# 
-# ###############################
-# ####  Plot with Correction ####
-# ###############################
-# 
-# ggplot(USF20, aes(x = DateTime, y = Baro_Cor_offset)) +
-#   geom_line() +
-#   #geom_vline(xintercept = as.POSIXct("2024-07-30"), linetype="dashed", color="red") +
-#   labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
 
 ###########################################################################
 #### Find the average Baro_Cor_Lvl TWO HOURS before and after the move ####
 ###########################################################################
 # define the move time
-move_time <- as.POSIXct("2024-07-30 15:30:00")  # Adjust time as needed
+move_time1 <- as.POSIXct("2024-07-30 14:57:00")  
+move_time2 <- as.POSIXct("2024-07-30 15:20:00")  
 
 # compute mean water level in the two hours before the move
 before_move <- USF20 %>%
-  filter(DateTime >= (move_time - hours(2)) & DateTime < move_time) %>%
+  filter(DateTime >= (move_time1 - hours(2)) & DateTime < move_time1) %>%
   summarize(mean_before = mean(Baro_Cor_Lvl, na.rm = TRUE))
 
 # compute mean water level in the two hours after the move
 after_move <- USF20 %>%
-  filter(DateTime >= move_time & DateTime < (move_time + hours(2))) %>%
+  filter(DateTime >= move_time2 & DateTime < (move_time2 + hours(2))) %>%
   summarize(mean_after = mean(Baro_Cor_Lvl, na.rm = TRUE))
 
 # compute offset
@@ -147,14 +113,14 @@ print(offset2)
 ####  Apply the Correction for the two hours ####
 #################################################
 USF20_offset <- USF20 %>%
-  mutate(Baro_Cor_offset2 = if_else(DateTime >= "2024-07-30 15:30:00", Baro_Cor_Lvl - offset2, Baro_Cor_Lvl))
+  mutate(Baro_Cor_offset2 = if_else(DateTime >= "2024-07-30 14:57:00", Baro_Cor_Lvl - offset2, Baro_Cor_Lvl))
 
 ###############################
 ####  Plot with Correction ####
 ###############################
 ggplot(USF20_offset, aes(x = DateTime, y = Baro_Cor_offset2)) +
   geom_line() +
-  #geom_vline(xintercept = as.POSIXct("2024-07-30 15:30:00"), linetype="dashed", color="red") +
+  #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
   labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
 
 ###################################################

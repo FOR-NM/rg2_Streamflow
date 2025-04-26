@@ -53,12 +53,13 @@ for (i in seq_along(pt_csvs$id)) {
 # check the contents of the list
 str(pt_list)
 
-#### remove baro file from pt list ####
+#### remove baro files from pt list ####
 # remove 7th item in this case, check position of baro file
-pt_list = pt_list[-6]
+pt_list = pt_list[-c(7, 13)]
 
 # look at it
 USF21 <- pt_list[["2024-10-29_USF21_WaterLevel.csv"]]
+USF20 <- pt_list[["2024-10-24_USF20_WaterLevel.csv"]]
 
 ##########################################################
 #### Combine and format Date and Time into one column #### 
@@ -158,7 +159,7 @@ for (site in lowersites) {
 # load the Air2 data for the upper sites
 air_upper <- read.csv("googledrive/2024-10-29_Air2.csv")
 air_middle
-air_lower <- read.csv("googledrive/2024-10-29_Air2.csv") # for now :(
+air_lower <- read.csv("googledrive/2025-04-03_Air3.csv") # for now :(
 
 ################################
 #### Format DateTime column ####

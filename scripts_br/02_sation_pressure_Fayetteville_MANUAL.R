@@ -12,7 +12,7 @@ library(lubridate)
 #### From the internet: ####
 ############################
 # Or actually from this NOAA page: https://www.weather.gov/media/epz/wxcalc/stationPressure.pdf
-# 
+#
 # Station Pressure:
 # From the user, a station elevation (h) and an altimeter setting (Pa) are given. Before
 # calculation the station pressure, the station elevation must be converted to meters (m)

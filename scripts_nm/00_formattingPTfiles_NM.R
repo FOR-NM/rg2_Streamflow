@@ -3,7 +3,6 @@
 ## Script to format all the Pressure Transducer (Level Logger) to a cleaner state and upload them back to Drive
 ## press Command+Option+O to collapse all sections and get an overview of the workflow!
 ##==============================================================================
-
 ##############
 ## Packages ##
 ##############
@@ -26,7 +25,7 @@ pt <- googledrive::as_id("https://drive.google.com/drive/folders/1i7G-q7FV0_bszq
 
 # list and filter CSV files with "pt" in their names
 pt_files <- googledrive::drive_ls(path = pt, type = "csv")
-pt_files <- pt_files[!grepl("hobo", pt_files$name), ]
+3
 
 # create an empty list to store the cleaned data frames
 pt_list <- lapply(seq_along(pt_files$name), function(i) {

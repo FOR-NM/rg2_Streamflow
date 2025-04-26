@@ -57,7 +57,6 @@ head(rating_data)
 ##################################
 #### Plot Stage vs. Discharge ####
 ##################################
-
 ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q)) +
   geom_point(color = "blue") +
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.m)", y = "Discharge (Q)") +
@@ -138,40 +137,9 @@ lines(rating_data$Baro_Cor_Lvl, pred_log, col = "red", lwd = 2)
 pred_linear <- predict(linear_model, newdata = rating_data)
 lines(rating_data$Baro_Cor_Lvl, pred_linear, col = "green", lwd = 2)
 
-# polynomial model predictions
-pred_poly <- predict(poly_model, newdata = rating_data)
-lines(rating_data$Baro_Cor_Lvl, pred_poly, col = "purple", lwd = 2)
-
 # legend
-legend("topleft", legend = c("Observed", "Log-Transformed", "Linear", "Polynomial"),
-       col = c("blue", "red", "green", "purple"), pch = c(19, NA, NA, NA), lty = c(NA, 1, 1, 1), lwd = c(NA, 2, 2, 2))
-
-###################################################
-#### Extrapolate model to calculate discharge? ####
-###################################################
-
-# # extract parameters from the fitted model
-# params <- coef(rating_curve)
-# a <- params["a"]
-# b <- params["b"]
-# h0 <- params["h0"]
-# 
-# # apply the power-law equation to the LEVEL.cm data in the dataset
-# USF21 <- USF21 %>%
-#   mutate(Discharge = a * (Baro_Cor_Lvl - h0)^b)
-# 
-# # check the first few rows with computed Discharge
-# head(USF21)
-# 
-# # plot 
-# ggplot(USF21, aes(x = DateTime, y = Discharge)) +
-#   geom_point(color = "blue") +
-#   labs(title = "Discharge", x = "DateTime", y = "Discharge (Q)") +
-#   theme_minimal()
-# 
-# 
-# # check the first few rows with computed discharge in m³/s
-# head(USF21)
+legend("topleft", legend = c("Observed", "Log-Transformed", "Linear"),
+       col = c("blue", "red", "green"), pch = c(19, NA, NA, NA), lty = c(NA, 1, 1, 1), lwd = c(NA, 2, 2, 2))
 
 #######################
 #### Predicted log ####
@@ -196,18 +164,6 @@ b_linear <- coef(linear_model)[2]  # Slope
 USF21 <- USF21 %>%
   mutate(Predicted_Discharge_Linear = a_linear + b_linear * Baro_Cor_Lvl)
 
-##############################
-#### Predicted Polynomial ####
-##############################
-# polynomial model parameters
-a_poly <- coef(poly_model)[1]      # Intercept
-b1_poly <- coef(poly_model)[2]     # Linear term
-b2_poly <- coef(poly_model)[3]     # Quadratic term
-
-# predict discharge for the entire dataset
-USF21 <- USF21 %>%
-  mutate(Predicted_Discharge_Poly = a_poly + b1_poly * Baro_Cor_Lvl + b2_poly * Baro_Cor_Lvl^2)
-
 #############################
 #### Compare predictions ####
 #############################
@@ -228,33 +184,30 @@ USF21 <- USF21 %>%
 ggplot(USF21, aes(x = Q.m3s)) +
   geom_point(aes(y = Predicted_Discharge_Log, color = "Log Model")) +
   geom_point(aes(y = Predicted_Discharge_Linear, color = "Linear Model")) +
-  geom_point(aes(y = Predicted_Discharge_Poly, color = "Polynomial Model")) +
   labs(
     title = "Comparison of Observed vs Predicted Discharge",
     x = "Observed Discharge (m³/s)",
     y = "Predicted Discharge (m³/s)"
   ) +
-  scale_color_manual(values = c("red", "green", "purple")) +
+  scale_color_manual(values = c("red", "green")) +
   theme_minimal()
 
 # residuals
 USF21 <- USF21 %>%
   mutate(
     Residual_Log = Q.m3s - Predicted_Discharge_Log,
-    Residual_Linear = Q.m3s - Predicted_Discharge_Linear,
-    Residual_Poly = Q.m3s - Predicted_Discharge_Poly
+    Residual_Linear = Q.m3s - Predicted_Discharge_Linear
   )
 
 ggplot(USF21, aes(x = Baro_Cor_Lvl)) +
   geom_point(aes(y = Residual_Log, color = "Log Model")) +
   geom_point(aes(y = Residual_Linear, color = "Linear Model")) +
-  geom_point(aes(y = Residual_Poly, color = "Polynomial Model")) +
   labs(
     title = "Residuals for Different Models",
     x = "Barometric Corrected Level (m)",
     y = "Residuals (Observed - Predicted)"
   ) +
-  scale_color_manual(values = c("red", "green", "purple")) +
+  scale_color_manual(values = c("red", "green")) +
   theme_minimal()
 
 ######################################

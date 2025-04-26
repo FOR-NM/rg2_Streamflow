@@ -234,7 +234,7 @@ USF20 <- depth_merged[["USF20.csv"]]
 
 #### remove duplicates... why are there duplicates? ####
 USF19 <- USF19[!duplicated(USF19), ]
-USF19 <- USF19[-6130,]
+USF19 <- USF19[-6127,]
 
 #######################################
 #### Save merged PT files to Drive ####
