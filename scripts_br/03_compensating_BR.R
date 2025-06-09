@@ -52,9 +52,6 @@ for (i in seq_along(pt_csvs$id)) {
   pt_list[[pt_csvs$name[i]]] <- read.csv(local_path)
 }
 
-# REMOVE BARO FILE AND TREAT SEPARATELY
-pt_list <- pt_list[-1]
-
 ################################
 #### Format DateTime column ####
 ################################
@@ -85,19 +82,33 @@ for (i in seq_along(pt_list)) {
     geom_line() + ggtitle(paste(pt_csvs$name[i])) 
   # display the plot in the plot panel
   print(p)
+  
+  # save the plot as a PNG file
+  ggsave(paste0("pt_figs/", pt_csvs$name[i], "raw.png"), plot = p)
 }
 
 #######################################
 #### Load the baro data separately ####
 #######################################
-# for now, we are using Fayetteville National weather service's data for compensation
-# from this page: https://www.weather.gov/wrh/timeseries?site=KFYV 
-# I downloaded it and calculated station pressure in a separate script
-air_data <- read.csv("googledrive/fdf_stationpressure.csv")
+# for now, we are using Fayetteville weather service's data for compensation
+# from this page: https://meteostat.net/en/place/us/fayetteville-ar?s=KFYV0&t=2025-05-21/2025-05-28
+# I downloaded and merged station pressure in a separate script. 
+# See 01_pressure_Fayetteville_API.R and 02_merging_timestamps_pressure_Fayetteville.R
 
-# convert the DateTime column to POSIXct
-air_data$DateTime <- paste(air_data$Date, air_data$Time, sep = " ")
-air_data$DateTime <- as.POSIXct(air_data$DateTime, format = "%Y-%m-%d %H:%M:%S")
+# this is the Fayetteville folder
+Fayetteville <- googledrive::as_id("https://drive.google.com/drive/folders/1FgFNGzv0Rh5t62V8SRFdwK6sd_ktwcRD")
+# list all CSV files in the folder
+ssq <- googledrive::drive_ls(path = Fayetteville)
+
+# choose the specific file by name
+fy_pressure <- ssq %>% filter(name == "fayetteville_pressure.csv")
+# download it
+drive_download(as_id(fy_pressure$id), path = "data/pressure_fv.csv", overwrite = TRUE)
+# fetch the file
+pressure <- read.csv("data/pressure_fv.csv")
+
+#### convert the DateTime column to POSIXct ####
+pressure$DateTime <- as.POSIXct(pressure$time, format = "%Y-%m-%d %H:%M:%S")
 
 ######################################
 #### Merging PT with Air pressure ####
@@ -108,7 +119,7 @@ merged_list <- list()
 # loop through each site file in pt_list
 for (i in names(pt_list)) {
   # merge each site data with air_data on the DateTime column
-  merged_list[[i]] <- merge(pt_list[[i]], air_data, by = "DateTime", all.x = TRUE)
+  merged_list[[i]] <- merge(pt_list[[i]], pressure, by = "DateTime", all.x = TRUE)
 }
 
 BRMQ1 <- merged_list[["BRMQ1.csv"]]
@@ -140,7 +151,7 @@ for (i in names(merged_list)) {
   df <- merged_list[[i]]
   # compensate
   df <- df %>%
-    mutate(Baro_Cor_Lvl.m = (.[["LEVEL.m"]] - .[["Pstn.m"]]))
+    mutate(Baro_Cor_Lvl.m = (.[["LEVEL.m"]] - .[["pres_m"]]))
   
   compensated_list[[i]] <-  df
 }

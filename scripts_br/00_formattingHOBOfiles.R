@@ -14,7 +14,7 @@ library(dplyr)
 ###################################
 ## Clear folders that we will use ##
 ###################################
-# List and delete all files in the folder
+# list and delete all files in the folder
 
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
@@ -22,15 +22,14 @@ file.remove(files)
 #####################
 #### Import Data ####
 #####################
-
-# Set up Google Drive folder
+# set up Google Drive folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1i7G-q7FV0_bszqeCdJ6Otz8b9xhpU1cx")
 
-# List and filter CSV files with "pt" in their names
+# list and filter CSV files with "pt" in their names
 pt_files <- googledrive::drive_ls(path = pt, type = "csv")
 pt_files <- pt_files[grepl("hobo", pt_files$name), ]
 
-# Create an empty list to store the cleaned data frames
+# create an empty list to store the cleaned data frames
 pt_list <- lapply(seq_along(pt_files$name), function(i) {
   googledrive::drive_download(
     file = pt_files$id[i],
@@ -38,66 +37,66 @@ pt_list <- lapply(seq_along(pt_files$name), function(i) {
     overwrite = TRUE
   )
   
-  # Read the CSV file, skipping the first 13 rows (header is on row 14)
+  # read the CSV file, skipping the first 13 rows (header is on row 14)
   read.csv(paste0("googledrive/", pt_files$name[i]), skip = 1, header = TRUE)
 })
 
-# Assign names to the list elements based on the file names
+# assign names to the list elements based on the file names
 names(pt_list) <- pt_files$name
 
-# Check the contents of the list
+# check the contents of the list
 str(pt_list)
 
 ###################################
 #### Format names to match PT ####
 ###################################
 for (i in seq_along(pt_list)) {
-  # Access the current data frame
+  # access the current data frame
   df <- pt_list[[i]]
   
-  # Rename columns
+  # rename columns
   df <- df %>%
     dplyr::rename(DateTime = Date.Time..GMT.06.00)
   
-  # Rename columns to standard names based on prefixes
+  # rename columns to standard names based on prefixes
   df <- df %>%
     rename_with(~ "TEMPERATURE", .cols = starts_with("Temp")) %>%
     rename_with(~ "LEVEL", .cols = starts_with("Abs.Pres"))
-  # Save back to the list
+  # save back to the list
   pt_list[[i]] <- df
 }
 
 ############################
 #### Format date column ####
 ############################
-# Loop through each data frame in the list
+# loop through each data frame in the list
 for (i in seq_along(pt_list)) {
-  # Access the current data frame
+  # access the current data frame
   df <- pt_list[[i]]
   
-  # Convert the DateTime column to POSIXct
+  # convert the DateTime column to POSIXct
   df$DateTime <- as.POSIXct(df$DateTime, format = "%m/%d/%y %H:%M:%S")
-  # Update the data frame in the list
+  # update the data frame in the list
   pt_list[[i]] <- df
   
 }
 #########################################
 #### Save edited files back to Drive ####
 #########################################
-# Loop through each data frame in the list
+# loop through each data frame in the list
 for (i in seq_along(pt_list)) {
-  # Access the current data frame
+  # access the current data frame
   df <- pt_list[[i]]
   
-  # Save new data frame
+  # save new data frame
   write.csv(df, paste0("googledrive/", pt_files$name[i]), row.names=FALSE, quote=FALSE)
   
-  # Define the local folder path and the target folder ID in Google Drive
+  # define the local folder path and the target folder ID in Google Drive
   file <- paste0("googledrive/", pt_files$name[i])
   # this is the in use folder
   drive_folder_id <- "1i7G-q7FV0_bszqeCdJ6Otz8b9xhpU1cx"
   
-  # Upload file to the specified Google Drive folder
+  # upload file to the specified Google Drive folder
   drive_put(
     media = file,
     path = as_id(drive_folder_id)

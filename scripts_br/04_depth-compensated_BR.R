@@ -43,9 +43,6 @@ discharge <- read.csv("data/discharge_BR_full.csv")
 ######################################
 #### Format Date and Time columns ####
 ######################################
-# combine Date and Time columns into a new DateTime column
-discharge$DateTime <- paste(discharge$Date, discharge$Time, sep = " ")
-
 # convert the DateTime column to POSIXct
 discharge$DateTime <- as.POSIXct(discharge$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
@@ -119,13 +116,15 @@ for (i in seq_along(pt_list)) {
   df <- pt_list[[i]]
   
   # combine Date and Time columns into a new DateTime column
-  df$DateTime <- paste(df$Date.x, df$Time.x, sep = " ")
+  df$DateTime <- paste(df$Date, df$Time, sep = " ")
   # convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
   
   # update the data frame in the list
   pt_list[[i]] <- df
 }
+
+BRMQ1 <- pt_list[["BRMQ1.csv"]]
 
 #######################################
 #### Combine depth info to PT data ####

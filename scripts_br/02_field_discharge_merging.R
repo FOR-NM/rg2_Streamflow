@@ -27,16 +27,13 @@ ssq <- googledrive::drive_ls(path = saltslugQ)
 3
 
 # choose the specific file by name
-ssq <- ssq %>% filter(name == "BR_discharge.csv")
+ssq <- ssq %>% filter(name == "Q_BR.csv")
 
 # download the most recent CSV file
-drive_download(as_id(ssq$id), path = "data/BR_discharge.csv", overwrite = TRUE)
+drive_download(as_id(ssq$id), path = "data/Q_BR.csv", overwrite = TRUE)
 
 # fetch the file
-SSQ <- read.csv("data/BR_discharge.csv")
-
-# convert the injection DateTime column to POSIXct
-SSQ$Date <- as.Date(SSQ$Date, format = "%Y-%m-%d")
+SSQ <- read.csv("data/Q_BR.csv")
 
 ### get velocity discharge ####
 velocityQ <- drive_get("https://docs.google.com/spreadsheets/d/1a09kFxDMyko_1BcsWNKd7H3-0jQKPEmvAKzAC4P9leg/edit?gid=0#gid=0")
@@ -80,8 +77,10 @@ VQ$DateTime <- as.POSIXct(VQ$DateTime, format = "%Y-%m-%d %H:%M:%S")
 # format time
 SSQ$Time <- as.POSIXct(SSQ$Time, format = "%I:%M:%S %p")
 SSQ$Time <- format(SSQ$Time, "%H:%M:%S")
-# copy and paste date and time into DateTime column
-SSQ$DateTime <- paste(SSQ$Date, SSQ$Time, sep = " ")
+
+# convert the injection DateTime column to POSIXct
+SSQ$Date <- as.Date(SSQ$Date, format = "%Y-%m-%d")
+
 # convert the DateTime column to POSIXct
 SSQ$DateTime <- as.POSIXct(SSQ$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
