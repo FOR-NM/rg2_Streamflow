@@ -56,8 +56,8 @@ discharge$DateTimeNotRounded <- discharge$DateTime
 discharge$DateTime <- as.POSIXct(discharge$DateTime,format = "%Y-%m-%d %H:%M:%S")
 discharge$DateTimeNotRounded <- as.POSIXct(discharge$DateTimeNotRounded,format = "%Y-%m-%d %H:%M:%S")
 
-# round DateTime to the nearest 15-minute interval 
-discharge$DateTime <- round_date(discharge$DateTime, unit="10 mins")
+# round DateTime to the nearest hour
+discharge$DateTime <- round_date(discharge$DateTime, unit="1 hour")
 
 # check if it worked!
 str(discharge)
@@ -65,7 +65,7 @@ str(discharge)
 ####################################################
 #### Load PT compensated data from Google drive ####
 ####################################################
-# this is the compensated folder
+# this is the "compensated" folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1Ix6n94e2pkKTyojz4SDQKe5MV7WbkH0C")
 
 # list all CSV files in the folder
@@ -125,6 +125,8 @@ for (i in seq_along(pt_list)) {
 }
 
 BRMQ1 <- pt_list[["BRMQ1.csv"]]
+BRM01 <- pt_list[["BRM01.csv"]]
+BRAA1 <- pt_list[["BRAA1.csv"]]
 
 #######################################
 #### Combine depth info to PT data ####

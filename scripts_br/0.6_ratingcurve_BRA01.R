@@ -27,7 +27,7 @@ file.remove(files)
 #################################
 #### load data from Google drive ####
 # this is the "compensated" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1Ix6n94e2pkKTyojz4SDQKe5MV7WbkH0C")
+pt <- googledrive::as_id("http://drive.google.com/drive/folders/1n17b_9yf5DCO_h6uPya5vBPz2dh13L3v")
 
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
@@ -43,27 +43,31 @@ BRA01 <- read.csv("googledrive/BRA01.csv")
 # convert Date column to Date type if not already
 BRA01$DateTime <- paste(BRA01$Date.x, BRA01$Time.x, sep = " ")
 # convert the DateTime column to POSIXct
-BRA01$DateTime <- as.POSIXct(BRA01$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+BRA01$DateTime <- as.POSIXct(BRA01$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
-# Filter out rows with missing stage or discharge
+# filter out rows with missing stage or discharge
 rating_data <- BRA01 %>% 
-  filter(!is.na(Baro_Cor_Lvl.m), !is.na(Q..L.s.))
+  filter(!is.na(Baro_Cor_Lvl.m), !is.na(Q_L_per_s))
 
 # check the structure of the cleaned data
 head(rating_data)
 
+# filter out rows with missing Baro NAs
+BRA01_baro <- BRA01 %>% 
+  filter(!is.na(Baro_Cor_Lvl.m))
+
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-ggplot(data = BRA01, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
-  geom_line() + ggtitle("SST01 compensated level data")
+ggplot(data = BRA01_baro, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
+  geom_line() + ggtitle("BRA01 compensated level data")
 
 ##################################
 #### Plot Stage vs. Discharge ####
 ##################################
 # discharge from L/s to m3/s
 rating_data <- rating_data %>%
-  mutate(Q.m3s = Q..L.s./1000)
+  mutate(Q.m3s = Q_L_per_s/1000)
 
 # plot with date info
 ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
@@ -72,16 +76,12 @@ ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
 
-# pt depth from cm to m
-rating_data <- rating_data %>%
-  mutate(pt_depth_m = Depth.above.PT..cm....7/100)
-
-# plot discharge vs manual stage measurement
-ggplot(rating_data, aes(x = pt_depth_m, y = Q.m3s)) +
-  geom_point(color = "blue") +
-  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points +
-  labs(title = "Manual Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
-  theme_minimal()
+# # plot discharge vs manual stage measurement
+# ggplot(rating_data, aes(x = pt_depth_m, y = Q.m3s)) +
+#   geom_point(color = "blue") +
+#   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points +
+#   labs(title = "Manual Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+#   theme_minimal()
 
 ###########################################
 #### Check for Log-Linear Relationship ####

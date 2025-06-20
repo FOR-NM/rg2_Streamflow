@@ -1,6 +1,7 @@
 ##==============================================================================
 ## Project: QuEST
-## Script to merge same site PT files in one (using timestamp) for Brush Creek watershed
+## Script to merge same site PT sites in one file (using timestamp) for Brush Creek watershed
+## We are also going to try to tackle the daylight savings time changes 
 ##==============================================================================
 
 library(readxl) #to read excel 
@@ -38,6 +39,8 @@ pt_list <- lapply(seq_along(pt_files$name), function(i) {
 
 # assign names to the list elements based on the file names
 names(pt_list) <- pt_files$name
+
+BRMQ1 <- pt_list[["2024-12-13_BRMQ1_2190536_PTdownload.csv"]]
 
 ####################################
 #### Combine data for each site ####
@@ -77,12 +80,13 @@ for (i in seq_along(combined_by_site)) {
   df$DateTime <- paste(df$Date, df$Time, sep = " ")
   
   # convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
   # update the data frame in the list
   combined_by_site[[i]] <- df
 }
 
 BRMQ1 <- combined_by_site[["BRMQ1"]]
+BRM01 <- combined_by_site[["BRM01"]]
 
 ##############################
 #### Save combined files  ####

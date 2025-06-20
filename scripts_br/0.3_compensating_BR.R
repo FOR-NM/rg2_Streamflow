@@ -27,7 +27,7 @@ file.remove(files)
 #################################
 #### load data from Google drive ####
 # this is the "merged_days" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1SbXzLapTIa_dt02JVba4PcsbQaJeFZtD")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1lff8pbyXG9w0XoNaToxMGNAIjkKWyjHs")
 
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
@@ -62,12 +62,25 @@ for (i in seq_along(pt_list)) {
   # combine Date and Time columns into a new DateTime column
   df$DateTime <- paste(df$Date, df$Time, sep = " ")
   # convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
   # update the data frame in the list
   pt_list[[i]] <- df
 }
 
-BRMQ1 <- pt_list[["BRMQ1.csv"]]
+# ### keep only 1 hour intervals ###
+# # loop through each data frame in the list
+# for (i in seq_along(pt_list)) {
+#   # access the current data frame
+#   df <- pt_list[[i]]
+#   # filter function
+#   df <- df %>%
+#     filter(format(df$DateTime, "%M") %in% c("00"))
+#   # update the data frame in the list
+#   pt_list[[i]] <- df
+# }
+
+# BRMQ1 <- pt_list[["BRMQ1.csv"]]
+# BRM01 <- pt_list[["BRM01.csv"]]
 
 #####################
 #### Plot curves ####
@@ -84,31 +97,40 @@ for (i in seq_along(pt_list)) {
   print(p)
   
   # save the plot as a PNG file
-  ggsave(paste0("pt_figs/", pt_csvs$name[i], "raw.png"), plot = p)
+  ggsave(paste0("pt_figs/", gsub(".csv", "", pt_csvs$name[i]), "_raw.png"), plot = p)
 }
 
 #######################################
 #### Load the baro data separately ####
 #######################################
-# for now, we are using Fayetteville weather service's data for compensation
+# For the first few months (August 2024 - March 2025) we use Fayetteville weather service's data for compensation
+# starting from March we use the new baro logger pressure data
 # from this page: https://meteostat.net/en/place/us/fayetteville-ar?s=KFYV0&t=2025-05-21/2025-05-28
 # I downloaded and merged station pressure in a separate script. 
-# See 01_pressure_Fayetteville_API.R and 02_merging_timestamps_pressure_Fayetteville.R
+# See 01_pressure_Fayetteville_API.R, 02_merging_timestamps_pressure_Fayetteville.R and 02.5_merging_pressure.R
 
-# this is the Fayetteville folder
-Fayetteville <- googledrive::as_id("https://drive.google.com/drive/folders/1FgFNGzv0Rh5t62V8SRFdwK6sd_ktwcRD")
+# this is the Baro folder
+air <- googledrive::as_id("https://drive.google.com/drive/folders/1BB6nEoVQOrCd_uHEW9n66kR8HCSUUmbC")
 # list all CSV files in the folder
-ssq <- googledrive::drive_ls(path = Fayetteville)
+pres <- googledrive::drive_ls(path = air)
 
 # choose the specific file by name
-fy_pressure <- ssq %>% filter(name == "fayetteville_pressure.csv")
+press <- pres %>% filter(name == "air_br.csv")
 # download it
-drive_download(as_id(fy_pressure$id), path = "data/pressure_fv.csv", overwrite = TRUE)
+drive_download(as_id(press$id), path = "data/pressure_fv.csv", overwrite = TRUE)
 # fetch the file
 pressure <- read.csv("data/pressure_fv.csv")
 
-#### convert the DateTime column to POSIXct ####
-pressure$DateTime <- as.POSIXct(pressure$time, format = "%Y-%m-%d %H:%M:%S")
+# DateTime at midnight is missing 00:00:00 time, so filling in that time using grep
+pressure$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",pressure$DateTime)] <- paste(
+  pressure$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",pressure$DateTime)],"00:00:00")
+
+# convert the DateTime column to POSIXct
+pressure$DateTime <- as.POSIXct(pressure$DateTime, format = "%Y-%m-%d %H:%M:%S")
+
+### keep only 1 hour intervals ###
+pressure <- pressure %>%
+  filter(format(pressure$DateTime, "%M") %in% c("00"))
 
 ######################################
 #### Merging PT with Air pressure ####
@@ -119,10 +141,13 @@ merged_list <- list()
 # loop through each site file in pt_list
 for (i in names(pt_list)) {
   # merge each site data with air_data on the DateTime column
-  merged_list[[i]] <- merge(pt_list[[i]], pressure, by = "DateTime", all.x = TRUE)
+  merged_list[[i]] <- merge(pt_list[[i]], pressure, by = "DateTime")
 }
 
 BRMQ1 <- merged_list[["BRMQ1.csv"]]
+BRM01 <- merged_list[["BRM01.csv"]]
+BRAA1 <- merged_list[["BRM01.csv"]]
+BRA01 <- merged_list[["BRA01.csv"]]
 
 ##################################
 #### Format some column names ####
@@ -143,6 +168,21 @@ for (i in seq_along(merged_list)) {
 ########################################
 ## the compensation is done by subtracting the barometric column from the Levelogger data 
 # to get the true net water level recorded by the Levelogger, make sure the units for each are the same (in m)
+# Fayetteville's elevation is 436 m and the outlet's elevation is 354 m
+# Springdale's elevation is 412 m
+# Altitude Difference from Fayetteville to our site is 436 m − 354 m = 82 m 
+# Altitude Difference from Springdale to our site is 412 m−354 m=58 m.
+# For an 82 m difference:
+# Pressure difference due to altitude ≈ (82 m/100 m)×1.2 kPa (Fayetteville)
+# Pressure difference ≈ 0.984 kPa ≈ 0.1003 mH2O (Fayetteville)
+
+# Pressure change in kPa = (58 m/100 m)×1.2 kPa=0.58×1.2 kPa=0.696 kPa (Springdale)
+# Correction in mH2O = 0.696 kPa×0.101972 mH2O/kPa ≈ 0.071 mH2O
+
+# So then:
+# Estimated_Air_Pressure_at_Site (in mH2O) = Air_Pressure_Fayetteville (in mH2O) + 0.071 mH2O
+# Corrected_Water_Depth (in m) = Water_Pressure_from_Transducer_Absolute (in mH2O) - Estimated_Air_Pressure_at_Site (in mH2O)
+
 # create empty compensated list 
 compensated_list <- list()
 
@@ -152,11 +192,16 @@ for (i in names(merged_list)) {
   # compensate
   df <- df %>%
     mutate(Baro_Cor_Lvl.m = (.[["LEVEL.m"]] - .[["pres_m"]]))
+  # adjust
+  df <- df %>%
+    mutate(Baro_Cor_adjusted.m = (.[["LEVEL.m"]] - .[["pres_m"]] + 0.071))
   
   compensated_list[[i]] <-  df
 }
 
 BRMQ1 <- compensated_list[["BRMQ1.csv"]]
+BRM01 <- compensated_list[["BRM01.csv"]]
+BRAA1 <- compensated_list[["BRAA1.csv"]]
 
 #########################################
 #### Save compensated files to Drive ####

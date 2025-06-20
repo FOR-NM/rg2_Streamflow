@@ -8,10 +8,8 @@
 ##############################################
 (depth <- drive_get("https://docs.google.com/spreadsheets/d/1ZR50uazdnmPdzYzIwpbspcnLNb_ql7KhdMmZ5t_Rppk/edit?gid=0#gid=0"))
 3
-
 # download the file as a csv file
 drive_download(as_id(depth$id), path = "googledrive/salt.csv", type = "csv", overwrite = T)
-
 # fetch the file
 salt <- read.csv("googledrive/salt.csv")
 
@@ -78,7 +76,7 @@ googledrive::drive_download(file = discharge_csv$id[discharge_csv$name=="Q_BR.cs
 Q = read.csv("googledrive/Q_BR.csv")
 
 # convert the Date column to Date
-Q$Date <- as.Date(Q$Date, format = "%Y-%m-%d", tz = "MST")
+Q$Date <- as.Date(Q$Date, format = "%Y-%m-%d")
 
 ########################################
 #### Merge depth and discharge data ####

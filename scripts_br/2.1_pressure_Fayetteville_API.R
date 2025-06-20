@@ -20,7 +20,7 @@ url <- "https://meteostat.p.rapidapi.com/stations/hourly"
 # Define the query parameters
 # Had to download data month by month since it is only allowed to do 30 days at a time for hourly data
 queryString <- list(
-  station = "KFYV0",
+  station = "KASG0", # this code is for Springdale and not Fayetteville
   start = "2025-04-01",
   end = "2025-04-30"
 )
@@ -43,18 +43,18 @@ print(paste("HTTP Status Code:", status_code(response)))
 
 # Extract and print the content of the response as text
 # This will be a JSON string
-april <- content(response, "text", encoding = "UTF-8")
-print(april)
+mes <- content(response, "text", encoding = "UTF-8")
+print(mes)
 
 # Assuming 'api_response_content' holds the JSON string from the API call
-parsed_april <- fromJSON(april)
+parsed_mes <- fromJSON(mes)
 
 # The actual weather data will likely be in a 'data' element within the parsed_data object
 # You can inspect the structure to find it:
-str(parsed_april)
+str(parsed_mes)
 
 # For example, if the weather data is directly under a 'data' field:
-april_df <- parsed_april$data
+mes_df <- parsed_mes$data
 
 # save files
-write.csv(april_df, "2025-03.csv")
+write.csv(mes_df, "2025-04.csv")

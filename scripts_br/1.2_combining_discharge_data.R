@@ -44,7 +44,7 @@ drive_download(as_id(velocityQ$id), path = "googledrive/BR_FLO.xlsx", type = "xl
 # fetch the file
 VQ <- readxl::read_xlsx("googledrive/BR_FLO.xlsx")
 
-### remove some rows ###
+### remove some columns ###
 SSQ <- SSQ[,-c(1, 4:6, 10:12, 14:17, 19:22)]
 
 ### rename some columns ###
@@ -89,9 +89,9 @@ SSQ$DateTime <- as.POSIXct(SSQ$DateTime, format = "%Y-%m-%d %H:%M:%S")
 ######################
 discharge <- bind_rows(SSQ, VQ)
 
-##############################
-#### Save combined files  ####
-##############################
+#############################
+#### Save combined files ####
+#############################
 write.csv(discharge, "data/discharge_BR_full.csv")
 
 drive_folder_id <- "1E3DklQjXkkJGxTyZJTVDkPGABJIQOiTh"
