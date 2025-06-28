@@ -29,7 +29,7 @@ file.remove(files)
 # this is the "depth" folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1n17b_9yf5DCO_h6uPya5vBPz2dh13L3v")
 
-# List all CSV files in the folder
+# list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
@@ -58,12 +58,15 @@ head(rating_data)
 ########################################
 # filter out rows with missing Baro NAs
 BRM01_baro <- BRM01 %>% 
-  filter(!is.na(Baro_Cor_Lvl.m))
+  filter(!is.na(Baro_Cor_adjusted.m))
 
-ggplot(data = BRM01_baro, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
+ggplot(data = BRM01_baro, aes(x = DateTime, y = Baro_Cor_adjusted.m)) +
   geom_line() + ggtitle("BRM01 compensated level data")
 
-ggplot(data = BRM01_baro, aes(x = DateTime, y = pres_m)) +
+ggplot(data = BRM01_baro, aes(x = DateTime, y = LEVEL.m)) +
+  geom_line() + ggtitle("BRM01 level data in m")
+
+ggplot(data = BRM01_baro, aes(x = DateTime, y = pres.psi)) +
   geom_line() + ggtitle("BRM01 level data in m")
 
 ##################################

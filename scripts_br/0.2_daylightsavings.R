@@ -67,8 +67,17 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
 }
 
-dst <- lubridate::dst(BRA01$DateTime)
-summary(dst)
+### keep only 1 hour intervals ###
+# loop through each data frame in the list
+for (i in seq_along(pt_list)) {
+  # access the current data frame
+  df <- pt_list[[i]]
+  # filter function
+  df <- df %>%
+    filter(format(df$DateTime, "%M") %in% c("00"))
+  # update the data frame in the list
+  pt_list[[i]] <- df
+}
 
 # make sure time intervals make sense
 # some of these intervals were off, so we have to look at them one by one to check them and round the time correctly
@@ -83,28 +92,20 @@ BRM05 <- pt_list[["BRM05.csv"]] # every 10min. Data goes until 2024-10-17
 BRM07 <- pt_list[["BRM07.csv"]] # every 10min, then every 15min. Daylight savings time on 2024-12-13? and 2025-03-09 02:00:00 am
 BRMQ1 <- pt_list[["BRMQ1.csv"]] # every 10min, then every 15min, then every 15 but all over the place, then every 15 again. Daylight savings time on 2024-12-13? and 2025-03-09 02:00:00 am 
 
-### keep only 1 hour intervals ###
-# loop through each data frame in the list
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  # filter function
-  df <- df %>%
-    filter(format(df$DateTime, "%M") %in% c("00"))
-  # update the data frame in the list
-  pt_list[[i]] <- df
-}
+# test
+lubridate::tz(BRA01$DateTime)
+dst <- lubridate::dst(BRA01$DateTime)
+summary(dst)
 
 #################################################
 #### Adjust for daylight savings time change ####
 #################################################
-# there's two ways of doing this?
-#### 1 ####
 #### create a "clean" set of time stamps ####
 # so they cover the whole range of the data in the correct time zone, then join the actual data to this.
 # time zone changes should show up either as blank rows or as duplicate rows, depending on the direction of change. 
 # then you can either interpolate or delete them.
 
+# --- BRA01 --- 
 # create complete time series sequence using min/max of data set
 time <- data.frame(
   DateTime = seq.POSIXt(
@@ -112,16 +113,38 @@ time <- data.frame(
     to = max(BRA01$DateTime),
     by = "1 hour"))
 
-# make sure all time stamps in data set are rounded to nearest 1 hour
-BRA01$DateTime<- lubridate::round_date(BRA01$DateTime, "1 hour") 
+# define the specific transition dates
+transition_date_1 <- ymd_hms("2024-12-12 11:00:00", tz = "UTC") # transition from CDT to CST
+transition_date_2 <- ymd_hms("2025-04-17 12:00:00", tz = "UTC") # transition from CST to CDT
 
-time$DateTime <- as.POSIXct(time$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "GMT")
-dst <- lubridate::tz(time$DateTime)
+# define the offsets as R timezone strings
+# note: "Etc/GMT+X" means UTC - X hours (e.g., GMT+5 means UTC-5)
+tz_cdt_gmt <- "Etc/GMT+5" # equivalent to UTC-5 (in this case CDT)
+tz_cst_gmt <- "Etc/GMT+6" # equivalent to UTC-6 (in this case CST)
 
+# force UTC to handle as naive
+time$DateTime = as.POSIXct(time$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+
+# manually apply GMT offsets based on date ranges
+time$AdjustedDateTime = case_when(
+  # beginning of data till Dec 12th: CDT (UTC-5)
+  time$DateTime < transition_date_1 ~ force_tz(time$DateTime, tzone = tz_cdt_gmt),
+  # Dec 12th till Apr 16th: CST (UTC-6)
+  time$DateTime >= transition_date_1 & time$DateTime < transition_date_2 ~ force_tz(time$DateTime, tzone = tz_cst_gmt),
+  # Apr 16th onwards: CDT (UTC-5)
+  time$DateTime >= transition_date_2 ~ force_tz(time$DateTime, tzone = tz_cdt_gmt),
+  TRUE ~ NA_POSIXct_ # should not happen if all dates covered
+)
+
+# test
+lubridate::tz(time$DateTime)
+lubridate::tz(time$AdjustedDateTime)
+                     
 # join to clean time stamps
 BRA01.ts = left_join(time, BRA01, by="DateTime")
 
-dst <- lubridate::tz(time$DateTime)
+# assign new real time zone
+time$AdjustedDateTime = as.POSIXct(time$AdjustedDateTime, format = "%Y-%m-%d %H:%M:%S", tz = "")
 
 #### 2 ####
 #### apply timezone adjustments (CST/CDT) ####
@@ -215,19 +238,3 @@ lapply(names(pt_daylightsavings), function(site) {
   )
 })
 
-#### for just one file ####
-# apply timezone (CST/CDT) 
-BRM01$DateTime <- force_tz(BRM01$DateTime, tzone = "America/Chicago", roll_dst = "NA")
-
-# remove the extra row on 2025-03-09 02:00:00 am due to the Daylight Saving Time spring forward.
-# do this by removing rows where DateTime became NA due to non-existent or ambiguous times
-BRM01 <- BRM01 %>%
-  filter(!is.na(DateTime))
-
-# optional: verify hourly intervals after adjustment
-# note: the first row will have NA for TimeDifference
-BRM01 <- BRM01 %>%
-  arrange(DateTime) %>% # ensure data is sorted by DateTime
-  mutate(TimeDifference_hours = as.numeric(difftime(lead(DateTime), DateTime, units = "hours")))
-
-return(BRM01)
