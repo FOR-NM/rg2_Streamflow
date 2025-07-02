@@ -1,7 +1,9 @@
 ##==============================================================================
 ## Project: QuEST
 ## Script to merge pressure files in one. The Fayetteville and baro logger
+## --- We are not using the baro data for now, it looks wonky compared to the Fayetteville station data
 ##==============================================================================
+
 ##############################
 #### Import pressure data ####
 ##############################

@@ -22,7 +22,7 @@ file.remove(files)
 #### list and download all files in the folder ####
 # this is the "pressure_Fayetteville" folder
 fayetteville <- googledrive::as_id("https://drive.google.com/drive/folders/1FgFNGzv0Rh5t62V8SRFdwK6sd_ktwcRD")
-springdale <- googledrive::as_id("https://drive.google.com/drive/folders/1BX6ZZosa3LxPbyAWSng9xfwjXEFWUfLG")
+#springdale <- googledrive::as_id("https://drive.google.com/drive/folders/1BX6ZZosa3LxPbyAWSng9xfwjXEFWUfLG")
 
 # list all CSV files in the folder
 p_files <- googledrive::drive_ls(path = fayetteville)
@@ -87,6 +87,9 @@ pressure <- pressure %>%
   mutate(pres_m = (TrueBP_mmHg * 0.0136))
 #1 mm Hg = 0.0136 meter of head
 
+# remove some rows
+pressure <- pressure[,-1]
+
 ##############################
 #### Save combined files  ####
 ##############################
@@ -96,7 +99,7 @@ write.csv(pressure, 'air_br/fayetteville_pressure.csv')
 # this is the Fayetteville folder
 drive_folder_id <- "1FgFNGzv0Rh5t62V8SRFdwK6sd_ktwcRD"
 # this is the Springdale folder
-drive_folder_id <- "1BX6ZZosa3LxPbyAWSng9xfwjXEFWUfLG"
+#drive_folder_id <- "1BX6ZZosa3LxPbyAWSng9xfwjXEFWUfLG"
 
 # upload file to the specified Google Drive folder
 drive_put(

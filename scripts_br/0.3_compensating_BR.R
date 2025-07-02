@@ -97,7 +97,7 @@ for (i in seq_along(pt_list)) {
   print(p)
   
   # save the plot as a PNG file
-  ggsave(paste0("pt_figs/", gsub(".csv", "", pt_csvs$name[i]), "_raw.png"), plot = p)
+  #ggsave(paste0("pt_figs/", gsub(".csv", "", pt_csvs$name[i]), "_raw.png"), plot = p)
 }
 
 #######################################
@@ -109,13 +109,25 @@ for (i in seq_along(pt_list)) {
 # I downloaded and merged station pressure in a separate script. 
 # See 01_pressure_Fayetteville_API.R, 02_merging_timestamps_pressure_Fayetteville.R and 02.5_merging_pressure.R
 
-# this is the Baro folder
-air <- googledrive::as_id("https://drive.google.com/drive/folders/1BB6nEoVQOrCd_uHEW9n66kR8HCSUUmbC")
+#----- Only using Fayetteville station data for now, not baro logger data ----# 
+
+# # this is the Baro folder
+# air <- googledrive::as_id("https://drive.google.com/drive/folders/1BB6nEoVQOrCd_uHEW9n66kR8HCSUUmbC")
+# # list all CSV files in the folder
+# pres <- googledrive::drive_ls(path = air)
+# # choose the specific file by name
+# press <- pres %>% filter(name == "air_br.csv")
+# # download it
+# drive_download(as_id(press$id), path = "data/pressure_fv.csv", overwrite = TRUE)
+# # fetch the file
+# pressure <- read.csv("data/pressure_fv.csv")
+
+# this is the Fayetteville folder
+air <- googledrive::as_id("https://drive.google.com/drive/folders/1FgFNGzv0Rh5t62V8SRFdwK6sd_ktwcRD")
 # list all CSV files in the folder
 pres <- googledrive::drive_ls(path = air)
-
 # choose the specific file by name
-press <- pres %>% filter(name == "air_br.csv")
+press <- pres %>% filter(name == "fayetteville_pressure.csv")
 # download it
 drive_download(as_id(press$id), path = "data/pressure_fv.csv", overwrite = TRUE)
 # fetch the file
@@ -131,6 +143,9 @@ pressure$DateTime <- as.POSIXct(pressure$DateTime, format = "%Y-%m-%d %H:%M:%S")
 ### keep only 1 hour intervals ###
 pressure <- pressure %>%
   filter(format(pressure$DateTime, "%M") %in% c("00"))
+
+# remove some rows
+pressure <- pressure[,-1]
 
 ######################################
 #### Merging PT with Air pressure ####
@@ -193,9 +208,9 @@ for (i in names(merged_list)) {
   df <- df %>%
     mutate(Baro_Cor_Lvl.m = (.[["LEVEL.m"]] - .[["pres_m"]]))
   # adjust
-  df <- df %>%
-    mutate(Baro_Cor_adjusted.m = (.[["LEVEL.m"]] - .[["pres_m"]] + 0.071))
-  
+  # df <- df %>%
+  #   mutate(Baro_Cor_adjusted.m = (.[["LEVEL.m"]] - .[["pres_m"]] + 0.071))
+  # 
   compensated_list[[i]] <-  df
 }
 

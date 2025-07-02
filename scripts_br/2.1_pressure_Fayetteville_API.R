@@ -13,20 +13,23 @@
 library(httr)
 library(jsonlite)
 
-# Define the API endpoint for point data (using latitude and longitude)
-# Note: Changed from /stations/hourly to /point/hourly
+######################################
+#### Download data month my month ####
+######################################
+# define the API endpoint for point data (using latitude and longitude)
+# note: changed from /stations/hourly to /point/hourly
 url <- "https://meteostat.p.rapidapi.com/stations/hourly"
 
-# Define the query parameters
-# Had to download data month by month since it is only allowed to do 30 days at a time for hourly data
+# define the query parameters
+# had to download data month by month since it is only allowed to do 30 days at a time for hourly data
 queryString <- list(
-  station = "KASG0", # this code is for Springdale and not Fayetteville
-  start = "2025-04-01",
-  end = "2025-04-30"
+  station = "KFYV0", # this code is for Fayetteville and not Springdale (KASG0)
+  start = "2025-07-01",
+  end = "2025-07-31"
 )
 
-# Make the GET request to the API
-# Include your RapidAPI key and host in the headers
+# make the GET request to the API
+# include your RapidAPI key and host in the headers
 response <- VERB(
   "GET",
   url,
@@ -37,24 +40,24 @@ response <- VERB(
   )
 )
 
-# Check the status of the response
-# A status code of 200 indicates success. If 400 something is wrong
+# check the status of the response
+# a status code of 200 indicates success. If 400 something is wrong
 print(paste("HTTP Status Code:", status_code(response)))
 
-# Extract and print the content of the response as text
-# This will be a JSON string
+# extract and print the content of the response as text
+# this will be a JSON string
 mes <- content(response, "text", encoding = "UTF-8")
 print(mes)
 
-# Assuming 'api_response_content' holds the JSON string from the API call
+# assuming 'api_response_content' holds the JSON string from the API call
 parsed_mes <- fromJSON(mes)
 
-# The actual weather data will likely be in a 'data' element within the parsed_data object
-# You can inspect the structure to find it:
+# the actual weather data will likely be in a 'data' element within the parsed_data object
+# you can inspect the structure to find it:
 str(parsed_mes)
 
-# For example, if the weather data is directly under a 'data' field:
+# for example, if the weather data is directly under a 'data' field:
 mes_df <- parsed_mes$data
 
 # save files
-write.csv(mes_df, "2025-04.csv")
+write.csv(mes_df, "2025-07.csv")

@@ -105,17 +105,103 @@ summary(dst)
 # time zone changes should show up either as blank rows or as duplicate rows, depending on the direction of change. 
 # then you can either interpolate or delete them.
 
-# --- BRA01 --- 
+# define the local timezone you want to work with (e.g., Central Time)
+local_tz <- "America/Chicago"
+
+#### For sites downloaded on 2024-12-12 and 2025-04-17 ####
 # create complete time series sequence using min/max of data set
+# --- BRA01 --- 
 time <- data.frame(
   DateTime = seq.POSIXt(
     from = min(BRA01$DateTime),
     to = max(BRA01$DateTime),
+    by = "1 hour",
+    tz = local_tz))
+
+lubridate::tz(time$DateTime)
+
+# --- BRM01 --- 
+time <- data.frame(
+  DateTime = seq.POSIXt(
+    from = min(BRM01$DateTime),
+    to = max(BRM01$DateTime),
+    by = "1 hour"))
+# --- BRM02 --- 
+time <- data.frame(
+  DateTime = seq.POSIXt(
+    from = min(BRM02$DateTime),
+    to = max(BRM02$DateTime),
+    by = "1 hour"))
+# --- BRM03 --- 
+time <- data.frame(
+  DateTime = seq.POSIXt(
+    from = min(BRM03$DateTime),
+    to = max(BRM03$DateTime),
+    by = "1 hour"))
+
+# define the specific transition dates
+transition_date_1 <- ymd_hms("2024-12-12 11:00:00", tz = local_tz) # transition from CDT to CST - custom fall-back point
+transition_date_2 <- ymd_hms("2025-04-17 12:00:00", tz = local_tz) # transition from CST to CDT - custom spring-forward point
+
+# manually apply the *actual time shifts* to the underlying UTC value
+# based on your device's custom behavior.
+# the goal is for AdjustedDateTime to have the correct underlying UTC value,
+# while still being displayable in the local_tz.
+time$AdjustedDateTime <- case_when(
+  # period 1: Before Dec 12th 11:00:00 local time
+  # device is effectively UTC-5. No adjustment to its underlying UTC value needed.
+  time$DateTime < transition_date_1 ~ time$DateTime,
+  
+  # period 2: From Dec 12th 11:00:00 local time to Apr 17th 12:00:00 local time
+  # device's clock is still operating as if it's UTC-5, but it *should* be UTC-6.
+  # this means the device's underlying UTC value is 1 hour *too early* for this period.
+  # to correct it, ADD 1 hour to the underlying UTC value.
+  time$DateTime >= transition_date_1 & time$DateTime < transition_date_2 ~ time$DateTime + hours(1),
+  
+  # period 3: From Apr 17th 12:00:00 local time onwards
+  # Device's clock is now operating as if it's UTC-5 again.
+  # It "sprang forward" from the UTC-6 period.
+  # This means its underlying UTC value is 1 hour *too late* relative to the UTC-5 offset.
+  # To correct it, SUBTRACT 1 hour from the underlying UTC value.
+  time$DateTime >= transition_date_2 ~ time$DateTime - hours(1),
+  
+  TRUE ~ NA_POSIXct_ # Should not happen
+)
+
+# test
+lubridate::tz(time$DateTime)
+lubridate::tz(time$AdjustedDateTime)
+
+# join to clean time stamps              
+# --- BRA01 ---   
+BRA01.ts = left_join(time, BRA01, by="DateTime")
+# --- BRM01 --- 
+BRM01.ts = left_join(time, BRM01, by="DateTime")
+# --- BRM02 --- 
+BRM02.ts = left_join(time, BRM02, by="DateTime")
+# --- BRM03 --- 
+BRM03.ts = left_join(time, BRM03, by="DateTime")
+
+# assign new real time zone
+time$AdjustedDateTime = as.POSIXct(time$AdjustedDateTime, format = "%Y-%m-%d %H:%M:%S", tz = "")
+
+#### For sites downloaded on 2024-12-12 and 2025-04-16 ####
+# --- BRD01 --- 
+time <- data.frame(
+  DateTime = seq.POSIXt(
+    from = min(BRD01$DateTime),
+    to = max(BRD01$DateTime),
+    by = "1 hour"))
+# --- BRF01 --- 
+time <- data.frame(
+  DateTime = seq.POSIXt(
+    from = min(BRF01$DateTime),
+    to = max(BRF01$DateTime),
     by = "1 hour"))
 
 # define the specific transition dates
 transition_date_1 <- ymd_hms("2024-12-12 11:00:00", tz = "UTC") # transition from CDT to CST
-transition_date_2 <- ymd_hms("2025-04-17 12:00:00", tz = "UTC") # transition from CST to CDT
+transition_date_2 <- ymd_hms("2025-04-16 12:00:00", tz = "UTC") # transition from CST to CDT
 
 # define the offsets as R timezone strings
 # note: "Etc/GMT+X" means UTC - X hours (e.g., GMT+5 means UTC-5)
@@ -131,7 +217,7 @@ time$AdjustedDateTime = case_when(
   time$DateTime < transition_date_1 ~ force_tz(time$DateTime, tzone = tz_cdt_gmt),
   # Dec 12th till Apr 16th: CST (UTC-6)
   time$DateTime >= transition_date_1 & time$DateTime < transition_date_2 ~ force_tz(time$DateTime, tzone = tz_cst_gmt),
-  # Apr 16th onwards: CDT (UTC-5)
+  # Apr 16th on wards: CDT (UTC-5)
   time$DateTime >= transition_date_2 ~ force_tz(time$DateTime, tzone = tz_cdt_gmt),
   TRUE ~ NA_POSIXct_ # should not happen if all dates covered
 )
@@ -139,102 +225,149 @@ time$AdjustedDateTime = case_when(
 # test
 lubridate::tz(time$DateTime)
 lubridate::tz(time$AdjustedDateTime)
-                     
-# join to clean time stamps
-BRA01.ts = left_join(time, BRA01, by="DateTime")
 
-# assign new real time zone
-time$AdjustedDateTime = as.POSIXct(time$AdjustedDateTime, format = "%Y-%m-%d %H:%M:%S", tz = "")
+# --- BRD01 --- 
+BRD01.ts = left_join(time, BRD01, by="DateTime")
+# --- BRF01 --- 
+BRF01.ts = left_join(time, BRF01, by="DateTime")
 
-#### 2 ####
-#### apply timezone adjustments (CST/CDT) ####
-# force_tz will assign the specified timezone.
-# roll_dst = "NA" is crucial:
-# - for non-existent times (spring forward, e.g., 2025-03-09 02:00:00 AM in CST), it sets DateTime to NA.
-# - for ambiguous times (fall back, e.g., 2024-11-03 01:00:00 AM in CST), it also sets DateTime to NA,
-#   which helps avoid duplication and forces a single, clear hourly sequence.
+#### For sites downloaded on 2024-12-13 and 2025-04-16 ####
+# --- BRAA1 --- 
+time <- data.frame(
+  DateTime = seq.POSIXt(
+    from = min(BRAA1$DateTime),
+    to = max(BRAA1$DateTime),
+    by = "1 hour"))
+# --- BRMQ1 --- 
+time <- data.frame(
+  DateTime = seq.POSIXt(
+    from = min(BRMQ1$DateTime),
+    to = max(BRMQ1$DateTime),
+    by = "1 hour"))
 
-# make new empty list to store data frames
-pt_daylightsavings <- list()
+# define the specific transition dates
+transition_date_1 <- ymd_hms("2024-12-13 11:00:00", tz = "UTC") # transition from CDT to CST
+transition_date_2 <- ymd_hms("2025-04-16 12:00:00", tz = "UTC") # transition from CST to CDT
 
-# loop through each data frame in the list
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  # filter function
-  df <- df %>%
-    force_tz(df$DateTime, tzone = "America/Chicago", roll_dst = "NA")
-  # update the data frame in the list
-  pt_daylightsavings[[i]] <- df
-}
+# define the offsets as R timezone strings
+# note: "Etc/GMT+X" means UTC - X hours (e.g., GMT+5 means UTC-5)
+tz_cdt_gmt <- "Etc/GMT+5" # equivalent to UTC-5 (in this case CDT)
+tz_cst_gmt <- "Etc/GMT+6" # equivalent to UTC-6 (in this case CST)
 
-# assign names to the list elements based on the file names
-names(pt_daylightsavings) <- pt_csvs$name
+# force UTC to handle as naive
+time$DateTime = as.POSIXct(time$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
 
-# apply timezone (CST/CDT) 
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  # adjust time zone
-  df <- df %>%
-    force_tz(df$DateTime, tzone = "America/Chicago", roll_dst = "NA")
-  # update the data frame in the list
-  pt_daylightsavings[[i]] <- df
-}
+# manually apply GMT offsets based on date ranges
+time$AdjustedDateTime = case_when(
+  # beginning of data till Dec 13th: CDT (UTC-5)
+  time$DateTime < transition_date_1 ~ force_tz(time$DateTime, tzone = tz_cdt_gmt),
+  # Dec 13th till Apr 16th: CST (UTC-6)
+  time$DateTime >= transition_date_1 & time$DateTime < transition_date_2 ~ force_tz(time$DateTime, tzone = tz_cst_gmt),
+  # Apr 16th on wards: CDT (UTC-5)
+  time$DateTime >= transition_date_2 ~ force_tz(time$DateTime, tzone = tz_cdt_gmt),
+  TRUE ~ NA_POSIXct_ # should not happen if all dates covered
+)
 
-# remove the extra row on 2025-03-09 02:00:00 am
-for (i in seq_along(pt_daylightsavings)) {
-  # access the current data frame
-  df <- pt_daylightsavings[[i]]
-  # remove NA times
-  df <- df %>%
-    filter(!is.na(DateTime))
-  # update the data frame in the list
-  pt_daylightsavings[[i]] <- df
-}
+# test
+lubridate::tz(time$DateTime)
+lubridate::tz(time$AdjustedDateTime)
 
-# optional: verify hourly intervals after adjustment
-# note: the first row will have NA for TimeDifference
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  # remove NA times
-  df <- df %>%
-    arrange(DateTime) %>% # ensure data is sorted by DateTime
-    mutate(TimeDifference_hours = as.numeric(difftime(lead(DateTime), DateTime, units = "hours")))
-  # update the data frame in the list
-  pt_daylightsavings[[i]] <- df
-}
+# --- BRAA1 --- 
+BRAA1.ts = left_join(time, BRAA1, by="DateTime")
+# --- BRMQ1 --- 
+BRMQ1.ts = left_join(time, BRMQ1, by="DateTime")
 
-# I just want to look at each file individually
-BRA01 <- pt_daylightsavings[["BRA01.csv"]] 
-BRAA1 <- pt_daylightsavings[["BRAA1.csv"]] 
-BRD01 <- pt_daylightsavings[["BRD01.csv"]] 
-BRF01 <- pt_daylightsavings[["BRF01.csv"]] 
-BRM01 <- pt_daylightsavings[["BRM01.csv"]] 
-BRM02 <- pt_daylightsavings[["BRM02.csv"]] 
-BRM03 <- pt_daylightsavings[["BRM03.csv"]] 
-BRM05 <- pt_daylightsavings[["BRM05.csv"]] 
-BRM07 <- pt_daylightsavings[["BRM07.csv"]] 
-BRMQ1 <- pt_daylightsavings[["BRMQ1.csv"]] 
+#### For sites downloaded on 2024-12-13 and 2025-04-18 ####
+# --- BRM07 --- 
+time <- data.frame(
+  DateTime = seq.POSIXt(
+    from = min(BRM07$DateTime),
+    to = max(BRM07$DateTime),
+    by = "1 hour"))
+# define the specific transition dates
+transition_date_1 <- ymd_hms("2024-12-13 11:00:00", tz = "UTC") # transition from CDT to CST
+transition_date_2 <- ymd_hms("2025-04-18 12:00:00", tz = "UTC") # transition from CST to CDT
 
-# remove extra rows for upload
+# define the offsets as R timezone strings
+# note: "Etc/GMT+X" means UTC - X hours (e.g., GMT+5 means UTC-5)
+tz_cdt_gmt <- "Etc/GMT+5" # equivalent to UTC-5 (in this case CDT)
+tz_cst_gmt <- "Etc/GMT+6" # equivalent to UTC-6 (in this case CST)
+
+# force UTC to handle as naive
+time$DateTime = as.POSIXct(time$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+
+# manually apply GMT offsets based on date ranges
+time$AdjustedDateTime = case_when(
+  # beginning of data till Dec 13th: CDT (UTC-5)
+  time$DateTime < transition_date_1 ~ force_tz(time$DateTime, tzone = tz_cdt_gmt),
+  # Dec 13th till Apr 18th: CST (UTC-6)
+  time$DateTime >= transition_date_1 & time$DateTime < transition_date_2 ~ force_tz(time$DateTime, tzone = tz_cst_gmt),
+  # Apr 18th on wards: CDT (UTC-5)
+  time$DateTime >= transition_date_2 ~ force_tz(time$DateTime, tzone = tz_cdt_gmt),
+  TRUE ~ NA_POSIXct_ # should not happen if all dates covered
+)
+
+# test
+lubridate::tz(time$DateTime)
+lubridate::tz(time$AdjustedDateTime)
+
+# --- BRM07 --- 
+BRM07.ts = left_join(time, BRM07, by="DateTime")
 
 ###########################################
 #### Save daylight time adjusted files ####
 ###########################################
-# write files to local data folder
-lapply(names(pt_daylightsavings), function(site) {
-  # define file path
-  file <- paste0("data/", site)
-  # save each data frame
-  write.csv(pt_daylightsavings[[site]], file, row.names = FALSE, quote = FALSE)
-  # this is the "daylight adjusted" folder
-  drive_folder_id <- "1lff8pbyXG9w0XoNaToxMGNAIjkKWyjHs"
-  # upload the file to Google Drive
-  drive_put(
-    media = file,
-    path = as_id(drive_folder_id)
-  )
-})
+write.csv(BRA01.ts, "data/BRA01.csv")
+write.csv(BRM01.ts, "data/BRM01.csv")
+write.csv(BRM02.ts, "data/BRM02.csv")
+write.csv(BRM03.ts, "data/BRM03.csv")
+write.csv(BRD01.ts, "data/BRD01.csv")
+write.csv(BRF01.ts, "data/BRF01.csv")
+write.csv(BRAA1.ts, "data/BRAA1.csv")
+write.csv(BRMQ1.ts, "data/BRMQ1.csv")
+write.csv(BRM07.ts, "data/BRM07.csv")
+#this one???? write.csv(BRM05.ts, "data/BRM05.csv")
 
+drive_folder_id <- "1lff8pbyXG9w0XoNaToxMGNAIjkKWyjHs"
+
+# upload file to the specified Google Drive folder
+drive_put(
+  media = "data/BRA01.csv",
+  path = as_id(drive_folder_id)
+)
+drive_put(
+  media = "data/BRM01.csv",
+  path = as_id(drive_folder_id)
+)
+drive_put(
+  media = "data/BRM02.csv",
+  path = as_id(drive_folder_id)
+)
+drive_put(
+  media = "data/BRM03.csv",
+  path = as_id(drive_folder_id)
+)
+drive_put(
+  media = "data/BRD01.csv",
+  path = as_id(drive_folder_id)
+)
+drive_put(
+  media = "data/BRF01.csv",
+  path = as_id(drive_folder_id)
+)
+drive_put(
+  media = "data/BRAA1.csv",
+  path = as_id(drive_folder_id)
+)
+drive_put(
+  media = "data/BRMQ1.csv",
+  path = as_id(drive_folder_id)
+)
+drive_put(
+  media = "data/BRM07.csv",
+  path = as_id(drive_folder_id)
+)
+drive_put(
+  media = "data/BRM05.csv",
+  path = as_id(drive_folder_id)
+)
