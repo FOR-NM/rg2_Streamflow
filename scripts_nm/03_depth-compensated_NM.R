@@ -177,7 +177,7 @@ for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
   # combine Date and Time columns into a new DateTime column
-  df$DateTime <- paste(df$Date.x, df$Time.x, sep = " ")
+  df$DateTime <- paste(df$Date, df$Time, sep = " ")
   
   # convert the DateTime column to POSIXct
   df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
@@ -234,7 +234,7 @@ USF20 <- depth_merged[["USF20.csv"]]
 
 #### remove duplicates... why are there duplicates? ####
 USF19 <- USF19[!duplicated(USF19), ]
-USF19 <- USF19[-6127,]
+#USF19 <- USF19[-6127,]
 
 #######################################
 #### Save merged PT files to Drive ####

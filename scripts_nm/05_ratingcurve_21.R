@@ -41,11 +41,11 @@ googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="USF21.csv"],
 USF21 <- read.csv("googledrive/USF21.csv")
 
 # convert Date column to Date type if not already
-USF21$Date <- as.Date(USF21$Date.x)
+USF21$Date <- as.Date(USF21$Date)
 # combine Date and Time columns into a new DateTime column
-USF21$DateTime <- paste(USF21$Date.x, USF21$Time.x, sep = " ")
+USF21$DateTime <- paste(USF21$Date, USF21$Time, sep = " ")
 # convert the DateTime column to POSIXct
-USF21$DateTime <- as.POSIXct(USF21$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+USF21$DateTime <- as.POSIXct(USF21$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 # filter out rows with missing stage or discharge
 rating_data <- USF21 %>% 
@@ -81,7 +81,6 @@ ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
 ###########################################
 #### Check for Log-Linear Relationship ####
 ###########################################
-
 ggplot(rating_data, aes(x = log(Baro_Cor_Lvl), y = log(Q))) +
   geom_point(color = "blue") +
   labs(title = "Log-Log Plot of Water Level vs. Discharge", 
@@ -91,7 +90,6 @@ ggplot(rating_data, aes(x = log(Baro_Cor_Lvl), y = log(Q))) +
 ####################
 #### Log model? ####
 ####################
-
 rating_data <- rating_data %>%
   mutate(Log_Stage = log(Baro_Cor_Lvl),
          Log_Discharge = log(Q.m3s))
@@ -106,23 +104,13 @@ b <- coef(log_model)[2]       # Slope
 #######################
 #### Linear model? ####
 #######################
-
 linear_model <- lm(Q.m3s ~ Baro_Cor_Lvl, data = rating_data)
 
 summary(linear_model)
 
 ###########################
-#### Polynomial model? ####
-###########################
-
-poly_model <- lm(Q.m3s ~ poly(Baro_Cor_Lvl, 2), data = rating_data)
-
-summary(poly_model)
-
-###########################
 #### Visualize models  ####
 ###########################
-
 # observed data
 plot(rating_data$Baro_Cor_Lvl, rating_data$Q.m3s,
      main = "Stage vs. Discharge",
@@ -144,7 +132,6 @@ legend("topleft", legend = c("Observed", "Log-Transformed", "Linear"),
 #######################
 #### Predicted log ####
 #######################
-
 # log-transformed model parameters
 a_log <- exp(coef(log_model)[1])  # Intercept
 b_log <- coef(log_model)[2]       # Slope
@@ -171,9 +158,8 @@ USF21 <- USF21 %>%
 plot(USF21$Baro_Cor_Lvl, USF21$Predicted_Discharge_Log, col = "red", type = "l", lwd = 2,
      xlab = "Stage (m)", ylab = "Discharge (m³/s)", main = "Discharge Predictions")
 lines(USF21$Baro_Cor_Lvl, USF21$Predicted_Discharge_Linear, col = "green", lwd = 2)
-lines(USF21$Baro_Cor_Lvl, USF21$Predicted_Discharge_Poly, col = "purple", lwd = 2)
-legend("topleft", legend = c("Log-Transformed", "Linear", "Polynomial"),
-       col = c("red", "green", "purple"), lty = 1, lwd = 2)
+legend("topleft", legend = c("Log-Transformed", "Linear"),
+       col = c("red", "green"), lty = 1, lwd = 2)
 
 
 # discharge from L/s to m3/s for entire dataset
@@ -213,7 +199,6 @@ ggplot(USF21, aes(x = Baro_Cor_Lvl)) +
 ######################################
 #### Plot and compare predictions ####
 ######################################
-
 USF21$DateTime <- as.POSIXct(USF21$DateTime)
 
 ggplot(USF21, aes(x = DateTime, y = Predicted_Discharge_Log)) +

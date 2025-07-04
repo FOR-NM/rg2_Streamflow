@@ -40,6 +40,24 @@ pt_list <- lapply(seq_along(pt_files$name), function(i) {
 names(pt_list) <- pt_files$name
 
 USF20 <- pt_list[["2024-10-24_USF20_WaterLevel.csv"]]
+AIR2 <- pt_list[["2024-10-29_USF_AIR2.csv"]]
+
+################################
+#### Format DateTime column ####
+################################
+# loop through each data frame in the list
+for (i in seq_along(pt_list)) {
+  # access the current data frame
+  df <- pt_list[[i]]
+  # combine Date and Time columns into a new DateTime column
+  df$DateTime <- paste(df$Date, df$Time, sep = " ")
+  
+  # convert the DateTime column to POSIXct
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+  # update the data frame in the list
+  pt_list[[i]] <- df
+}
+
 
 ####################################
 #### Combine data for each site ####
@@ -68,24 +86,8 @@ combined_by_site <- lapply(pt_list_by_site, function(site_data_list) {
     distinct(DateTime, .keep_all = TRUE) # remove duplicates
 })
 
-################################
-#### Format DateTime column ####
-################################
-# loop through each data frame in the list
-for (i in seq_along(combined_by_site)) {
-  # access the current data frame
-  df <- combined_by_site[[i]]
-  # combine Date and Time columns into a new DateTime column
-  df$DateTime <- paste(df$Date, df$Time, sep = " ")
-  
-  # convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
-  # update the data frame in the list
-  combined_by_site[[i]] <- df
-}
-
+AIR2 <- combined_by_site[["AIR2"]]
 USF03 <- combined_by_site[["USF03"]]
-
 
 ##############################
 #### Save combined files  ####
