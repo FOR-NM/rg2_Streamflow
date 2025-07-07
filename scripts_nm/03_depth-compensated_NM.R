@@ -98,7 +98,7 @@ googledrive::drive_download(file = discharge_csv$id[discharge_csv$name=="Q.csv"]
 Q = read.csv("googledrive/Q.csv")
 
 # convert the Date column to Date
-Q$Date <- as.Date(Q$Date, format = "%Y-%m-%d", tz = "MST")
+Q$Date <- as.Date(Q$Date, format = "%m/%d/%y", tz = "MST")
 
 # remove duplicate rows
 Q <- Q[ , -c(3, 7, 8)]
