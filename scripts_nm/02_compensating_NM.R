@@ -184,6 +184,29 @@ air_lower$DateTime <- round_date(air_lower$DateTime, unit="15 mins")
 # check if it worked!
 str(air_lower)
 
+###############################################
+#### Rounding the time for USF13 and USF16 ####
+###############################################
+USF13 <- pt_list[["USF13.csv"]]
+USF16 <- pt_list[["USF16.csv"]]
+
+# transform to datetime format
+USF13$DateTime <- as.POSIXct(USF13$DateTime,format = "%Y-%m-%d %H:%M:%S")
+USF16$DateTime <- as.POSIXct(USF16$DateTime,format = "%Y-%m-%d %H:%M:%S")
+#USF13$DateTimeNotRounded <- as.POSIXct(USF13$DateTimeNotRounded,format = "%Y-%m-%d %H:%M:%S")
+
+# round DateTime to the nearest 15-minute interval 
+USF13$DateTime <- round_date(USF13$DateTime, unit="15 mins")
+USF16$DateTime <- round_date(USF16$DateTime, unit="15 mins")
+
+# check if it worked!
+str(USF13)
+str(USF16)
+
+# return to list
+upper_list$USF13.csv <- USF13
+upper_list$USF16.csv <- USF16
+
 #####################################
 #### Change all units to meters  ####
 #####################################
@@ -231,6 +254,8 @@ str(merged_lower)
 # look at it
 USF21 <- merged_upper[["USF21.csv"]]
 USF20 <- merged_lower[["USF20.csv"]]
+USF13 <- merged_upper[["USF13.csv"]]
+USF16 <- merged_upper[["USF16.csv"]]
 
 ########################################
 #### Manual Barometric Compensation ####
@@ -273,6 +298,8 @@ isna <- is.na(compensated_lower$USF20)
 # look at it
 USF21 <- compensated_upper[["USF21.csv"]]
 USF20 <- compensated_lower[["USF20.csv"]]
+USF13 <- compensated_upper[["USF13.csv"]]
+USF16 <- compensated_upper[["USF16.csv"]]
 
 ####################################################
 #### Save merged and compensated slugs to Drive ####

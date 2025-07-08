@@ -98,7 +98,7 @@ googledrive::drive_download(file = discharge_csv$id[discharge_csv$name=="Q.csv"]
 Q = read.csv("googledrive/Q.csv")
 
 # convert the Date column to Date
-Q$Date <- as.Date(Q$Date, format = "%m/%d/%y", tz = "MST")
+Q$Date <- as.Date(Q$Date, format = "%Y-%m-%d", tz = "MST")
 
 # remove duplicate rows
 Q <- Q[ , -c(3, 7, 8)]
@@ -144,6 +144,7 @@ str(pt_list)
 # Look at it
 USF21 <- pt_list[["USF21.csv"]]
 USF20 <- pt_list[["USF20.csv"]]
+USF16 <- pt_list[["USF16.csv"]]
 
 ###################################
 #### Add DataID column to csvs ####
@@ -177,7 +178,7 @@ for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
   # combine Date and Time columns into a new DateTime column
-  df$DateTime <- paste(df$Date, df$Time, sep = " ")
+  df$DateTime <- paste(df$Date, df$Time.air, sep = " ")
   
   # convert the DateTime column to POSIXct
   df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
