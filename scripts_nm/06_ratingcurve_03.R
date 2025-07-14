@@ -133,13 +133,9 @@ lines(rating_data$Baro_Cor_Lvl, pred_log, col = "red", lwd = 2)
 pred_linear <- predict(linear_model, newdata = rating_data)
 lines(rating_data$Baro_Cor_Lvl, pred_linear, col = "green", lwd = 2)
 
-# polynomial model predictions
-pred_poly <- predict(poly_model, newdata = rating_data)
-lines(rating_data$Baro_Cor_Lvl, pred_poly, col = "purple", lwd = 2)
-
 # legend
-legend("topleft", legend = c("Observed", "Log-Transformed", "Linear", "Polynomial"),
-       col = c("blue", "red", "green", "purple"), pch = c(19, NA, NA, NA), lty = c(NA, 1, 1, 1), lwd = c(NA, 2, 2, 2))
+legend("topleft", legend = c("Observed", "Log-Transformed", "Linear"),
+       col = c("blue", "red", "green"), pch = c(19, NA, NA, NA), lty = c(NA, 1, 1, 1), lwd = c(NA, 2, 2, 2))
 
 ###################################################
 #### Extrapolate model to calculate discharge? ####

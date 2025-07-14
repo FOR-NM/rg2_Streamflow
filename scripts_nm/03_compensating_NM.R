@@ -11,6 +11,7 @@ library(googledrive)
 library(ggplot2)
 library(dplyr)
 library(lubridate) 
+library(hms)
 
 ####################################
 ## Clear folders that we will use ##
@@ -22,11 +23,11 @@ file.remove(files)
 files <- list.files(path = "merged", full.names = TRUE)
 file.remove(files)
 
-#################################
-#### Import & Visualize Data ####
-#################################
+#####################
+#### Import data ####
+#####################
 #### load data from Google drive ####
-# This is the inuse folder
+# this is the inuse folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1aUwQq19HnlyIxnMHMH3HtybzvA_Zcrwu")
 
 # list all CSV files in the folder
@@ -60,6 +61,7 @@ pt_list = pt_list[-c(1:3)]
 
 # look at it
 USF21 <- pt_list[["USF21.csv"]]
+USF20 <- pt_list[["USF20.csv"]]
 
 ##########################################################
 #### Combine and format Date and Time into one column #### 
@@ -103,6 +105,7 @@ str(pt_list)
 
 # look at it
 USF21 <- pt_list[["USF21.csv"]]
+USF20 <- pt_list[["USF20.csv"]]
 
 #####################
 #### Plot curves ####
@@ -150,10 +153,11 @@ air_upper <- air_upper %>%
   dplyr::rename(Date.air = Date,
                 Time.air = Time,
                 Level.air.kPa = LEVEL)
+
 air_lower <- air_lower %>%
-  dplyr::rename(Date.air = Date,
-                Time.air = Time,
-                Level.air.kPa = LEVEL)
+  dplyr::rename(Date.air = Date.air1,
+                Time.air = Time.air1,
+                Level.air.kPa = Level.air.kPa1_filled)
 
 ################################
 #### Format DateTime column ####
@@ -163,49 +167,46 @@ air_upper$DateTime <- paste(air_upper$Date.air, air_upper$Time.air, sep = " ")
 # convert the DateTime column to POSIXct
 air_upper$DateTime <- as.POSIXct(air_upper$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
 
-# check datetime format for lower air data
-air_lower$DateTime <- paste(air_lower$Date.air, air_lower$Time.air, sep = " ")
+# DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep                     
+air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)] <- paste(
+  air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)],"00:00:00")
+
 # convert the DateTime column to POSIXct
-air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
-####################################
-#### Rounding the time for AIR1 ####
-####################################
-# create extra columns so you don't erase original time               
-air_lower$DateTimeNotRounded <- air_lower$DateTime
+str(air_lower$DateTime)
+# If you tried to make Date.air and Time.air before, check that code
+air_lower$Date.air_new <- as.Date(air_lower$DateTime) # Extracts date
+air_lower$Time.air <- format(air_lower$DateTime, "%H:%M:%S") # Extracts time as string
 
-# transform to datetime format
-air_lower$DateTime <- as.POSIXct(air_lower$DateTime,format = "%Y-%m-%d %H:%M:%S")
-air_lower$DateTimeNotRounded <- as.POSIXct(air_lower$DateTimeNotRounded,format = "%Y-%m-%d %H:%M:%S")
-
-# round DateTime to the nearest 15-minute interval 
-air_lower$DateTime <- round_date(air_lower$DateTime, unit="15 mins")
-
-# check if it worked!
-str(air_lower)
-
-###############################################
-#### Rounding the time for USF13 and USF16 ####
-###############################################
+######################################################
+#### Rounding the time for USF13, USF16 and USF19 ####
+######################################################
 USF13 <- pt_list[["USF13.csv"]]
 USF16 <- pt_list[["USF16.csv"]]
+USF19 <- pt_list[["USF19.csv"]]
 
 # transform to datetime format
 USF13$DateTime <- as.POSIXct(USF13$DateTime,format = "%Y-%m-%d %H:%M:%S")
 USF16$DateTime <- as.POSIXct(USF16$DateTime,format = "%Y-%m-%d %H:%M:%S")
+USF19$DateTime <- as.POSIXct(USF19$DateTime,format = "%Y-%m-%d %H:%M:%S")
+
 #USF13$DateTimeNotRounded <- as.POSIXct(USF13$DateTimeNotRounded,format = "%Y-%m-%d %H:%M:%S")
 
 # round DateTime to the nearest 15-minute interval 
 USF13$DateTime <- round_date(USF13$DateTime, unit="15 mins")
 USF16$DateTime <- round_date(USF16$DateTime, unit="15 mins")
+USF19$DateTime <- round_date(USF19$DateTime, unit="15 mins")
 
 # check if it worked!
 str(USF13)
 str(USF16)
+str(USF19)
 
 # return to list
 upper_list$USF13.csv <- USF13
 upper_list$USF16.csv <- USF16
+upper_list$USF19.csv <- USF19
 
 #####################################
 #### Change all units to meters  ####
@@ -218,7 +219,7 @@ air_upper <- air_upper %>%
 ### lower site
 ## air pressure in kpa to m
 air_lower <- air_lower %>%
-  mutate(Level_air.m = (.[[4]] * 0.101972))
+  mutate(Level_air.m = (.[[9]] * 0.101972))
 
 #1 kPa = 0.101972 m in common barometric units to water column equivalent conversions
   
@@ -231,7 +232,7 @@ merged_upper <- list()
 
 # loop through each site file in upper_list
 for (site in names(upper_list)) {
-  # Merge each site data with air_upper on the DateTime column
+  # merge each site data with air_upper on the DateTime column
   merged_upper[[site]] <- merge(upper_list[[site]], air_upper, by = "DateTime", all.x = TRUE)
 }
 
@@ -244,7 +245,7 @@ merged_lower <- list()
 
 # loop through each site file in upper_list
 for (site in names(lower_list)) {
-  # Merge each site data with air_upper on the DateTime column
+  # merge each site data with air_upper on the DateTime column
   merged_lower[[site]] <- merge(lower_list[[site]], air_lower, by = "DateTime", all.x = TRUE)
 }
 
@@ -254,8 +255,6 @@ str(merged_lower)
 # look at it
 USF21 <- merged_upper[["USF21.csv"]]
 USF20 <- merged_lower[["USF20.csv"]]
-USF13 <- merged_upper[["USF13.csv"]]
-USF16 <- merged_upper[["USF16.csv"]]
 
 ########################################
 #### Manual Barometric Compensation ####
@@ -288,7 +287,7 @@ for (i in names(merged_lower)) {
   
   # compensate
   df <- df %>%
-    mutate(Baro_Cor_Lvl = (.[[7]] - .[[14]]))
+    mutate(Baro_Cor_Lvl = (.[[7]] - .[[15]]))
   
   compensated_lower[[i]] <-  df
 }
@@ -298,8 +297,6 @@ isna <- is.na(compensated_lower$USF20)
 # look at it
 USF21 <- compensated_upper[["USF21.csv"]]
 USF20 <- compensated_lower[["USF20.csv"]]
-USF13 <- compensated_upper[["USF13.csv"]]
-USF16 <- compensated_upper[["USF16.csv"]]
 
 ####################################################
 #### Save merged and compensated slugs to Drive ####

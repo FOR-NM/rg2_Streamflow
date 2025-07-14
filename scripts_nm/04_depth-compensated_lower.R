@@ -141,10 +141,11 @@ for (i in seq_along(pt_csvs$id)) {
 # check the contents of the list
 str(pt_list)
 
-# Look at it
-USF21 <- pt_list[["USF21.csv"]]
+# remove upper sites
+pt_list = pt_list[-c(2, 7:10)]
+
+# look at it
 USF20 <- pt_list[["USF20.csv"]]
-USF16 <- pt_list[["USF16.csv"]]
 
 ###################################
 #### Add DataID column to csvs ####
@@ -168,7 +169,7 @@ for (i in seq_along(pt_list)) {
 str(pt_list)
 
 # check individual data frame
-USF19 <- pt_list[["USF19.csv"]]
+USF13 <- pt_list[["USF13.csv"]]
 
 ###################################
 #### Change to DateTime format ####
@@ -181,13 +182,16 @@ for (i in seq_along(pt_list)) {
   df$DateTime <- paste(df$Date, df$Time.air, sep = " ")
   
   # convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
   # update the data frame in the list
   pt_list[[i]] <- df
 }
 
 # check the contents of the list and make sure there are no NAs
 str(pt_list)
+# check individual data frame
+USF20<- pt_list[["USF20.csv"]]
+
 
 #######################################
 #### Combine depth info to PT data ####
@@ -222,20 +226,12 @@ non_na_counts <- sapply(depth_merged, function(df) {
 # print the counts
 print(non_na_counts)
 
-USF19 <- depth_merged[["USF19.csv"]]
-USF21 <- depth_merged[["USF21.csv"]]
-USF16 <- depth_merged[["USF16.csv"]]
-USF14 <- depth_merged[["USF14.csv"]]
-USF13 <- depth_merged[["USF13.csv"]]
 USF03 <- depth_merged[["USF03.csv"]]
 USF04 <- depth_merged[["USF04.csv"]]
 USF05 <- depth_merged[["USF05.csv"]]
 USF07 <- depth_merged[["USF07.csv"]]
 USF20 <- depth_merged[["USF20.csv"]]
 
-#### remove duplicates... why are there duplicates? ####
-USF19 <- USF19[!duplicated(USF19), ]
-#USF19 <- USF19[-6127,]
 
 #######################################
 #### Save merged PT files to Drive ####
