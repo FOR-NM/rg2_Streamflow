@@ -17,8 +17,9 @@ library(dplyr)
 # list and delete all files in the folder
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
-
 files <- list.files(path = "merged", full.names = TRUE)
+file.remove(files)
+files <- list.files(path = "data", full.names = TRUE)
 file.remove(files)
 
 ####################################################

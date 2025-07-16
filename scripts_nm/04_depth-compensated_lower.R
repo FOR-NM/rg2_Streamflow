@@ -141,9 +141,6 @@ for (i in seq_along(pt_csvs$id)) {
 # check the contents of the list
 str(pt_list)
 
-# remove upper sites
-pt_list = pt_list[-c(2, 7:10)]
-
 # look at it
 USF20 <- pt_list[["USF20.csv"]]
 
@@ -169,7 +166,10 @@ for (i in seq_along(pt_list)) {
 str(pt_list)
 
 # check individual data frame
-USF13 <- pt_list[["USF13.csv"]]
+USF20 <- pt_list[["USF20.csv"]]
+
+# remove upper sites
+pt_list = pt_list[-c(6:10)]
 
 ###################################
 #### Change to DateTime format ####
@@ -179,10 +179,10 @@ for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
   # combine Date and Time columns into a new DateTime column
-  df$DateTime <- paste(df$Date, df$Time.air, sep = " ")
+  df$DateTime <- paste(df$Date, df$Time, sep = " ")
   
   # convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
   # update the data frame in the list
   pt_list[[i]] <- df
 }
@@ -191,7 +191,6 @@ for (i in seq_along(pt_list)) {
 str(pt_list)
 # check individual data frame
 USF20<- pt_list[["USF20.csv"]]
-
 
 #######################################
 #### Combine depth info to PT data ####
@@ -232,7 +231,6 @@ USF05 <- depth_merged[["USF05.csv"]]
 USF07 <- depth_merged[["USF07.csv"]]
 USF20 <- depth_merged[["USF20.csv"]]
 
-
 #######################################
 #### Save merged PT files to Drive ####
 #######################################
@@ -256,13 +254,3 @@ for (i in seq_along(depth_merged)) {
   )
 }
 
-#### then have to save USF19 separate because we edited that one ####
-write.csv(USF19, "data/USF19.csv") 
-
-drive_folder_id <- "1EswIfUWCK6bsdcs-ZrAMGW1oYKs4B0Eh"
-
-# upload file to the specified Google Drive folder
-drive_put(
-  media = "data/USF19.csv",
-  path = as_id(drive_folder_id)
-)

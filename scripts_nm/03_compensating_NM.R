@@ -57,7 +57,7 @@ str(pt_list)
 
 #### remove baro files from pt list ####
 # remove 1-3rd item in this case, check position of baro files
-pt_list = pt_list[-c(1:3)]
+pt_list = pt_list[-c(1, 3, 4)]
 
 # look at it
 USF21 <- pt_list[["USF21.csv"]]
@@ -157,27 +157,29 @@ air_upper <- air_upper %>%
 air_lower <- air_lower %>%
   dplyr::rename(Date.air = Date.air1,
                 Time.air = Time.air1,
-                Level.air.kPa = Level.air.kPa1_filled)
+                Level.air.kPa = Level.air.kPa_use)
 
 ################################
 #### Format DateTime column ####
 ################################
+# for upper
 # check datetime format for upper air data
 air_upper$DateTime <- paste(air_upper$Date.air, air_upper$Time.air, sep = " ")
 # convert the DateTime column to POSIXct
 air_upper$DateTime <- as.POSIXct(air_upper$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
 
-# DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep                     
-air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)] <- paste(
-  air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)],"00:00:00")
+# # for lower
+# # DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep                     
+# air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)] <- paste(
+#   air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)],"00:00:00")
 
 # convert the DateTime column to POSIXct
-air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d %H:%M:%S")
-
+air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d %H:%M")
 str(air_lower$DateTime)
-# If you tried to make Date.air and Time.air before, check that code
-air_lower$Date.air_new <- as.Date(air_lower$DateTime) # Extracts date
-air_lower$Time.air <- format(air_lower$DateTime, "%H:%M:%S") # Extracts time as string
+
+# # If you tried to make Date.air and Time.air before, check that code
+# air_lower$Date.air_new <- as.Date(air_lower$DateTime) # Extracts date
+# air_lower$Time.air <- format(air_lower$DateTime, "%H:%M:%S") # Extracts time as string
 
 ######################################################
 #### Rounding the time for USF13, USF16 and USF19 ####
@@ -287,7 +289,7 @@ for (i in names(merged_lower)) {
   
   # compensate
   df <- df %>%
-    mutate(Baro_Cor_Lvl = (.[[7]] - .[[15]]))
+    mutate(Baro_Cor_Lvl = (.[[7]] - .[[17]]))
   
   compensated_lower[[i]] <-  df
 }
@@ -342,3 +344,4 @@ for (i in seq_along(compensated_lower)) {
     path = as_id(drive_folder_id)
   )
 }
+
