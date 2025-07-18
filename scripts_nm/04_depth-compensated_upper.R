@@ -139,11 +139,6 @@ for (i in seq_along(pt_csvs$id)) {
   pt_list[[pt_csvs$name[i]]] <- read.csv(local_path)
 }
 
-# remove upper sites
-pt_list = pt_list[-c(1, 3:6)]
-# check the contents of the list
-str(pt_list)
-
 # Look at it
 USF21 <- pt_list[["USF21.csv"]]
 
@@ -171,6 +166,11 @@ str(pt_list)
 # check individual data frame
 USF19 <- pt_list[["USF19.csv"]]
 
+# remove upper sites
+pt_list = pt_list[-c(1:5)]
+# check the contents of the list
+str(pt_list)
+
 ###################################
 #### Change to DateTime format ####
 ###################################
@@ -192,6 +192,7 @@ str(pt_list)
 # check individual data frame
 
 USF21<- pt_list[["USF21.csv"]]
+USF16<- pt_list[["USF16.csv"]]
 
 #######################################
 #### Combine depth info to PT data ####
@@ -259,13 +260,13 @@ for (i in seq_along(depth_merged)) {
   )
 }
 
-#### then have to save USF19 separate because we edited that one ####
-write.csv(USF19, "data/USF19.csv") 
-
-drive_folder_id <- "1EswIfUWCK6bsdcs-ZrAMGW1oYKs4B0Eh"
-
-# upload file to the specified Google Drive folder
-drive_put(
-  media = "data/USF19.csv",
-  path = as_id(drive_folder_id)
-)
+# #### then have to save USF19 separate because we edited that one ####
+# write.csv(USF19, "data/USF19.csv") 
+# 
+# drive_folder_id <- "1EswIfUWCK6bsdcs-ZrAMGW1oYKs4B0Eh"
+# 
+# # upload file to the specified Google Drive folder
+# drive_put(
+#   media = "data/USF19.csv",
+#   path = as_id(drive_folder_id)
+# )

@@ -81,8 +81,6 @@ PT_sites$DateTime <- as.POSIXct(PT_sites$DateTime, format = "%Y-%m-%d %H:%M:%S")
 #######################################
 #### Load Q data from Google drive ####
 #######################################
-#### load chem data ####
-# chem data is for all the sites
 discharge <- googledrive::as_id("https://drive.google.com/drive/folders/1UkRaYRBePgY9XU90_3DvURNGGEWbCew0")
 
 # list all CSV files in the folder
@@ -143,6 +141,7 @@ str(pt_list)
 
 # look at it
 USF20 <- pt_list[["USF20.csv"]]
+USF07 <- pt_list[["USF07.csv"]]
 
 ###################################
 #### Add DataID column to csvs ####
@@ -167,6 +166,7 @@ str(pt_list)
 
 # check individual data frame
 USF20 <- pt_list[["USF20.csv"]]
+USF07 <- pt_list[["USF07.csv"]]
 
 # remove upper sites
 pt_list = pt_list[-c(6:10)]
@@ -189,8 +189,15 @@ for (i in seq_along(pt_list)) {
 
 # check the contents of the list and make sure there are no NAs
 str(pt_list)
+
+# round seconds to the 00 interval 
+USF07$DateTime <- floor_date(USF07$DateTime, unit="minute")
+# return to list
+pt_list$USF07.csv <- USF07
+
 # check individual data frame
-USF20<- pt_list[["USF20.csv"]]
+USF20 <- pt_list[["USF20.csv"]]
+USF07 <- pt_list[["USF07.csv"]]
 
 #######################################
 #### Combine depth info to PT data ####

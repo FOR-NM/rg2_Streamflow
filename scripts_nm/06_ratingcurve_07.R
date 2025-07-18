@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to calculate discharge from compensated pressure data for Santa Fe USF20 site
+## This script is to calculate discharge from compensated pressure data for Santa Fe USF07 site
 ## press Command+Option+O to collapse all sections and get an overview of the workflow
 ##==============================================================================
 
@@ -33,26 +33,26 @@ pt <- googledrive::as_id("https://drive.google.com/drive/folders/1VIonkS5GXUsn34
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
-#USF20
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="offset_USF20.csv"], 
-                            path = "googledrive/offset_USF20.csv",
+#USF07
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="offset_USF07.csv"], 
+                            path = "googledrive/offset_USF07.csv",
                             overwrite = T)
 # load file
-USF20 <- read.csv("googledrive/offset_USF20.csv")
+USF07 <- read.csv("googledrive/offset_USF07.csv")
 
 # convert Date column to Date type if not already
-USF20$Date <- as.Date(USF20$Date.x)
+USF07$Date <- as.Date(USF07$Date.x)
 # combine Date and Time columns into a new DateTime column
-USF20$DateTime <- paste(USF20$Date.x, USF20$Time, sep = " ")
+USF07$DateTime <- paste(USF07$Date.x, USF07$Time, sep = " ")
 # convert the DateTime column to POSIXct
-USF20$DateTime <- as.POSIXct(USF20$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+USF07$DateTime <- as.POSIXct(USF07$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
 
-########################################
-#### Make compensated data positive ####
-########################################
+# round seconds to the 00 interval 
+USF07$DateTime <- floor_date(USF07$DateTime, unit="minute")
+
 # filter out rows with missing stage or discharge
-rating_data <- USF20 %>% 
-  filter(!is.na(Baro_Cor_offset2), !is.na(Q))
+rating_data <- USF07 %>% 
+  filter(!is.na(Baro_Cor_offset1), !is.na(Q.m3s))
 
 # check the structure of the cleaned data
 head(rating_data)
@@ -60,23 +60,14 @@ head(rating_data)
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-ggplot(data = USF20, aes(x = DateTime, y = Baro_Cor_offset2)) +
-  geom_line() + ggtitle("USF20 compensated and offset level data")
+ggplot(data = USF07, aes(x = DateTime, y = Baro_Cor_offset1)) +
+  geom_line() + ggtitle("USF07 compensated level data")
 
 ##################################
 #### Plot Stage vs. Discharge ####
 ##################################
-ggplot(rating_data, aes(x = Baro_Cor_offset2, y = Q)) +
-  geom_point(color = "blue") +
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.m)", y = "Discharge (Q)") +
-  theme_minimal()
-
-# discharge from L/s to m3/s
-rating_data <- rating_data %>%
-  mutate(Q.m3s = Q/1000)
-
 # plot with date info
-ggplot(rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
+ggplot(rating_data, aes(x = Baro_Cor_offset1, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
@@ -85,7 +76,7 @@ ggplot(rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
 ###########################################
 #### Check for Log-Linear Relationship ####
 ###########################################
-ggplot(rating_data, aes(x = log(Baro_Cor_offset2), y = log(Q))) +
+ggplot(rating_data, aes(x = log(Baro_Cor_offset1), y = log(Q))) +
   geom_point(color = "blue") +
   labs(title = "Log-Log Plot of Water Level vs. Discharge", 
        x = "Log(Water Level)", y = "Log(Discharge)") +
@@ -95,7 +86,7 @@ ggplot(rating_data, aes(x = log(Baro_Cor_offset2), y = log(Q))) +
 #### Log model? ####
 ####################
 rating_data <- rating_data %>%
-  mutate(Log_Stage = log(Baro_Cor_offset2),
+  mutate(Log_Stage = log(Baro_Cor_offset1),
          Log_Discharge = log(Q.m3s))
 
 log_model <- lm(Log_Discharge ~ Log_Stage, data = rating_data)
@@ -108,7 +99,7 @@ b <- coef(log_model)[2]       # Slope
 #######################
 #### Linear model? ####
 #######################
-linear_model <- lm(Q.m3s ~ Baro_Cor_offset2, data = rating_data)
+linear_model <- lm(Q.m3s ~ Baro_Cor_offset1, data = rating_data)
 
 summary(linear_model)
 
@@ -116,18 +107,18 @@ summary(linear_model)
 #### Visualize models ####
 ##########################
 # observed data
-plot(rating_data$Baro_Cor_offset2, rating_data$Q.m3s,
+plot(rating_data$Baro_Cor_offset1, rating_data$Q.m3s,
      main = "Stage vs. Discharge",
      xlab = "Water Level (m)", ylab = "Discharge (m³/s)",
      pch = 19, col = "blue")
 
 # log-transformed model predictions
 pred_log <- exp(predict(log_model, newdata = rating_data))
-lines(rating_data$Baro_Cor_offset2, pred_log, col = "red", lwd = 2)
+lines(rating_data$Baro_Cor_offset1, pred_log, col = "red", lwd = 2)
 
 # linear model predictions
 pred_linear <- predict(linear_model, newdata = rating_data)
-lines(rating_data$Baro_Cor_offset2, pred_linear, col = "green", lwd = 2)
+lines(rating_data$Baro_Cor_offset1, pred_linear, col = "green", lwd = 2)
 
 # legend
 legend("topleft", legend = c("Observed", "Log-Transformed", "Linear"),
@@ -141,8 +132,8 @@ a_log <- exp(coef(log_model)[1])  # Intercept
 b_log <- coef(log_model)[2]       # Slope
 
 # predict discharge for the entire dataset
-USF20 <- USF20 %>%
-  mutate(Predicted_Discharge_Log_m3s = a_log * (Baro_Cor_offset2 ^ b_log))
+USF07 <- USF07 %>%
+  mutate(Predicted_Discharge_Log_m3s = a_log * (Baro_Cor_offset1 ^ b_log))
 
 ##########################
 #### Predicted linear ####
@@ -152,26 +143,26 @@ a_linear <- coef(linear_model)[1]  # Intercept
 b_linear <- coef(linear_model)[2]  # Slope
 
 # predict discharge for the entire dataset
-USF20 <- USF20 %>%
-  mutate(Predicted_Discharge_Linear_m3s = a_linear + b_linear * Baro_Cor_offset2)
+USF07 <- USF07 %>%
+  mutate(Predicted_Discharge_Linear_m3s = a_linear + b_linear * Baro_Cor_offset1)
 
 #############################
 #### Compare predictions ####
 #############################
 # visualize predictions
-plot(USF20$Baro_Cor_offset2, USF20$Predicted_Discharge_Log_m3s, col = "red", type = "l", lwd = 2,
+plot(USF07$Baro_Cor_offset1, USF07$Predicted_Discharge_Log_m3s, col = "red", type = "l", lwd = 2,
      xlab = "Stage (m)", ylab = "Discharge (m³/s)", main = "Discharge Predictions")
-lines(USF20$Baro_Cor_offset2, USF20$Predicted_Discharge_Linear_m3s, col = "green", lwd = 2)
+lines(USF07$Baro_Cor_offset1, USF07$Predicted_Discharge_Linear_m3s, col = "green", lwd = 2)
 legend("topleft", legend = c("Log-Transformed", "Linear"),
        col = c("red", "green"), lty = 1, lwd = 2)
 
 
 # discharge from L/s to m3/s for entire dataset
-USF20 <- USF20 %>%
+USF07 <- USF07 %>%
   mutate(Q.m3s = Q/1000)
 
 # compare Predicted vs. Observed Discharge
-ggplot(USF20, aes(x = Q.m3s)) +
+ggplot(USF07, aes(x = Q.m3s)) +
   geom_point(aes(y = Predicted_Discharge_Log_m3s, color = "Log Model")) +
   geom_point(aes(y = Predicted_Discharge_Linear_m3s, color = "Linear Model")) +
   labs(
@@ -183,13 +174,13 @@ ggplot(USF20, aes(x = Q.m3s)) +
   theme_minimal()
 
 # residuals
-USF20 <- USF20 %>%
+USF07 <- USF07 %>%
   mutate(
     Residual_Log = Q.m3s - Predicted_Discharge_Log_m3s,
     Residual_Linear = Q.m3s - Predicted_Discharge_Linear_m3s
   )
 
-ggplot(USF20, aes(x = Baro_Cor_offset2)) +
+ggplot(USF07, aes(x = Baro_Cor_offset1)) +
   geom_point(aes(y = Residual_Log, color = "Log Model")) +
   geom_point(aes(y = Residual_Linear, color = "Linear Model")) +
   labs(
@@ -203,15 +194,15 @@ ggplot(USF20, aes(x = Baro_Cor_offset2)) +
 ######################################
 #### Plot and compare predictions ####
 ######################################
-USF20$DateTime <- as.POSIXct(USF20$DateTime)
+USF07$DateTime <- as.POSIXct(USF07$DateTime)
 
-ggplot(USF20, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) +
+ggplot(USF07, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) +
   geom_point(color = "blue") +
   labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggplot(USF20, aes(x = DateTime, y = Predicted_Discharge_Linear_m3s)) +
+ggplot(USF07, aes(x = DateTime, y = Predicted_Discharge_Linear_m3s)) +
   geom_point(color = "blue") +
   labs(title = "Predicted Discharge (Linear)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "2 week") +
@@ -220,13 +211,13 @@ ggplot(USF20, aes(x = DateTime, y = Predicted_Discharge_Linear_m3s)) +
 ###################
 #### Save file ####
 ###################
-write.csv(USF20, "data/discharge_USF20.csv")
+write.csv(USF07, "data/discharge_USF07.csv")
 
 # this is the "predicted" folder 
 drive_folder_id <- "1fPDNinUQ3pCFFQXJ1dtLGbqEawyTmPUx"
 
 # upload file to the specified Google Drive folder
 drive_put(
-  media = "data/discharge_USF20.csv",
+  media = "data/discharge_USF07.csv",
   path = as_id(drive_folder_id)
 )

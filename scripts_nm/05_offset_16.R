@@ -56,11 +56,10 @@ rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-# filter out the one row with negative baro lvl value 
-USF16 <- USF16 %>% 
-  filter(Baro_Cor_Lvl >= 0)
-
 ggplot(data = USF16, aes(x = DateTime, y = Baro_Cor_Lvl)) +
+  geom_line() + ggtitle("USF16 compensated level data")
+
+ggplot(data = USF16, aes(x = DateTime, y = LELVEL.m)) +
   geom_line() + ggtitle("USF16 compensated level data")
 
 ##################################
@@ -97,19 +96,60 @@ ggplot(USF16, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_vline(xintercept = as.POSIXct("2024-10-29"), linetype="dashed", color="red") +
   labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
 
-####################################################
-#### Remove times where PT was out of the water ####
-####################################################
-time1 <- as.POSIXct("2024-10-29 12:30:00")
-# time2 <- as.POSIXct("2024-10-29 10:30:00")
-# time3 <- as.POSIXct("2025-06-05 10:15:00")
-# 
+############################
+#### look at it closely ####
+############################
+#take the subset of the data for when PT was moved
+Date1 <- as.Date("2024-10-29", "%Y-%m-%d")
+Date2 <- as.Date("2024-10-30", "%Y-%m-%d")
+subdf <- USF16[USF16$DateTime < Date2 & USF16$DateTime > Date1,]
+
+# sheet says we got to the site at 13:15:00
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-10-29 13:00:00"), linetype="dashed", color="red") 
+
+#take the subset of the data for when PT was moved
+Date1 <- as.Date("2024-12-09", "%Y-%m-%d")
+Date2 <- as.Date("2024-12-23", "%Y-%m-%d")
+subdf <- USF16[USF16$DateTime < Date2 & USF16$DateTime > Date1,]
+
+# sheet says we got to the site at 13:15:00
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-10-29 13:00:00"), linetype="dashed", color="red") 
+
+##############################################################
+#### Remove times where PT was out of the water or errors ####
+##############################################################
+# remove what looks like error section in January and part of February
+Date1 <- as.Date("2024-12-09", "%Y-%m-%d")
+Date2 <- as.Date("2024-12-23", "%Y-%m-%d")
+
+USF16$Baro_Cor_Lvl[USF16$DateTime >= Date1 & USF16$DateTime <= Date2] <- NA
+
+ggplot(data = USF16, aes(x = DateTime, y = Baro_Cor_Lvl)) +
+  geom_line() + ggtitle("USF16 compensated level data")
+
+# filter out the one row with negative baro lvl value 
+USF16 <- USF16 %>% 
+  filter(Baro_Cor_Lvl >= 0)
+# filter out the two outliers. PT out of water?
+USF16 <- USF16 %>% 
+  mutate(Baro_Cor_Lvl = ifelse(Baro_Cor_Lvl >= 0.09, NA, Baro_Cor_Lvl))
+
+ggplot(data = USF16, aes(x = DateTime, y = Baro_Cor_Lvl)) +
+  geom_line() + ggtitle("USF16 compensated level data")
+
+# remove what looks like error section
+time1 <- as.POSIXct("2024-10-29 13:00:00")
+time2 <- as.POSIXct("2024-10-29 12:30:00")
+time3 <- as.POSIXct("2024-10-29 13:15:00")
+
 USF16 <- USF16 %>%
   mutate(Baro_Cor_Lvl = ifelse(DateTime == time1, NA, Baro_Cor_Lvl))
-# USF16 <- USF16 %>%
-#   mutate(Baro_Cor_Lvl = ifelse(DateTime == time2, NA, Baro_Cor_Lvl))
-# USF16 <- USF16 %>%
-#   mutate(Baro_Cor_Lvl = ifelse(DateTime == time3, NA, Baro_Cor_Lvl))
+USF16 <- USF16 %>%
+  mutate(Baro_Cor_Lvl = ifelse(DateTime == time2, NA, Baro_Cor_Lvl))
+USF16 <- USF16 %>%
+  mutate(Baro_Cor_Lvl = ifelse(DateTime == time3, NA, Baro_Cor_Lvl))
 
 # plot after cleaning
 ggplot(USF16, aes(x = DateTime, y = Baro_Cor_Lvl)) +
@@ -122,7 +162,7 @@ ggplot(USF16, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 #### Find the average Baro_Cor_Lvl TWO HOURS before and after the move ####
 ###########################################################################
 # first move correction (2024-10-29 10:30:00)
-move_time1 <- as.POSIXct("2024-10-29 14:15:00")
+move_time1 <- as.POSIXct("2024-10-29 13:00:00")
 
 before_move1 <- USF16 %>%
   filter(DateTime >= (move_time1 - hours(2)) & DateTime < move_time1) %>%
@@ -212,6 +252,16 @@ ggplot(USF16_october, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 ggplot(USF16_october, aes(x = DateTime, y = Baro_Cor_offset1)) +
   geom_line() +
   labs(title = "Baro_Cor_offset1", x = "Date", y = "Water Level (m)")
+
+#take the subset of the data for October when PT was moved
+Date1 <- as.Date("2024-10-29", "%Y-%m-%d")
+Date2 <- as.Date("2024-10-30", "%Y-%m-%d")
+subdf <- USF16[USF16$DateTime < Date2 & USF16$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-10-29 13:15:00"), linetype="dashed", color="red") 
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset1)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-10-29 15:00:00"), linetype="dashed", color="red") 
 
 ###################
 #### Save file ####

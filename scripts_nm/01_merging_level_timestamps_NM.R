@@ -58,7 +58,6 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
 }
 
-
 ####################################
 #### Combine data for each site ####
 ####################################
@@ -88,6 +87,7 @@ combined_by_site <- lapply(pt_list_by_site, function(site_data_list) {
 
 AIR2 <- combined_by_site[["AIR2"]]
 USF03 <- combined_by_site[["USF03"]]
+USF07 <- combined_by_site[["USF07"]]
 
 ##############################
 #### Save combined files  ####

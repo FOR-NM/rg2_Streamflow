@@ -27,7 +27,7 @@ file.remove(files)
 #### Import data ####
 #####################
 #### load data from Google drive ####
-# this is the inuse folder
+# this is the merged days folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1aUwQq19HnlyIxnMHMH3HtybzvA_Zcrwu")
 
 # list all CSV files in the folder
@@ -55,13 +55,10 @@ for (i in seq_along(pt_csvs$id)) {
 # check the contents of the list
 str(pt_list)
 
-#### remove baro files from pt list ####
-# remove 1-3rd item in this case, check position of baro files
-pt_list = pt_list[-c(1, 3, 4)]
-
 # look at it
 USF21 <- pt_list[["USF21.csv"]]
 USF20 <- pt_list[["USF20.csv"]]
+USF07 <- pt_list[["USF07.csv"]]
 
 ##########################################################
 #### Combine and format Date and Time into one column #### 
@@ -106,6 +103,7 @@ str(pt_list)
 # look at it
 USF21 <- pt_list[["USF21.csv"]]
 USF20 <- pt_list[["USF20.csv"]]
+USF07 <- pt_list[["USF07.csv"]]
 
 #####################
 #### Plot curves ####
@@ -144,6 +142,21 @@ lower_list <- append(lower_list, c(pt_list["USF03.csv"], pt_list["USF04.csv"], p
 #########################
 #### Get air pt data ####
 #########################
+# this is the merged days folder
+pt_air <- googledrive::as_id("https://drive.google.com/drive/folders/1BsASDFjFci_7mndSKj6T5uXKxW1UZoaP")
+# list all CSV files in the folder
+pt_csvs_air <- googledrive::drive_ls(path = pt_air, type = "csv")
+# call the specific file you want
+googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="AIR1.csv"], 
+                            path = "googledrive/AIR1.csv",
+                            overwrite = T)
+googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="AIR2.csv"], 
+                            path = "googledrive/AIR2.csv",
+                            overwrite = T)
+googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="AIR3.csv"], 
+                            path = "googledrive/AIR3.csv",
+                            overwrite = T)
+
 air_upper <- read.csv("googledrive/AIR2.csv")
 air_middle <-  read.csv("googledrive/AIR3.csv")
 air_lower <- read.csv("googledrive/AIR1.csv")
@@ -168,27 +181,29 @@ air_upper$DateTime <- paste(air_upper$Date.air, air_upper$Time.air, sep = " ")
 # convert the DateTime column to POSIXct
 air_upper$DateTime <- as.POSIXct(air_upper$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
 
-# # for lower
-# # DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep                     
-# air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)] <- paste(
-#   air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)],"00:00:00")
+# for lower
+# DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep
+air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)] <- paste(
+  air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)],"00:00:00")
 
 # convert the DateTime column to POSIXct
 air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d %H:%M")
 str(air_lower$DateTime)
 
-# # If you tried to make Date.air and Time.air before, check that code
-# air_lower$Date.air_new <- as.Date(air_lower$DateTime) # Extracts date
-# air_lower$Time.air <- format(air_lower$DateTime, "%H:%M:%S") # Extracts time as string
+# If you tried to make Date.air and Time.air before, check that code
+air_lower$Date.air_new <- as.Date(air_lower$DateTime) # Extracts date
+air_lower$Time.air <- format(air_lower$DateTime, "%H:%M:%S") # Extracts time as string
 
-######################################################
-#### Rounding the time for USF13, USF16 and USF19 ####
-######################################################
-USF13 <- pt_list[["USF13.csv"]]
-USF16 <- pt_list[["USF16.csv"]]
-USF19 <- pt_list[["USF19.csv"]]
+#############################################################
+#### Rounding the time for USF07, USF13, USF16 and USF19 ####
+#############################################################
+USF07 <- lower_list[["USF07.csv"]]
+USF13 <- upper_list[["USF13.csv"]]
+USF16 <- upper_list[["USF16.csv"]]
+USF19 <- upper_list[["USF19.csv"]]
 
 # transform to datetime format
+USF07$DateTime <- as.POSIXct(USF07$DateTime,format = "%Y-%m-%d %H:%M:%S")
 USF13$DateTime <- as.POSIXct(USF13$DateTime,format = "%Y-%m-%d %H:%M:%S")
 USF16$DateTime <- as.POSIXct(USF16$DateTime,format = "%Y-%m-%d %H:%M:%S")
 USF19$DateTime <- as.POSIXct(USF19$DateTime,format = "%Y-%m-%d %H:%M:%S")
@@ -196,19 +211,18 @@ USF19$DateTime <- as.POSIXct(USF19$DateTime,format = "%Y-%m-%d %H:%M:%S")
 #USF13$DateTimeNotRounded <- as.POSIXct(USF13$DateTimeNotRounded,format = "%Y-%m-%d %H:%M:%S")
 
 # round DateTime to the nearest 15-minute interval 
+USF07$DateTime <- floor_date(USF07$DateTime, unit="minute")
 USF13$DateTime <- round_date(USF13$DateTime, unit="15 mins")
 USF16$DateTime <- round_date(USF16$DateTime, unit="15 mins")
 USF19$DateTime <- round_date(USF19$DateTime, unit="15 mins")
 
-# check if it worked!
-str(USF13)
-str(USF16)
-str(USF19)
-
 # return to list
+lower_list$USF07.csv <- USF07
 upper_list$USF13.csv <- USF13
 upper_list$USF16.csv <- USF16
 upper_list$USF19.csv <- USF19
+
+USF07 <- lower_list[["USF07.csv"]]
 
 #####################################
 #### Change all units to meters  ####
@@ -221,7 +235,7 @@ air_upper <- air_upper %>%
 ### lower site
 ## air pressure in kpa to m
 air_lower <- air_lower %>%
-  mutate(Level_air.m = (.[[9]] * 0.101972))
+  mutate(Level_air.m = (.[[11]] * 0.101972))
 
 #1 kPa = 0.101972 m in common barometric units to water column equivalent conversions
   
@@ -257,6 +271,7 @@ str(merged_lower)
 # look at it
 USF21 <- merged_upper[["USF21.csv"]]
 USF20 <- merged_lower[["USF20.csv"]]
+USF07 <- merged_lower[["USF07.csv"]]
 
 ########################################
 #### Manual Barometric Compensation ####
@@ -280,6 +295,9 @@ for (i in names(merged_upper)) {
 }
 
 ## lower
+merged_lower[["USF07.csv"]][["DateTime"]] <- floor_date(merged_lower[["USF07.csv"]][["DateTime"]], unit="minute")
+USF07 <- merged_lower[["USF07.csv"]]
+
 # create empty compensated list
 compensated_lower <- list()
 
@@ -289,7 +307,7 @@ for (i in names(merged_lower)) {
   
   # compensate
   df <- df %>%
-    mutate(Baro_Cor_Lvl = (.[[7]] - .[[17]]))
+    mutate(Baro_Cor_Lvl = (.[[7]] - .[[19]]))
   
   compensated_lower[[i]] <-  df
 }
@@ -299,6 +317,7 @@ isna <- is.na(compensated_lower$USF20)
 # look at it
 USF21 <- compensated_upper[["USF21.csv"]]
 USF20 <- compensated_lower[["USF20.csv"]]
+USF07 <- compensated_lower[["USF07.csv"]]
 
 ####################################################
 #### Save merged and compensated slugs to Drive ####
