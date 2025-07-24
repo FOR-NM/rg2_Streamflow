@@ -113,22 +113,6 @@ for (i in seq_along(pt_list)) {
   print(p)
 }
 
-####################################################
-#### Prep data for merging PT with Air pressure ####
-####################################################
-# list of site names
-uppersites <- c("DVWT3","DVWT1","DVNWT5","DVNWT4","DVNWT3","DVMS5","DVMS1","DVET")
-lowersites <- c("DVSB1", "DVSB2")
-
-# create an empty lists to store the files
-upper_list <- list()
-lower_list <- list()
-
-# separate sites in lists
-upper_list <- append(upper_list, c(pt_list["DVWT3.csv"], pt_list["DVWT1.csv"], pt_list["DVNWT5.csv"], pt_list["DVNWT4.csv"], 
-                                   pt_list["DVNWT3.csv"], pt_list["DVMS5.csv"], pt_list["DVMS1.csv"], pt_list["DVET.csv"]))
-lower_list <- append(lower_list, c(pt_list["DVSB1.csv"], pt_list["DVSB2.csv"]))
-
 #########################
 #### Get air pt data ####
 #########################
@@ -154,6 +138,15 @@ air_upper <- air_upper %>%
                 Level.air.kPa = LEVEL)
 air_lower <- air_lower %>%
   dplyr::rename(Level_air.m = LEVEL.m)
+
+#######################
+#### Plot air data ####
+#######################
+ggplot(data = air_upper, aes(x = DateTime, y = Level_air.m)) + 
+  geom_line() + ggtitle("Air upper") 
+
+ggplot(data = air_lower, aes(x = DateTime, y = Level_air.m)) + 
+  geom_line() + ggtitle("Air lower") 
 
 ################################
 #### Format DateTime column ####
@@ -214,7 +207,23 @@ air_upper <- air_upper %>%
   mutate(Level_air.m = (.[[4]] * 0.101972))
 
 #1 kPa = 0.101972 m in common barometric units to water column equivalent conversions
-  
+
+####################################################
+#### Prep data for merging PT with Air pressure ####
+####################################################
+# list of site names
+uppersites <- c("DVWT3","DVWT1","DVNWT5","DVNWT4","DVNWT3","DVMS5","DVMS1","DVET")
+lowersites <- c("DVSB1", "DVSB2")
+
+# create an empty lists to store the files
+upper_list <- list()
+lower_list <- list()
+
+# separate sites in lists
+upper_list <- append(upper_list, c(pt_list["DVWT3.csv"], pt_list["DVWT1.csv"], pt_list["DVNWT5.csv"], pt_list["DVNWT4.csv"], 
+                                   pt_list["DVNWT3.csv"], pt_list["DVMS5.csv"], pt_list["DVMS1.csv"], pt_list["DVET.csv"]))
+lower_list <- append(lower_list, c(pt_list["DVSB1.csv"], pt_list["DVSB2.csv"]))
+
 ######################################
 #### Merging PT with Air pressure ####
 ######################################
@@ -265,14 +274,10 @@ for (i in names(merged_upper)) {
   
   # compensate
   df <- df %>%
-    mutate(Baro_Cor_Lvl = (.[[7]] - .[[13]]))
+    mutate(Baro_Cor_Lvl = (df$LEVEL.m - df$Level_air.m))
   
   compensated_upper[[i]] <-  df
 }
-
-## lower
-merged_lower[["USF07.csv"]][["DateTime"]] <- floor_date(merged_lower[["USF07.csv"]][["DateTime"]], unit="minute")
-USF07 <- merged_lower[["USF07.csv"]]
 
 # create empty compensated list
 compensated_lower <- list()
@@ -283,17 +288,17 @@ for (i in names(merged_lower)) {
   
   # compensate
   df <- df %>%
-    mutate(Baro_Cor_Lvl = (.[[7]] - .[[19]]))
+    mutate(Baro_Cor_Lvl = (df$LEVEL.m - df$Level_air.m))
   
   compensated_lower[[i]] <-  df
 }
 
-isna <- is.na(compensated_lower$USF20)
+isna <- is.na(compensated_lower$DVSB1.csv)
 
 # look at it
-USF21 <- compensated_upper[["USF21.csv"]]
-USF20 <- compensated_lower[["USF20.csv"]]
-USF07 <- compensated_lower[["USF07.csv"]]
+DVSB1 <- compensated_lower[["DVSB1.csv"]]
+DVWT3 <- compensated_upper[["DVWT3.csv"]]
+DVNWT5 <- compensated_upper[["DVNWT5.csv"]]
 
 ####################################################
 #### Save merged and compensated slugs to Drive ####
@@ -310,7 +315,7 @@ for (i in seq_along(compensated_upper)) {
   # define the local folder path and the target folder ID in Google Drive
   file <- paste0("data/", names(compensated_upper)[i])
   # this is the "compensated" folder
-  drive_folder_id <- "1VsT7hirl5OHIGhrrc3b7dxPpSqr1wNC0"
+  drive_folder_id <- "15HqdL5fw1BDTt_X6xWsm__GTJcZCIy8w"
   
   # upload file to the specified Google Drive folder
   drive_put(
@@ -331,7 +336,7 @@ for (i in seq_along(compensated_lower)) {
   # define the local folder path and the target folder ID in Google Drive
   file <- paste0("data/", names(compensated_lower)[i])
   # this is the "compensated" folder
-  drive_folder_id <- "1VsT7hirl5OHIGhrrc3b7dxPpSqr1wNC0"
+  drive_folder_id <- "15HqdL5fw1BDTt_X6xWsm__GTJcZCIy8w"
   
   # upload file to the specified Google Drive folder
   drive_put(
