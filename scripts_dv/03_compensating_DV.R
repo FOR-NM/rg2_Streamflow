@@ -187,6 +187,18 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
 }
 
+## make a column for the new rounded time
+for (i in seq_along(pt_list)) {
+  # access the current data frame
+  df <- pt_list[[i]]
+  # time only
+  df <- df %>%
+    mutate(TimeOnly = format(DateTime, "%H:%M:%S"))
+  
+  # update the data frame in the list
+  pt_list[[i]] <- df
+}
+
 # look at it
 DVWT3 <- pt_list[["DVWT3.csv"]]
 DVSB1 <- pt_list[["DVSB1.csv"]]
