@@ -60,7 +60,7 @@ ggplot(data = USF03, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_line() + ggtitle("USF03 compensated level data")
 
 ggplot(data = USF03, aes(x = DateTime, y = LELVEL.m)) +
-  geom_line() + ggtitle("USF03 compensated level data")
+  geom_line() + ggtitle("USF03 level data")
 
 ##################################
 #### Plot Stage vs. Discharge ####
@@ -115,6 +115,27 @@ subdf <- USF03[USF03$DateTime < Date2 & USF03$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-06-19 10:30:00"), linetype="dashed", color="red")
 
+Date1 <- as.Date("2024-12-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-01-14", "%Y-%m-%d")
+subdf <- USF03[USF03$DateTime < Date2 & USF03$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-06-19 10:30:00"), linetype="dashed", color="red")
+
+Date1 <- as.Date("2025-02-13", "%Y-%m-%d")
+Date2 <- as.Date("2025-02-14", "%Y-%m-%d")
+subdf <- USF03[USF03$DateTime < Date2 & USF03$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-06-19 10:30:00"), linetype="dashed", color="red")
+
+Date1 <- as.Date("2025-02-13", "%Y-%m-%d")
+Date2 <- as.Date("2025-03-30", "%Y-%m-%d")
+subdf <- USF03[USF03$DateTime < Date2 & USF03$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-06-19 10:30:00"), linetype="dashed", color="red")
+
 ####################################################
 #### Remove times where PT was out of the water ####
 ####################################################
@@ -135,6 +156,18 @@ ggplot(USF03, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_vline(xintercept = as.POSIXct("2024-06-19"), linetype="dashed", color="red") +
   geom_vline(xintercept = as.POSIXct("2024-10-24"), linetype="dashed", color="red") +
   labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
+
+# remove what looks like error section in January and part of February
+Date1 <- as.Date("2024-12-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-01-13", "%Y-%m-%d")
+USF03$Baro_Cor_Lvl[USF03$DateTime >= Date1 & USF03$DateTime <= Date2] <- NA
+
+Date1 <- as.Date("2025-02-13", "%Y-%m-%d")
+Date2 <- as.Date("2025-02-14", "%Y-%m-%d")
+USF03$Baro_Cor_Lvl[USF03$DateTime >= Date1 & USF03$DateTime <= Date2] <- NA
+
+ggplot(data = USF03, aes(x = DateTime, y = Baro_Cor_Lvl)) +
+  geom_line() + ggtitle("USF03 compensated level data")
 
 ###########################################################################
 #### Find the average Baro_Cor_Lvl TWO HOURS before and after the move ####

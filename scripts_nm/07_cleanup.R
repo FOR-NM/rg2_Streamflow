@@ -225,6 +225,31 @@ for (i in seq_along(smooth_df)) {
   print(p)
 }
 
+#######################################
+#### Save merged PT files to Drive ####
+#######################################
+# loop through each data frame in the list
+for (i in seq_along(smooth_df)) {
+  # Access the current data frame
+  df <- smooth_df[[i]]
+  
+  # save new data frame
+  write.csv(df, paste0("data/", names(smooth_df)[i]), row.names=FALSE, quote=FALSE)
+  
+  # define the local folder path and the target folder ID in Google Drive
+  file <- paste0("data/", names(smooth_df)[i])
+  # this is the "depth" folder
+  drive_folder_id <- "1y2bMWCS48cROq_BO5HkaNWmFIxdJUON0"
+  
+  # upload file to the specified Google Drive folder
+  drive_put(
+    media = file,
+    path = as_id(drive_folder_id)
+  )
+}
+
+
+
 ###############################
 #### Do just one at a time ####
 ###############################

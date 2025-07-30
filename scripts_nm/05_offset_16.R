@@ -60,7 +60,7 @@ ggplot(data = USF16, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_line() + ggtitle("USF16 compensated level data")
 
 ggplot(data = USF16, aes(x = DateTime, y = LELVEL.m)) +
-  geom_line() + ggtitle("USF16 compensated level data")
+  geom_line() + ggtitle("USF16 level data")
 
 ##################################
 #### Plot Stage vs. Discharge ####

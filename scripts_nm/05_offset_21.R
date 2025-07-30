@@ -56,12 +56,11 @@ rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-# filter out the one row with negative baro lvl value 
-USF21 <- USF21 %>% 
-  filter(Baro_Cor_Lvl >= 0)
-
 ggplot(data = USF21, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_line() + ggtitle("USF21 compensated level data")
+
+ggplot(data = USF21, aes(x = DateTime, y = LEVEL)) +
+  geom_line() + ggtitle("USF21 level data")
 
 ##################################
 #### Plot Stage vs. Discharge ####
@@ -76,6 +75,7 @@ ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
+
 
 # pt depth from cm to m
 rating_data <- rating_data %>%
@@ -97,6 +97,14 @@ ggplot(USF21, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_vline(xintercept = as.POSIXct("2024-10-29"), linetype="dashed", color="red") +
   labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
 
+# look at it closely, this point is off
+Date1 <- as.Date("2025-05-06", "%Y-%m-%d")
+Date2 <- as.Date("2025-05-07", "%Y-%m-%d")
+subdf <- USF21[USF21$DateTime < Date2 & USF21$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-06-19 10:30:00"), linetype="dashed", color="red")
+
 ####################################################
 #### Remove times where PT was out of the water ####
 ####################################################
@@ -117,6 +125,13 @@ ggplot(USF21, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_vline(xintercept = as.POSIXct("2025-06-05"), linetype="dashed", color="red") +
   geom_vline(xintercept = as.POSIXct("2024-10-29"), linetype="dashed", color="red") +
   labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
+
+Date1 <- as.Date("2025-05-06", "%Y-%m-%d")
+Date2 <- as.Date("2025-05-07", "%Y-%m-%d")
+USF21$Baro_Cor_Lvl[USF21$DateTime >= Date1 & USF21$DateTime <= Date2] <- NA
+
+ggplot(data = USF21, aes(x = DateTime, y = Baro_Cor_Lvl)) +
+  geom_line() + ggtitle("USF21 compensated level data")
 
 ###########################################################################
 #### Find the average Baro_Cor_Lvl TWO HOURS before and after the move ####

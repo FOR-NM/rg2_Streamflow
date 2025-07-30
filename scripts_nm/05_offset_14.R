@@ -56,12 +56,15 @@ rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-# filter out the one row with negative baro lvl value 
-USF14 <- USF14 %>% 
-  filter(Baro_Cor_Lvl >= 0)
+# # filter out the one row with negative baro lvl value 
+# USF14 <- USF14 %>% 
+#   filter(Baro_Cor_Lvl >= 0)
 
 ggplot(data = USF14, aes(x = DateTime, y = Baro_Cor_Lvl )) +
   geom_line() + ggtitle("USF14 compensated level data")
+ggplot(data = USF14, aes(x = DateTime, y = LEVEL )) +
+  geom_line() + ggtitle("USF14 compensated level data")
+
 
 ##################################
 #### Plot Stage vs. Discharge ####
@@ -97,9 +100,28 @@ ggplot(USF14, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_vline(xintercept = as.POSIXct("2024-10-29"), linetype="dashed", color="red") +
   labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
 
+#take the subset of the data for when PT was moved
+Date1 <- as.Date("2024-12-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-01-15", "%Y-%m-%d")
+subdf <- USF14[USF14$DateTime < Date2 & USF14$DateTime > Date1,]
+
+# sheet says we got to the site at 13:15:00
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-10-29 13:00:00"), linetype="dashed", color="red") 
+
+
 ####################################################
 #### Remove times where PT was out of the water ####
 ####################################################
+# remove what looks like error section in January and part of February
+Date1 <- as.Date("2024-12-08", "%Y-%m-%d")
+Date2 <- as.Date("2025-01-06", "%Y-%m-%d")
+
+USF14$Baro_Cor_Lvl[USF14$DateTime >= Date1 & USF14$DateTime <= Date2] <- NA
+
+ggplot(data = USF14, aes(x = DateTime, y = Baro_Cor_Lvl)) +
+  geom_line() + ggtitle("USF14 compensated level data")
+
 time1 <- as.POSIXct("2024-10-29 10:45:00")
 time2 <- as.POSIXct("2024-10-29 11:00:00")
 # time3 <- as.POSIXct("2024-10-29 12:30:00")
@@ -225,3 +247,4 @@ drive_put(
   media = "data/offset_USF14.csv",
   path = as_id(drive_folder_id)
 )
+
