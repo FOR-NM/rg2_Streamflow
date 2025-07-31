@@ -59,6 +59,9 @@ rating_data <- rating_data %>%
 USF04 <- USF04 %>%
   mutate(Q..L.s. = ifelse(Q..L.s. < 0, NA, Q..L.s.))
 
+# make compensated backup 
+USF04$Baro_backup <- USF04$Baro_Cor_Lvl
+
 ########################################
 #### Plot pressure compensated data ####
 ########################################

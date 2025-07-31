@@ -53,6 +53,9 @@ rating_data <- USF16 %>%
 USF16$Q..L.s. <- as.numeric(USF16$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 
+# make compensated backup 
+USF16$Baro_backup <- USF16$Baro_Cor_Lvl
+
 ########################################
 #### Plot pressure compensated data ####
 ########################################
@@ -61,6 +64,9 @@ ggplot(data = USF16, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 
 ggplot(data = USF16, aes(x = DateTime, y = LELVEL.m)) +
   geom_line() + ggtitle("USF16 level data")
+
+ggplot(data = USF16, aes(x = DateTime, y = TEMPERATURE.x)) +
+  geom_line() + ggtitle("USF16 temperature data")
 
 ##################################
 #### Plot Stage vs. Discharge ####
@@ -154,8 +160,8 @@ USF16 <- USF16 %>%
 # plot after cleaning
 ggplot(USF16, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_line() +
-  geom_vline(xintercept = as.POSIXct("2025-06-05"), linetype="dashed", color="red") +
-  geom_vline(xintercept = as.POSIXct("2024-10-29"), linetype="dashed", color="red") +
+  #geom_vline(xintercept = as.POSIXct("2025-06-05"), linetype="dashed", color="red") +
+  #geom_vline(xintercept = as.POSIXct("2024-10-29"), linetype="dashed", color="red") +
   labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
 
 ###########################################################################

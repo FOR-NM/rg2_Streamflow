@@ -53,6 +53,8 @@ rating_data <- USF19 %>%
 USF19$Q..L.s. <- as.numeric(USF19$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 
+# make compensated backup 
+USF19$Baro_backup <- USF19$Baro_Cor_Lvl
 ########################################
 #### Plot pressure compensated data ####
 ########################################
@@ -62,6 +64,10 @@ rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 
 ggplot(data = USF19, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_line() + ggtitle("USF19 compensated level data")
+ggplot(data = USF19, aes(x = DateTime, y = LELVEL.m)) +
+  geom_line() + ggtitle("USF19  level data")
+ggplot(data = USF19, aes(x = DateTime, y = TEMPERATURE.x)) +
+  geom_line() + ggtitle("USF19 temperarure data")
 
 ##################################
 #### Plot Stage vs. Discharge ####

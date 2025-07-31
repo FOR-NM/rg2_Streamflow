@@ -53,6 +53,9 @@ rating_data <- USF21 %>%
 USF21$Q..L.s. <- as.numeric(USF21$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 
+# make compensated backup 
+USF21$Baro_backup <- USF21$Baro_Cor_Lvl
+
 ########################################
 #### Plot pressure compensated data ####
 ########################################
@@ -61,6 +64,9 @@ ggplot(data = USF21, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 
 ggplot(data = USF21, aes(x = DateTime, y = LEVEL)) +
   geom_line() + ggtitle("USF21 level data")
+
+ggplot(data = USF21, aes(x = DateTime, y = TEMPERATURE.x)) +
+  geom_line() + ggtitle("USF21 temperature data")
 
 ##################################
 #### Plot Stage vs. Discharge ####
@@ -105,6 +111,14 @@ subdf <- USF21[USF21$DateTime < Date2 & USF21$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-06-19 10:30:00"), linetype="dashed", color="red")
 
+# look at it closely, this point is off
+Date1 <- as.Date("2024-12-10", "%Y-%m-%d")
+Date2 <- as.Date("2024-12-22", "%Y-%m-%d")
+subdf <- USF21[USF21$DateTime < Date2 & USF21$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-06-19 10:30:00"), linetype="dashed", color="red")
+
 ####################################################
 #### Remove times where PT was out of the water ####
 ####################################################
@@ -128,6 +142,13 @@ ggplot(USF21, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 
 Date1 <- as.Date("2025-05-06", "%Y-%m-%d")
 Date2 <- as.Date("2025-05-07", "%Y-%m-%d")
+USF21$Baro_Cor_Lvl[USF21$DateTime >= Date1 & USF21$DateTime <= Date2] <- NA
+
+ggplot(data = USF21, aes(x = DateTime, y = Baro_Cor_Lvl)) +
+  geom_line() + ggtitle("USF21 compensated level data")
+
+Date1 <- as.Date("2024-12-10", "%Y-%m-%d")
+Date2 <- as.Date("2024-12-22", "%Y-%m-%d")
 USF21$Baro_Cor_Lvl[USF21$DateTime >= Date1 & USF21$DateTime <= Date2] <- NA
 
 ggplot(data = USF21, aes(x = DateTime, y = Baro_Cor_Lvl)) +

@@ -53,6 +53,9 @@ rating_data <- USF05 %>%
 USF05$Q..L.s. <- as.numeric(USF05$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 
+# make compensated backup 
+USF05$Baro_backup <- USF05$Baro_Cor_Lvl
+
 ########################################
 #### Plot pressure compensated data ####
 ########################################

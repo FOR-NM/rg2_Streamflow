@@ -53,14 +53,18 @@ rating_data <- USF03 %>%
 USF03$Q..L.s. <- as.numeric(USF03$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 
+# make compensated backup 
+USF03$Baro_backup <- USF03$Baro_Cor_Lvl
+
 ########################################
 #### Plot pressure compensated data ####
 ########################################
 ggplot(data = USF03, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_line() + ggtitle("USF03 compensated level data")
-
 ggplot(data = USF03, aes(x = DateTime, y = LELVEL.m)) +
   geom_line() + ggtitle("USF03 level data")
+ggplot(data = USF03, aes(x = DateTime, y = TEMPERATURE)) +
+  geom_line() + ggtitle("USF03 temperature data")
 
 ##################################
 #### Plot Stage vs. Discharge ####
@@ -115,8 +119,8 @@ subdf <- USF03[USF03$DateTime < Date2 & USF03$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-06-19 10:30:00"), linetype="dashed", color="red")
 
-Date1 <- as.Date("2024-12-01", "%Y-%m-%d")
-Date2 <- as.Date("2025-01-14", "%Y-%m-%d")
+Date1 <- as.Date("2024-11-29", "%Y-%m-%d")
+Date2 <- as.Date("2025-01-30", "%Y-%m-%d")
 subdf <- USF03[USF03$DateTime < Date2 & USF03$DateTime > Date1,]
 
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
@@ -129,8 +133,15 @@ subdf <- USF03[USF03$DateTime < Date2 & USF03$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-06-19 10:30:00"), linetype="dashed", color="red")
 
-Date1 <- as.Date("2025-02-13", "%Y-%m-%d")
-Date2 <- as.Date("2025-03-30", "%Y-%m-%d")
+Date1 <- as.Date("2024-11-07", "%Y-%m-%d")
+Date2 <- as.Date("2024-11-11", "%Y-%m-%d")
+subdf <- USF03[USF03$DateTime < Date2 & USF03$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-06-19 10:30:00"), linetype="dashed", color="red")
+
+Date1 <- as.Date("2025-03-09", "%Y-%m-%d")
+Date2 <- as.Date("2025-03-22", "%Y-%m-%d")
 subdf <- USF03[USF03$DateTime < Date2 & USF03$DateTime > Date1,]
 
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
@@ -158,9 +169,23 @@ ggplot(USF03, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
 
 # remove what looks like error section in January and part of February
-Date1 <- as.Date("2024-12-01", "%Y-%m-%d")
+Date1 <- as.Date("2024-11-29", "%Y-%m-%d")
 Date2 <- as.Date("2025-01-13", "%Y-%m-%d")
 USF03$Baro_Cor_Lvl[USF03$DateTime >= Date1 & USF03$DateTime <= Date2] <- NA
+
+Date1 <- as.Date("2025-03-09", "%Y-%m-%d")
+Date2 <- as.Date("2025-03-22", "%Y-%m-%d")
+USF03$Baro_Cor_Lvl[USF03$DateTime >= Date1 & USF03$DateTime <= Date2] <- NA
+
+ggplot(data = USF03, aes(x = DateTime, y = Baro_Cor_Lvl)) +
+  geom_line() + ggtitle("USF03 compensated level data")
+
+Date1 <- as.Date("2024-11-07", "%Y-%m-%d")
+Date2 <- as.Date("2024-11-11", "%Y-%m-%d")
+USF03$Baro_Cor_Lvl[USF03$DateTime >= Date1 & USF03$DateTime <= Date2] <- NA
+
+ggplot(data = USF03, aes(x = DateTime, y = Baro_Cor_Lvl)) +
+  geom_line() + ggtitle("USF03 compensated level data")
 
 Date1 <- as.Date("2025-02-13", "%Y-%m-%d")
 Date2 <- as.Date("2025-02-14", "%Y-%m-%d")

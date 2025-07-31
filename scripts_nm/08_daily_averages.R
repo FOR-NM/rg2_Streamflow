@@ -1,14 +1,13 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to clean predicted discharge files for NM
+## This script is to calculate daily average discharge for NM
 ##==============================================================================
 
 ##################
 #### Packages ####
 ##################
-library(ggplot2)
 library(dplyr)
-library(purrr)  # for map functions
+library(lubridate)
 
 ####################################
 ## Clear folders that we will use ##
@@ -23,7 +22,7 @@ file.remove(files)
 ####################
 #### Import data ####
 #####################
-# this is the predicted folder
+# this is the smooth folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1y2bMWCS48cROq_BO5HkaNWmFIxdJUON0")
 
 # list all CSV files in the folder
@@ -47,9 +46,6 @@ for (i in seq_along(pt_csvs$id)) {
   # read the CSV file and add it to the list
   pt_list[[pt_csvs$name[i]]] <- read.csv(local_path)
 }
-
-# check the contents of the list
-str(pt_list)
 
 ############################
 #### Format date column #### 
@@ -75,36 +71,57 @@ for (i in seq_along(pt_list)) {
 # look at it
 USF21 <- pt_list[["discharge_USF21.csv"]]
 USF20 <- pt_list[["discharge_USF20.csv"]]
+USF03 <- pt_list[["discharge_USF03.csv"]]
 
-####################################################
-#### Plot discharge data together for all sites #### 
-####################################################
-# combine all data frames into one
-combined_df <- pt_list %>%
-  bind_rows()  # Automatically adds a row for each df, keeping column names
+##################################
+#### Calculate daily averages #### 
+##################################
+# create empty list to store new data frames
+da_list <- list()
 
-# plot the data
-ggplot(combined_df, aes(x = DateTime, y = Smooth_Discharge_Log_m3s, color = DataID)) +
-  geom_line() +
-  labs(
-    x = "Date",
-    y = "Discharge (m³/s)",
-    color = "Site"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "right")
+# loop through each data frame in the list
+for (i in seq_along(pt_list)) {
+  # access the current data frame
+  df <- pt_list[[i]]
+  
+  df <- df %>%
+    mutate(date = floor_date(Date)) %>%
+    group_by(Date) %>%
+    summarize(smooth_dailyaverage.m3s = mean(Smooth_Discharge_Log_m3s),
+              discharge_dailyaverage.m3s = mean(Predicted_Discharge_Log_m3s),
+              DataID = DataID)
+  
+  # update the data frame in the list
+  da_list[[i]] <- df
+}
+# keep original file names
+names(da_list) <- names(pt_list)
 
-# Filter out large discharge sites
-combined_df_filtered <- combined_df %>%
-  filter(!DataID %in% c("USF03", "USF05", "USF20"))
+# look at it
+USF21 <- da_list[["discharge_USF21.csv"]]
+USF20 <- da_list[["discharge_USF20.csv"]]
+USF03 <- da_list[["discharge_USF03.csv"]]
 
-# plot the data
-ggplot(combined_df_filtered, aes(x = DateTime, y = Smooth_Discharge_Log_m3s, color = DataID)) +
-  geom_line() +
-  labs(
-    x = "Date",
-    y = "Discharge (m³/s)",
-    color = "Site"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "right")
+#######################################
+#### Save merged PT files to Drive ####
+#######################################
+# loop through each data frame in the list
+for (i in seq_along(da_list)) {
+  # Access the current data frame
+  df <- da_list[[i]]
+  
+  # save new data frame
+  write.csv(df, paste0("data/", names(da_list)[i]), row.names=FALSE, quote=FALSE)
+  
+  # define the local folder path and the target folder ID in Google Drive
+  file <- paste0("data/", names(da_list)[i])
+  # this is the "daily averages" folder
+  drive_folder_id <- "17zLOfcBqiw1-b7WoG-INL9DOeQ-VTGBq"
+  
+  # upload file to the specified Google Drive folder
+  drive_put(
+    media = file,
+    path = as_id(drive_folder_id)
+  )
+}
+            

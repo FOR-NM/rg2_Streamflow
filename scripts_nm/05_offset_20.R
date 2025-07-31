@@ -53,6 +53,9 @@ rating_data <- USF20 %>%
 USF20$Q..L.s. <- as.numeric(USF20$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 
+# make compensated backup 
+USF20$Baro_backup <- USF20$Baro_Cor_Lvl
+
 ########################################
 #### Plot pressure compensated data ####
 ########################################
@@ -61,6 +64,9 @@ ggplot(data = USF20, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 
 ggplot(data = USF20, aes(x = DateTime, y = LELVEL.m)) +
   geom_line() + ggtitle("USF20 level data")
+
+ggplot(data = USF20, aes(x = DateTime, y = TEMPERATURE)) +
+  geom_line() + ggtitle("USF20 TEMPERATURE data")
 
 ##################################
 #### Plot Stage vs. Discharge ####
@@ -115,12 +121,19 @@ subdf <- USF20[USF20$DateTime < Date2 & USF20$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,LEVEL)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-07-30 15:00:00"), linetype="dashed", color="red") 
 
-# Date1 <- as.Date("2025-04-10", "%Y-%m-%d")
-# Date2 <- as.Date("2025-05-02", "%Y-%m-%d")
-# subdf <- USF20[USF20$DateTime < Date2 & USF20$DateTime > Date1,]
-# 
-# ggplot(data=subdf, aes(DateTime,LEVEL)) + geom_line() +
-#   geom_vline(xintercept = as.POSIXct("2024-07-30 15:00:00"), linetype="dashed", color="red") 
+Date1 <- as.Date("2024-11-29", "%Y-%m-%d")
+Date2 <- as.Date("2025-01-14", "%Y-%m-%d")
+subdf <- USF20[USF20$DateTime < Date2 & USF20$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-07-30 15:00:00"), linetype="dashed", color="red")
+
+Date1 <- as.Date("2025-01-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-02-28", "%Y-%m-%d")
+subdf <- USF20[USF20$DateTime < Date2 & USF20$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-07-30 15:00:00"), linetype="dashed", color="red")
 
 ####################################################
 #### Remove times where PT was out of the water ####
@@ -144,6 +157,19 @@ ggplot(USF20, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-10-24"), linetype="dashed", color="red") +
   geom_vline(xintercept = as.POSIXct("2024-07-30"), linetype="dashed", color="red") +
+  labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
+
+# remove what looks like error section in part of November and partDecember
+Date1 <- as.Date("2024-11-29", "%Y-%m-%d")
+Date2 <- as.Date("2025-01-14", "%Y-%m-%d")
+
+USF20$Baro_Cor_Lvl[USF20$DateTime >= Date1 & USF20$DateTime <= Date2] <- NA
+
+# plot after cleaning
+ggplot(USF20, aes(x = DateTime, y = Baro_Cor_Lvl)) +
+  geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-01-07"), linetype="dashed", color="red") +
+  geom_vline(xintercept = as.POSIXct("2025-02-05"), linetype="dashed", color="red") +
   labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
 
 ###########################################################################

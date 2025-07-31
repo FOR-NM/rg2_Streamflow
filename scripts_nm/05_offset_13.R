@@ -53,13 +53,12 @@ rating_data <- USF13 %>%
 USF13$Q..L.s. <- as.numeric(USF13$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 
+# make compensated backup 
+USF13$Baro_backup <- USF13$Baro_Cor_Lvl
+
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-# filter out the one row with negative baro lvl value 
-USF13 <- USF13 %>% 
-  filter(Baro_Cor_Lvl >= 0)
-
 ggplot(data = USF13, aes(x = DateTime, y = Baro_Cor_Lvl )) +
   geom_line() + ggtitle("USF13 compensated level data")
 
@@ -97,19 +96,28 @@ ggplot(USF13, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_vline(xintercept = as.POSIXct("2024-10-29"), linetype="dashed", color="red") +
   labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
 
+Date1 <- as.Date("2024-10-28", "%Y-%m-%d")
+Date2 <- as.Date("2024-10-30", "%Y-%m-%d")
+subdf <- USF13[USF13$DateTime < Date2 & USF13$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,LEVEL)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-10-29 12:00:00"), linetype="dashed", color="red")
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-10-29 12:30:00"), linetype="dashed", color="red")
+
 ####################################################
 #### Remove times where PT was out of the water ####
 ####################################################
 # time1 <- as.POSIXct("2025-06-05 10:15:00")
 # time2 <- as.POSIXct("2024-10-29 11:45:00")
-# time3 <- as.POSIXct("2024-10-29 12:30:00")
-# 
+time3 <- as.POSIXct("2024-10-29 12:30:00")
+
 # USF13 <- USF13 %>%
 #   mutate(Baro_Cor_Lvl = ifelse(DateTime == time1, NA, Baro_Cor_Lvl))
 # USF13 <- USF13 %>%
 #   mutate(Baro_Cor_Lvl = ifelse(DateTime == time2, NA, Baro_Cor_Lvl))
-# USF13 <- USF13 %>%
-#   mutate(Baro_Cor_Lvl = ifelse(DateTime == time3, NA, Baro_Cor_Lvl))
+USF13 <- USF13 %>%
+  mutate(Baro_Cor_Lvl = ifelse(DateTime == time3, NA, Baro_Cor_Lvl))
 # 
 # # plot after cleaning 
 # ggplot(USF13, aes(x = DateTime, y = Baro_Cor_Lvl)) +

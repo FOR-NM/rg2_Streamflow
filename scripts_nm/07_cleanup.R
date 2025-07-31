@@ -220,7 +220,7 @@ for (i in seq_along(smooth_df)) {
   p <- ggplot(data = df, aes(x = DateTime, y = Smooth_Discharge_Log_m3s)) + 
     geom_line() + ggtitle(paste(pt_csvs$name[i])) 
   # save the plot as a PNG file
-  ggsave(paste0("pt_figs/", pt_csvs$name[i], "smooth.png"), plot = p)
+  # ggsave(paste0("pt_figs/", pt_csvs$name[i], "smooth.png"), plot = p)
   # display the plot in the plot panel
   print(p)
 }
@@ -247,8 +247,6 @@ for (i in seq_along(smooth_df)) {
     path = as_id(drive_folder_id)
   )
 }
-
-
 
 ###############################
 #### Do just one at a time ####

@@ -53,6 +53,9 @@ rating_data <- USF14 %>%
 USF14$Q..L.s. <- as.numeric(USF14$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 
+# make compensated backup 
+USF14$Baro_backup <- USF14$Baro_Cor_Lvl
+
 ########################################
 #### Plot pressure compensated data ####
 ########################################
@@ -63,8 +66,10 @@ rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 ggplot(data = USF14, aes(x = DateTime, y = Baro_Cor_Lvl )) +
   geom_line() + ggtitle("USF14 compensated level data")
 ggplot(data = USF14, aes(x = DateTime, y = LEVEL )) +
-  geom_line() + ggtitle("USF14 compensated level data")
+  geom_line() + ggtitle("USF14 level data")
 
+ggplot(data = USF14, aes(x = DateTime, y = TEMPERATURE.x)) +
+  geom_line() + ggtitle("USF14 temperature data")
 
 ##################################
 #### Plot Stage vs. Discharge ####
@@ -114,8 +119,8 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
 #### Remove times where PT was out of the water ####
 ####################################################
 # remove what looks like error section in January and part of February
-Date1 <- as.Date("2024-12-08", "%Y-%m-%d")
-Date2 <- as.Date("2025-01-06", "%Y-%m-%d")
+Date1 <- as.Date("2024-12-06", "%Y-%m-%d")
+Date2 <- as.Date("2025-01-18", "%Y-%m-%d")
 
 USF14$Baro_Cor_Lvl[USF14$DateTime >= Date1 & USF14$DateTime <= Date2] <- NA
 
