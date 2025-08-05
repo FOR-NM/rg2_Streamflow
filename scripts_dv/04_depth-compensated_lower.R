@@ -28,64 +28,68 @@ file.remove(files)
 ########################################################
 (depth <- drive_get("https://docs.google.com/spreadsheets/d/1f4iH0JrE9bNU3SSsXhK-gk3yzFa_k70TaJQ1BOPd3mk/edit?gid=1002055380#gid=1002055380"))
 3
-
 # download the file as a csv file
 drive_download(as_id(depth$id), path = "googledrive/salt.csv", type = "csv", overwrite = T)
 
 # fetch the file
-salt <- read.csv("data/salt.csv", skip = 1)
+salt <- read.csv("googledrive/salt.csv", skip = 1)
+
+# clean the column names (this removes spaces, special characters, etc.)
+salt <- salt %>%
+  janitor::clean_names()
 
 # rename columns and convert types
 salt <- salt %>%
   # rename columns
   dplyr::rename(
-    DataID = Site,
-    Time = Time.Arrived..if.applicable.,
-    salt = Amount.of.Salt.Injected..g.,
-  ) %>%
-  # change date format
-  mutate(Date = as.Date(Date, format = "%m/%d/%Y"))
-    
-colnames(salt)
+    DataID = site,
+    Date = date,
+    Time = time_of_injection,
+    background = background_spc_m_s_cm,
+    salt = amount_of_salt_injected_g,
+  ) 
 
 # remove rows that I don't want
-salt <- salt[ , -c(4, 8, 9, 12, 14:16, 19:32)]
+salt <- salt[ , -c(4, 8, 9, 12, 14:16)]
 
 # replace empties with NA
-salt["Slug.flag"][salt["Slug.flag"] == ''] <- NA
-salt["Slug.notes"][salt["Slug.notes"] == ''] <- NA
+salt["slug_flag"][salt["slug_flag"] == ''] <- NA
+salt["slug_notes"][salt["slug_notes"] == ''] <- NA
 
 ########################################################
 #### Combine and format Date and Time in one column ####
 ########################################################
+# convert the Date column to Date
+salt$Date <- as.POSIXct(salt$Date, format = "%m/%d/%Y")
+
 # combine Date and Time columns into a new DateTime column
 salt$DateTime <- paste(salt$Date, salt$Time, sep = " ")
 
 # convert the DateTime column to POSIXct
-salt$DateTime <- as.POSIXct(salt$DateTime, format = "%Y-%m-%d %H:%M:%S")
+salt$DateTime <- as.POSIXct(salt$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
 
 #######################################
 #### Load Q data from Google drive ####
 #######################################
-discharge <- googledrive::as_id("https://drive.google.com/drive/folders/1UkRaYRBePgY9XU90_3DvURNGGEWbCew0")
+discharge <- googledrive::as_id("https://drive.google.com/drive/folders/1zAYT2ZXfCbIuoxzR7-CpZPw19Wk91pIH")
 
 # list all CSV files in the folder
 discharge_csv <- googledrive::drive_ls(path = discharge, type = "csv")
 3
 
 # call the specific file you want (most recent one)
-googledrive::drive_download(file = discharge_csv$id[discharge_csv$name=="Q.csv"], 
-                            path = "googledrive/Q.csv",
+googledrive::drive_download(file = discharge_csv$id[discharge_csv$name=="Q_DV.csv"], 
+                            path = "googledrive/Q_DV.csv",
                             overwrite = T)
 
 # load it into R
-Q = read.csv("data/DVSB1_Q.csv")
+Q = read.csv("googledrive/Q_DV.csv")
 
 # convert the Date column to Date
 Q$Date <- as.Date(Q$Date, format = "%Y-%m-%d")
 
 # remove duplicate rows
-Q <- Q[ , -c(3, 7, 8)]
+Q <- Q[ , -c(3, 4, 7, 8)]
 
 colnames(Q)
 
@@ -125,7 +129,7 @@ for (i in seq_along(pt_csvs$id)) {
   pt_list[[pt_csvs$name[i]]] <- read.csv(local_path)
 }
 
-pt_list <- pt_list_backup 
+pt_list_backup <- pt_list
 
 # check the contents of the list
 str(pt_list)
@@ -186,6 +190,19 @@ pt_list = pt_list[-c(3:10)]
 for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
+  # combine Date and Time columns into a new DateTime column
+  df$DateTime <- paste(df$Date, df$TimeOnly, sep = " ")
+  
+  # convert the DateTime column to POSIXct
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
+  # update the data frame in the list
+  pt_list[[i]] <- df
+}
+
+# loop through each data frame in the list
+for (i in seq_along(pt_list)) {
+  # access the current data frame
+  df <- pt_list[[i]]
   
   # round
   df$DateTime <- round_date(df$DateTime, unit="15 mins")
@@ -206,19 +223,6 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
 }
 
-# loop through each data frame in the list
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  # combine Date and Time columns into a new DateTime column
-  df$DateTime <- paste(df$Date, df$TimeOnly, sep = " ")
-  
-  # convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
-  # update the data frame in the list
-  pt_list[[i]] <- df
-}
-
 # for (i in seq_along(pt_list)) {
 #   # access the current data frame
 #   df <- pt_list[[i]]
@@ -229,12 +233,6 @@ for (i in seq_along(pt_list)) {
 #   # update the data frame in the list
 #   pt_list[[i]] <- df
 # }
-
-
-
-
-# check the contents of the list and make sure there are no NAs
-str(pt_list)
 
 # check individual data frame
 DVSB1 <- pt_list[["DVSB1.csv"]]
@@ -274,7 +272,7 @@ non_na_counts <- sapply(depth_merged, function(df) {
 print(non_na_counts)
 
 # offline
-DVSB1_depth <- merge(DVSB1, discharge_depth, by = c("DateTime"), all.y = T)
+# DVSB1_depth <- merge(DVSB1, discharge_depth, by = c("DateTime"), all.y = T)
 
 DVSB1 <- depth_merged[["DVSB1.csv"]]
 DVSB2 <- depth_merged[["DVSB2.csv"]]
