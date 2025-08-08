@@ -78,13 +78,15 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
 }
 
-# round time to the nearest 5 min
+# round time to the nearest 15 min
 # some files recorded every 5 minutes others every 10 but baro files are every 15?
 for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
   # round time
-  df$DateTime <- round_date(df$DateTime, unit="5 mins")
+  df$DateTime <- round_date(df$DateTime, unit="15 mins")
+  # remove duplicates
+  df <- df[!duplicated(df$DateTime), ]
   
   # update the data frame in the list
   pt_list[[i]] <- df
@@ -98,6 +100,16 @@ for (i in seq_along(pt_list)) {
   df <- df %>%
     mutate(TimeOnly = format(DateTime, "%H:%M:%S"))
   
+  # update the data frame in the list
+  pt_list[[i]] <- df
+}
+
+# omit NAs
+for (i in seq_along(pt_list)) {
+  # access the current data frame
+  df <- pt_list[[i]]
+  # is na
+  df <- df[!is.na(df$DateTime),]
   # update the data frame in the list
   pt_list[[i]] <- df
 }
@@ -130,6 +142,8 @@ combined_by_site <- lapply(pt_list_by_site, function(site_data_list) {
     arrange(DateTime) %>%  # ensure chronological order if 'DateTime' exists
     distinct(DateTime, .keep_all = TRUE) # remove duplicates
 })
+
+DVWT3 <- combined_by_site[["DVWT3"]]
 
 ##############################
 #### Save combined files  ####

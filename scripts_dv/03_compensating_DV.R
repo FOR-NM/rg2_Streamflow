@@ -20,7 +20,7 @@ library(hms)
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
 
-files <- list.files(path = "merged", full.names = TRUE)
+files <- list.files(path = "data", full.names = TRUE)
 file.remove(files)
 
 #####################
@@ -69,15 +69,22 @@ for (i in seq_along(pt_list)) {
   df <- pt_list[[i]]
   
   # convert the DateTime column to POSIXct
+  df$DateTime <- paste(df$Date, df$TimeOnly, sep = " ")
   df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
   # update the data frame in the list
   pt_list[[i]] <- df
   
-  # make date into date fomat
+  # make date into date format
   df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
   # update the data frame in the list
   pt_list[[i]] <- df
 }
+
+# look at it
+DVWT3 <- pt_list[["DVWT3.csv"]]
+DVSB1 <- pt_list[["DVSB1.csv"]]
+DVMS5 <- pt_list[["DVMS5.csv"]]
+DVNWT4 <- pt_list[["DVNWT4.csv"]]
 
 ##############################
 #### Rename some columns  ####
@@ -108,7 +115,7 @@ for (i in seq_along(pt_list)) {
   p <- ggplot(data = df, aes(x = DateTime, y = LEVEL.m)) + 
     geom_line() + ggtitle(paste(pt_csvs$name[i])) 
   # save the plot as a PNG file
-  ggsave(paste0("pt_figs/", pt_csvs$name[i], ".png"), plot = p)
+  #ggsave(paste0("pt_figs/", pt_csvs$name[i], ".png"), plot = p)
   # display the plot in the plot panel
   print(p)
 }
@@ -116,28 +123,55 @@ for (i in seq_along(pt_list)) {
 #########################
 #### Get air pt data ####
 #########################
-# this is the merged days folder
+# this is the merged days baro folder
 pt_air <- googledrive::as_id("https://drive.google.com/drive/folders/1SeGx6MUt6icUFum4Yu-kUHHqZSbN4AQU")
 # list all CSV files in the folder
 pt_csvs_air <- googledrive::drive_ls(path = pt_air, type = "csv")
 # call the specific file you want
-googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="air_upper.csv"], 
-                            path = "googledrive/air_upper.csv",
+googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="DVNWT5.csv"], 
+                            path = "googledrive/DVNWT5.csv",
                             overwrite = T)
-googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="air_lower.csv"], 
-                            path = "googledrive/air_lower.csv",
+googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="DVO.csv"], 
+                            path = "googledrive/DVO.csv",
                             overwrite = T)
 
-air_upper <- read.csv("googledrive/air_upper.csv")
-air_lower <- read.csv("googledrive/air_lower.csv")
+air_upper <- read.csv("googledrive/DVNWT5.csv")
+air_lower <- read.csv("googledrive/DVO.csv")
 
 # changing some column names
 air_upper <- air_upper %>%
   dplyr::rename(Date.air = Date,
                 Time.air = Time,
-                Level.air.kPa = LEVEL)
+                Level_air.m = LEVEL.m)
 air_lower <- air_lower %>%
-  dplyr::rename(Level_air.m = LEVEL.m)
+  dplyr::rename(Date.air = Date,
+                Time.air = Time,
+                Level_air.m = LEVEL.m)
+
+################################
+#### Format DateTime column ####
+################################
+# for lower
+# check datetime format
+air_lower$DateTime <- paste(air_lower$Date.air, air_lower$Time.air, sep = " ")
+# convert the DateTime column to POSIXct
+air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d %H:%M:%S")
+# 
+# # convert the DateTime column to POSIXct
+# air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d %H:%M:%S")
+# # DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep
+# air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)] <- paste(
+#   air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)],"00:00:00")
+# 
+# # If you tried to make Date.air and Time.air before, check that code
+# air_lower$Date.air <- as.Date(air_lower$DateTime) # Extracts date
+# air_lower$Time.air <- format(air_lower$DateTime, "%H:%M:%S") # Extracts time as string
+
+# for upper
+# check datetime format
+air_upper$DateTime <- paste(air_upper$Date.air, air_upper$Time.air, sep = " ")
+# convert the DateTime column to POSIXct
+air_upper$DateTime <- as.POSIXct(air_upper$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 #######################
 #### Plot air data ####
@@ -147,78 +181,6 @@ ggplot(data = air_upper, aes(x = DateTime, y = Level_air.m)) +
 
 ggplot(data = air_lower, aes(x = DateTime, y = Level_air.m)) + 
   geom_line() + ggtitle("Air lower") 
-
-################################
-#### Format DateTime column ####
-################################
-# for upper
-# check datetime format for upper air data
-air_upper$DateTime <- paste(air_upper$Date.air, air_upper$Time.air, sep = " ")
-# convert the DateTime column to POSIXct
-air_upper$DateTime <- as.POSIXct(air_upper$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
-
-# for lower
-# DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep
-air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)] <- paste(
-  air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)],"00:00:00")
-
-# convert the DateTime column to POSIXct
-air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d %H:%M")
-str(air_lower$DateTime)
-
-# If you tried to make Date.air and Time.air before, check that code
-air_lower$Date.air <- as.Date(air_lower$DateTime) # Extracts date
-air_lower$Time.air <- format(air_lower$DateTime, "%H:%M:%S") # Extracts time as string
-
-#########################################
-#### Rounding the time to nearest 15 ####
-#########################################
-# loop through each data frame in the list
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  
-  # round
-  df$DateTime <- round_date(df$DateTime, unit="15 mins")
-  # remove duplicates
-  df <- df[!duplicated(df$DateTime), ]
-  
-  # update the data frame in the list
-  pt_list[[i]] <- df
-}
-
-## make a column for the new rounded time
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  # time only
-  df <- df %>%
-    mutate(TimeOnly = format(DateTime, "%H:%M:%S"))
-  
-  # update the data frame in the list
-  pt_list[[i]] <- df
-}
-
-# look at it
-DVWT3 <- pt_list[["DVWT3.csv"]]
-DVSB1 <- pt_list[["DVSB1.csv"]]
-DVMS5 <- pt_list[["DVMS5.csv"]]
-DVNWT4 <- pt_list[["DVNWT4.csv"]]
-
-# round air lower
-air_lower$DateTime <- round_date(air_lower$DateTime, unit="15 mins")
-
-air_lower <- air_lower[!duplicated(air_lower$DateTime), ]
-
-#####################################
-#### Change all units to meters  ####
-#####################################
-### upper site
-## air pressure in kpa to m
-air_upper <- air_upper %>%
-  mutate(Level_air.m = (.[[4]] * 0.101972))
-
-#1 kPa = 0.101972 m in common barometric units to water column equivalent conversions
 
 ####################################################
 #### Prep data for merging PT with Air pressure ####
