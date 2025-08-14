@@ -145,6 +145,12 @@ combined_by_site <- lapply(pt_list_by_site, function(site_data_list) {
 
 DVWT3 <- combined_by_site[["DVWT3"]]
 
+Date1 <- as.Date("2025-04-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-04-30", "%Y-%m-%d")
+subdf <- DVWT3[DVWT3$DateTime < Date2 & DVWT3$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,LEVEL)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-04-18 14:00:00"), linetype="dashed", color="red")
+
 ##############################
 #### Save combined files  ####
 ##############################

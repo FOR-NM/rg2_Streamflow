@@ -68,14 +68,19 @@ for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
   
-  # convert the DateTime column to POSIXct
-  df$DateTime <- paste(df$Date, df$TimeOnly, sep = " ")
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
-  # update the data frame in the list
-  pt_list[[i]] <- df
-  
   # make date into date format
   df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
+  
+  # DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep
+  df$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",df$DateTime)] <- paste(
+    df$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",df$DateTime)],"00:00:00")
+  
+  # convert the DateTime column to POSIXct
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
+  
+  # update the data frame in the list
+  pt_list[[i]] <- df
+
   # update the data frame in the list
   pt_list[[i]] <- df
 }
@@ -86,9 +91,15 @@ DVSB1 <- pt_list[["DVSB1.csv"]]
 DVMS5 <- pt_list[["DVMS5.csv"]]
 DVNWT4 <- pt_list[["DVNWT4.csv"]]
 
-##############################
-#### Rename some columns  ####
-##############################
+Date1 <- as.Date("2025-04-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-04-30", "%Y-%m-%d")
+subdf <- DVSB1[DVSB1$DateTime < Date2 & DVSB1$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,LEVEL)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-04-18 14:00:00"), linetype="dashed", color="red")
+
+#############################
+#### Rename some columns ####
+#############################
 # loop through each data frame in the list
 for (i in seq_along(pt_list)) {
   # access the current data frame
@@ -120,6 +131,12 @@ for (i in seq_along(pt_list)) {
   print(p)
 }
 
+Date1 <- as.Date("2025-04-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-04-30", "%Y-%m-%d")
+subdf <- DVWT3[DVWT3$DateTime < Date2 & DVWT3$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,LEVEL)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-04-18 14:00:00"), linetype="dashed", color="red")
+
 #########################
 #### Get air pt data ####
 #########################
@@ -139,10 +156,6 @@ air_upper <- read.csv("googledrive/DVNWT5.csv")
 air_lower <- read.csv("googledrive/DVO.csv")
 
 # changing some column names
-air_upper <- air_upper %>%
-  dplyr::rename(Date.air = Date,
-                Time.air = Time,
-                Level_air.m = LEVEL.m)
 air_lower <- air_lower %>%
   dplyr::rename(Date.air = Date,
                 Time.air = Time,
@@ -171,7 +184,7 @@ air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d %H:%M:%S
 # check datetime format
 air_upper$DateTime <- paste(air_upper$Date.air, air_upper$Time.air, sep = " ")
 # convert the DateTime column to POSIXct
-air_upper$DateTime <- as.POSIXct(air_upper$DateTime, format = "%Y-%m-%d %H:%M:%S")
+air_upper$DateTime <- as.POSIXct(air_upper$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
 
 #######################
 #### Plot air data ####
@@ -273,6 +286,35 @@ isna <- is.na(compensated_lower$DVSB1.csv)
 DVSB1 <- compensated_lower[["DVSB1.csv"]]
 DVWT3 <- compensated_upper[["DVWT3.csv"]]
 DVNWT5 <- compensated_upper[["DVNWT5.csv"]]
+
+#####################################
+#### Plot baro compensated level ####
+#####################################
+# loop through each data frame in the list
+for (i in seq_along(compensated_lower)) {
+  # access the current data frame
+  df <- compensated_lower[[i]]
+  # Plot
+  p <- ggplot(data = df, aes(x = DateTime, y = Baro_Cor_Lvl)) + 
+    geom_line() + ggtitle(names(compensated_lower)[i])
+  # save the plot as a PNG file
+  ggsave(paste0("pt_figs/", names(compensated_lower)[i], "_notcorrected.png"), plot = p)
+  # display the plot in the plot panel
+  print(p)
+}
+
+# loop through each data frame in the list
+for (i in seq_along(compensated_upper)) {
+  # access the current data frame
+  df <- compensated_upper[[i]]
+  # Plot
+  p <- ggplot(data = df, aes(x = DateTime, y = Baro_Cor_Lvl)) + 
+    geom_line() + ggtitle(names(compensated_upper)[i])
+  # save the plot as a PNG file
+  ggsave(paste0("pt_figs/", names(compensated_upper)[i], "_notcorrected.png"), plot = p)
+  # display the plot in the plot panel
+  print(p)
+}
 
 ####################################################
 #### Save merged and compensated slugs to Drive ####

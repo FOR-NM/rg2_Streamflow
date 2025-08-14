@@ -87,7 +87,9 @@ combined_by_site <- lapply(pt_list_by_site, function(site_data_list) {
 
 #### plot ####
 ggplot(data = combined_by_site[["DVNWT5"]], aes(x = DateTime, y = LEVEL.m)) + 
-  geom_line() + ggtitle(paste(pt_files$name[i])) 
+  geom_line()
+ggplot(data = combined_by_site[["DVO"]], aes(x = DateTime, y = LEVEL.m)) + 
+  geom_line()
 
 ##############################
 #### Save combined files  ####

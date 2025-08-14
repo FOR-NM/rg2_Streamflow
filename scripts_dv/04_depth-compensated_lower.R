@@ -64,9 +64,8 @@ salt$Date <- as.POSIXct(salt$Date, format = "%m/%d/%Y")
 
 # combine Date and Time columns into a new DateTime column
 salt$DateTime <- paste(salt$Date, salt$Time, sep = " ")
-
 # convert the DateTime column to POSIXct
-salt$DateTime <- as.POSIXct(salt$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+salt$DateTime <- as.POSIXct(salt$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 #######################################
 #### Load Q data from Google drive ####
@@ -156,26 +155,6 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
 }
 
-# # offline 
-# # extract the file name without the .csv extension
-# for (i in seq_along(pt_list)) {
-#   # access the current data frame
-#   df <- pt_list[[i]]
-#   
-#   # extract the file name without the .csv extension
-#   DataID <- tools::file_path_sans_ext(pt_list$name[[i]])
-#   
-#   # add the DataID column
-#   df <- df %>%
-#     dplyr::mutate(DataID = data_id)
-#   
-#   # save the modified data frame back to the list
-#   pt_list[[i]] <- df
-# }
-
-# check the contents of the list
-str(pt_list)
-
 # check individual data frame
 DVSB1 <- pt_list[["DVSB1"]]
 DVSB2 <- pt_list[["DVSB2"]]
@@ -190,49 +169,20 @@ pt_list = pt_list[-c(3:10)]
 for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
-  # combine Date and Time columns into a new DateTime column
-  df$DateTime <- paste(df$Date, df$TimeOnly, sep = " ")
+  
+  # make date into date format
+  df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
+  
+  # DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep
+  df$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",df$DateTime)] <- paste(
+    df$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",df$DateTime)],"00:00:00")
   
   # convert the DateTime column to POSIXct
   df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
-  # update the data frame in the list
-  pt_list[[i]] <- df
-}
-
-# loop through each data frame in the list
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  
-  # round
-  df$DateTime <- round_date(df$DateTime, unit="15 mins")
-  # remove duplicates
-  df <- df[!duplicated(df$DateTime), ]
   
   # update the data frame in the list
   pt_list[[i]] <- df
 }
-
-## make a column for the new rounded time
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  # time only
-  df$Time.Only <- format(df$DateTime, "%H:%M:%S") # extracts time as string
-  # update the data frame in the list
-  pt_list[[i]] <- df
-}
-
-# for (i in seq_along(pt_list)) {
-#   # access the current data frame
-#   df <- pt_list[[i]]
-# 
-#   df$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",df$DateTime)] <- paste(
-#     df$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",df$DateTime)],"00:00:00")
-# 
-#   # update the data frame in the list
-#   pt_list[[i]] <- df
-# }
 
 # check individual data frame
 DVSB1 <- pt_list[["DVSB1.csv"]]
@@ -276,6 +226,12 @@ print(non_na_counts)
 
 DVSB1 <- depth_merged[["DVSB1.csv"]]
 DVSB2 <- depth_merged[["DVSB2.csv"]]
+
+Date1 <- as.Date("2025-04-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-04-30", "%Y-%m-%d")
+subdf <- DVSB1[DVSB1$DateTime < Date2 & DVSB1$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-04-18 14:00:00"), linetype="dashed", color="red")
 
 #######################################
 #### Save merged PT files to Drive ####

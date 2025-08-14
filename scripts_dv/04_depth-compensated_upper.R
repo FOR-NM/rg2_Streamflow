@@ -56,15 +56,16 @@ salt <- salt[ , -c(4, 8, 9, 12, 14:16)]
 salt["slug_flag"][salt["slug_flag"] == ''] <- NA
 salt["slug_notes"][salt["slug_notes"] == ''] <- NA
 
-#### combine and format Date and Time in one column ####
+########################################################
+#### Combine and format Date and Time in one column ####
+########################################################
 # convert the Date column to Date
 salt$Date <- as.POSIXct(salt$Date, format = "%m/%d/%Y")
 
 # combine Date and Time columns into a new DateTime column
 salt$DateTime <- paste(salt$Date, salt$Time, sep = " ")
-
 # convert the DateTime column to POSIXct
-salt$DateTime <- as.POSIXct(salt$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+salt$DateTime <- as.POSIXct(salt$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 #######################################
 #### Load Q data from Google drive ####
@@ -131,11 +132,6 @@ for (i in seq_along(pt_csvs$id)) {
 pt_list_backup <- pt_list 
 #########################
 
-# pt_csvs <- c("DVMS5")
-# 
-# pt_list[["DVMS5.csv"]] <- DVMS5
-# pt_list[["DVNWT3.csv"]] <- DVNWT3
-
 # look at it
 DVMS1 <- pt_list[["DVMS1.csv"]]
 DVWT3 <- pt_list[["DVWT3.csv"]]
@@ -160,26 +156,6 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
 }
 
-# # offline 
-# # extract the file name without the .csv extension
-# for (i in seq_along(pt_list)) {
-#   # access the current data frame
-#   df <- pt_list[[i]]
-#   
-#   # extract the file name without the .csv extension
-#   DataID <- tools::file_path_sans_ext(pt_csvs[[i]])
-#   
-#   # add the DataID column
-#   df <- df %>%
-#     dplyr::mutate(DataID = data_id)
-#   
-#   # save the modified data frame back to the list
-#   pt_list[[i]] <- df
-# }
-
-# check the contents of the list
-str(pt_list)
-
 # check individual data frame
 DVMS5 <- pt_list[["DVMS5.csv"]]
 DVNWT3 <- pt_list[["DVNWT3.csv"]]
@@ -195,44 +171,15 @@ for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
   
+  # make date into date format
+  df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
+  
+  # DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep
   df$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",df$DateTime)] <- paste(
     df$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",df$DateTime)],"00:00:00")
   
-  # update the data frame in the list
-  pt_list[[i]] <- df
-}
-
-# loop through each data frame in the list
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  
   # convert the DateTime column to POSIXct
   df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
-  # update the data frame in the list
-  pt_list[[i]] <- df
-}
-
-# # loop through each data frame in the list
-# for (i in seq_along(pt_list)) {
-#   # access the current data frame
-#   df <- pt_list[[i]]
-#   
-#   # round
-#   df$DateTime <- round_date(df$DateTime, unit="15 mins")
-#   # remove duplicates
-#   df <- df[!duplicated(df$DateTime), ]
-#   
-#   # update the data frame in the list
-#   pt_list[[i]] <- df
-# }
-
-## make a column for the new rounded time
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  # time only
-  df$TimeOnly <- format(df$DateTime, "%H:%M:%S") # extracts time as string
   # update the data frame in the list
   pt_list[[i]] <- df
 }

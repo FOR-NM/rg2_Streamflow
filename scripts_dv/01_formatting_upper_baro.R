@@ -124,7 +124,7 @@ for (i in seq_along(pt_list)) {
   
   # define the local folder path and the target folder ID in Google Drive
   file <- paste0("data/", names(pt_list)[i])
-  # this is the "depth" folder
+  # this is the "inuse_barologger" folder
   drive_folder_id <- "1_KUXHWDuAbO3Z6EV_RKBZL9IyWeeaj-X"
   
   # upload file to the specified Google Drive folder

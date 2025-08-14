@@ -73,7 +73,21 @@ rating_data <- rating_data %>%
 ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+  labs(title = "Baro-corrected level vs. Discharge", x = "Baro-corrected level (m)", y = "Discharge (Q m³/s)") +
+  theme_minimal()
+
+########################################
+#### Plot Water Level vs. Discharge ####
+########################################
+# discharge from L/s to m3/s
+rating_data <- rating_data %>%
+  mutate(Q.m3s = Q..L.s./1000)
+
+# plot with date info
+ggplot(rating_data, aes(x = actual_depth_m, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Baro-corrected level vs. Actual water depth at sensor", x = "Baro-corrected level (m)", y = "Water depth  (m)") +
   theme_minimal()
 
 #################################################
@@ -92,13 +106,6 @@ ggplot(DVNWT4, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 ############################
 #### Look at it closely ####
 ############################
-#take the subset of the data for when PT was moved
-Date1 <- as.Date("2024-11-15", "%Y-%m-%d")
-Date2 <- as.Date("2024-11-25", "%Y-%m-%d")
-subdf <- DVNWT4[DVNWT4$DateTime < Date2 & DVNWT4$DateTime > Date1,]
-ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-11-19 11:00:00"), linetype="dashed", color="red") 
-
 Date1 <- as.Date("2025-01-30", "%Y-%m-%d")
 Date2 <- as.Date("2025-02-03", "%Y-%m-%d")
 subdf <- DVNWT4[DVNWT4$DateTime < Date2 & DVNWT4$DateTime > Date1,]
@@ -253,17 +260,14 @@ ggplot(new_rating_data, aes(x = Baro_Cor_offset1, y = Q.m3s)) +
   labs(title = "Stage vs. Discharge (First Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
   theme_minimal()
 
-# ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
-#   geom_point(color = "blue") +
-#   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
-#   labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
-#   theme_minimal()
-
-# ggplot(new_rating_data, aes(x = Baro_Cor_offset3, y = Q.m3s)) +
-#   geom_point(color = "blue") +
-#   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
-#   labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
-#   theme_minimal()
+####################################
+#### Plot level with correction ####
+####################################
+ggplot(new_rating_data, aes(x = Baro_Cor_offset1, y = actual_depth_m)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
+  labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+  theme_minimal()
 
 ########################
 #### Plot close ups ####
