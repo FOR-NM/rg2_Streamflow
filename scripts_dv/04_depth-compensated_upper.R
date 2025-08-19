@@ -208,9 +208,6 @@ depth_merged <- lapply(pt_list, function(df) {
   return(merged_df)
 })
 
-# check the structure of the merged list
-str(depth_merged)
-
 # count non-NA values in the 'pt' column for each data frame
 non_na_counts <- sapply(depth_merged, function(df) {
   if ("pt" %in% colnames(df)) {

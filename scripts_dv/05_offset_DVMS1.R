@@ -76,20 +76,6 @@ ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
   labs(title = "Baro-corrected level vs. Discharge", x = "Baro-corrected level (m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
 
-########################################
-#### Plot Water Level vs. Discharge ####
-########################################
-# discharge from L/s to m3/s
-rating_data <- rating_data %>%
-  mutate(Q.m3s = Q..L.s./1000)
-
-# plot with date info
-ggplot(rating_data, aes(x = actual_depth_m, y = Q.m3s)) +
-  geom_point(color = "blue") +
-  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
-  labs(title = "Baro-corrected level vs. Actual water depth at sensor", x = "Baro-corrected level (m)", y = "Water depth  (m)") +
-  theme_minimal()
-
 #################################################
 #### Find offset, when did the change happen ####
 ################################################# 
@@ -108,45 +94,50 @@ ggplot(DVMS1, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 ############################
 #### Look at it closely ####
 ############################
-#take the subset of the data for when PT was moved
+# clean beginning of data
 Date1 <- as.Date("2024-08-01", "%Y-%m-%d")
 Date2 <- as.Date("2024-08-08", "%Y-%m-%d")
 subdf <- DVMS1[DVMS1$DateTime < Date2 & DVMS1$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-08-06 08:15:00"), linetype="dashed", color="red") 
 
+# cut zip tie loop
 Date1 <- as.Date("2024-11-15", "%Y-%m-%d")
 Date2 <- as.Date("2024-11-25", "%Y-%m-%d")
 subdf <- DVMS1[DVMS1$DateTime < Date2 & DVMS1$DateTime > Date1,]
 # sheet says we logger was out of water at 14:29
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-11-18 00:00:00"), linetype="dashed", color="red")
+  geom_vline(xintercept = as.POSIXct("2024-11-19 00:00:00"), linetype="dashed", color="red")
 
-Date1 <- as.Date("2024-09-26", "%Y-%m-%d")
+# Moved up one hole
+Date1 <- as.Date("2024-09-25", "%Y-%m-%d")
 Date2 <- as.Date("2024-09-27", "%Y-%m-%d")
 subdf <- DVMS1[DVMS1$DateTime < Date2 & DVMS1$DateTime > Date1,]
 # sheet says we logger was back in the water at 15:50
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-09-26 15:50:00"), linetype="dashed", color="red")
 
+# Downloaded level logger data
 Date1 <- as.Date("2025-04-10", "%Y-%m-%d")
 Date2 <- as.Date("2025-04-14", "%Y-%m-%d")
 subdf <- DVMS1[DVMS1$DateTime < Date2 & DVMS1$DateTime > Date1,]
-# spike?
+# spike
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-04-11 11:30:00"), linetype="dashed", color="red")
 
+# Downloaded level logger data
 Date1 <- as.Date("2025-06-03", "%Y-%m-%d")
 Date2 <- as.Date("2025-06-04", "%Y-%m-%d")
 subdf <- DVMS1[DVMS1$DateTime < Date2 & DVMS1$DateTime > Date1,]
-# spike?
+# spike
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-06-03 13:15:00"), linetype="dashed", color="red")
 
+# Level logger data download, general maintenance
 Date1 <- as.Date("2024-11-13", "%Y-%m-%d")
 Date2 <- as.Date("2024-11-15", "%Y-%m-%d")
 subdf <- DVMS1[DVMS1$DateTime < Date2 & DVMS1$DateTime > Date1,]
-# spike?
+# spike
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-11-14 11:00:00"), linetype="dashed", color="red")
 
@@ -173,15 +164,6 @@ DVMS1 <- DVMS1 %>%
   mutate(Baro_Cor_Lvl = ifelse(DateTime == time5, NA, Baro_Cor_Lvl))
 DVMS1 <- DVMS1 %>%
   mutate(Baro_Cor_Lvl = ifelse(DateTime == time6, NA, Baro_Cor_Lvl))
-
-
-# remove little error section in November
-Date1 <- as.Date("2024-11-17", "%Y-%m-%d")
-Date2 <- as.Date("2024-11-20", "%Y-%m-%d")
-DVMS1$Baro_Cor_Lvl[DVMS1$DateTime >= Date1 & DVMS1$DateTime <= Date2] <- NA
-Date1 <- as.Date("2024-09-06", "%Y-%m-%d")
-Date2 <- as.Date("2024-09-13", "%Y-%m-%d")
-DVMS1$Baro_Cor_Lvl[DVMS1$DateTime >= Date1 & DVMS1$DateTime <= Date2] <- NA
 
 # plot after cleaning
 ggplot(DVMS1, aes(x = DateTime, y = Baro_Cor_Lvl)) +
@@ -211,23 +193,23 @@ print(paste("Offset 1:", offset1))
 DVMS1 <- DVMS1 %>%
   mutate(Baro_Cor_offset1 = if_else(DateTime >= move_time1, Baro_Cor_Lvl - offset1, Baro_Cor_Lvl))
 
-# # second move correction (2024-09-26 15:45:00)
-# move_time2 <- as.POSIXct("2024-09-26 16:00:00")
-# 
-# before_move2 <- DVMS1 %>%
-#   filter(DateTime >= (move_time2 - hours(2)) & DateTime < move_time2) %>%
-#   summarize(mean_before2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
-# 
-# after_move2 <- DVMS1 %>%
-#   filter(DateTime >= move_time2 & DateTime < (move_time2 + hours(2))) %>%
-#   summarize(mean_after2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
-# 
-# offset2 <- after_move2$mean_after2 - before_move2$mean_before2
-# print(paste("Offset 2:", offset2))
+# second move correction (2024-11-14 11:00:00)
+move_time2 <- as.POSIXct("2024-11-14 11:00:00")
 
-# # apply the second correction
-# DVMS1 <- DVMS1 %>%
-#   mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
+before_move2 <- DVMS1 %>%
+  filter(DateTime >= (move_time2 - hours(2)) & DateTime < move_time2) %>%
+  summarize(mean_before2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
+
+after_move2 <- DVMS1 %>%
+  filter(DateTime >= move_time2 & DateTime < (move_time2 + hours(2))) %>%
+  summarize(mean_after2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
+
+offset2 <- after_move2$mean_after2 - before_move2$mean_before2
+print(paste("Offset 2:", offset2))
+
+# apply the second correction
+DVMS1 <- DVMS1 %>%
+  mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
 
 # # third move correction (2025-05-23 10:15:00)
 # move_time3 <- as.POSIXct("2025-05-23 10:15:00")
@@ -298,18 +280,7 @@ ggplot(new_rating_data, aes(x = Baro_Cor_offset1, y = Q.m3s)) +
 ########################
 #### Plot close ups ####
 ########################
-DVMS1_feb <- DVMS1%>%
-  filter(month(DateTime) == 2)
-
-# plot after cleaning 
-ggplot(DVMS1_feb, aes(x = DateTime, y = Baro_Cor_Lvl)) +
-  geom_line() +
-  labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
-ggplot(DVMS1_feb, aes(x = DateTime, y = Baro_Cor_offset1)) +
-  geom_line() +
-  labs(title = "Baro_Cor_offset1", x = "Date", y = "Water Level (m)")
-
-#take the subset of the data for February when PT was moved
+#take the subset of the data for September when PT was moved
 Date1 <- as.Date("2024-09-26", "%Y-%m-%d")
 Date2 <- as.Date("2024-09-27", "%Y-%m-%d")
 subdf <- DVMS1[DVMS1$DateTime < Date2 & DVMS1$DateTime > Date1,]
@@ -318,6 +289,16 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-09-26 12:00:00"), linetype="dashed", color="red") 
 ggplot(data=subdf, aes(DateTime,Baro_Cor_offset1)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-09-26 12:00:00"), linetype="dashed", color="red") 
+
+#take the subset of the data for November when PT was moved
+Date1 <- as.Date("2024-11-14", "%Y-%m-%d")
+Date2 <- as.Date("2024-11-15", "%Y-%m-%d")
+subdf <- DVMS1[DVMS1$DateTime < Date2 & DVMS1$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-11-14 11:00:00"), linetype="dashed", color="red") 
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset2)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-11-14 11:00:00"), linetype="dashed", color="red") 
 
 ###################
 #### Save file ####
@@ -332,3 +313,4 @@ drive_put(
   media = "data/offset_DVMS1.csv",
   path = as_id(drive_folder_id)
 )
+

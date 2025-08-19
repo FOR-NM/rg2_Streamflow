@@ -45,6 +45,8 @@ names(pt_list) <- pt_files$name
 # remove lower site
 pt_list = pt_list[-c(2)]
 
+NWT5_241114 <- pt_list[["2137296_2024_11_14_DVNWT5_Barologger.csv"]] 
+
 # rename columns and convert types
 # loop through each data frame in the list
 for (i in seq_along(pt_list)) {
@@ -63,6 +65,8 @@ for (i in seq_along(pt_list)) {
   # update the data frame in the list
   pt_list[[i]] <- df
 }
+
+NWT5_241114 <- pt_list[["2137296_2024_11_14_DVNWT5_Barologger.csv"]]
 
 # 1 kPa = 0.101972 m
 

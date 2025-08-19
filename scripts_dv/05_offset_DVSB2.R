@@ -39,7 +39,7 @@ DVSB2 <- read.csv("googledrive/DVSB2.csv")
 
 # convert Date column to Date type if not already
 # combine Date and Time columns into a new DateTime column
-DVSB2$DateTime <- paste(DVSB2$Date.x, DVSB2$TimeOnly, sep = " ")
+DVSB2$DateTime <- paste(DVSB2$Date.air, DVSB2$Time.air, sep = " ")
 # convert the DateTime column to POSIXct
 DVSB2$DateTime <- as.POSIXct(DVSB2$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
@@ -84,6 +84,12 @@ rating_data <- rating_data %>%
   mutate(Q.m3s = Q..L.s./1000)
 
 # plot with date info
+ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Baro-corrected level vs. Actual water depth at sensor", x = "Baro-corrected level (m)", y = "Water depth  (m)") +
+  theme_minimal()
+
 ggplot(rating_data, aes(x = actual_depth_m, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
@@ -110,14 +116,20 @@ ggplot(DVSB2, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 ############################
 #### Look at it closely ####
 ############################
+# these are the moments when the level logger was adjusted or moved 
 #take the subset of the data
-Date1 <- as.Date("024-11-19", "%Y-%m-%d")
-Date2 <- as.Date("024-11-20", "%Y-%m-%d")
+# Cut zip tie loop
+Date1 <- as.Date("2024-11-19", "%Y-%m-%d")
+Date2 <- as.Date("2024-11-20", "%Y-%m-%d")
 subdf <- DVSB2[DVSB2$DateTime < Date2 & DVSB2$DateTime > Date1,]
-#start of data
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-08-06 08:15:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2024-11-19 16:15:00"), linetype="dashed", color="red") 
+ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-11-19 16:15:00"), linetype="dashed", color="red") 
+ggplot(data=subdf, aes(DateTime,Level_air.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-11-19 16:15:00"), linetype="dashed", color="red") 
 
+# Levelogger burried upon arrival. Adjusted up by 9.0 cm. Levelogger redeployed at 11:30:00 AM
 Date1 <- as.Date("2025-02-28", "%Y-%m-%d")
 Date2 <- as.Date("2025-03-01", "%Y-%m-%d")
 subdf <- DVSB2[DVSB2$DateTime < Date2 & DVSB2$DateTime > Date1,]
@@ -125,6 +137,7 @@ subdf <- DVSB2[DVSB2$DateTime < Date2 & DVSB2$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-02-28 11:30:00"), linetype="dashed", color="red")
 
+# Level logger moved down 1.0 cm using the fence post pounder
 Date1 <- as.Date("2025-06-03", "%Y-%m-%d")
 Date2 <- as.Date("2025-06-04", "%Y-%m-%d")
 subdf <- DVSB2[DVSB2$DateTime < Date2 & DVSB2$DateTime > Date1,]
@@ -132,6 +145,7 @@ subdf <- DVSB2[DVSB2$DateTime < Date2 & DVSB2$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-06-03 09:45:00"), linetype="dashed", color="red")
 
+# Level logger moved down 3.5 cm using the fence post pounder
 Date1 <- as.Date("2025-06-06", "%Y-%m-%d")
 Date2 <- as.Date("2025-07-02", "%Y-%m-%d")
 subdf <- DVSB2[DVSB2$DateTime < Date2 & DVSB2$DateTime > Date1,]
@@ -139,19 +153,31 @@ subdf <- DVSB2[DVSB2$DateTime < Date2 & DVSB2$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-04-25 12:00:00"), linetype="dashed", color="red")
 
+# 
+Date1 <- as.Date("2024-09-01", "%Y-%m-%d")
+Date2 <- as.Date("2024-09-20", "%Y-%m-%d")
+subdf <- DVSB2[DVSB2$DateTime < Date2 & DVSB2$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-09-06 12:00:00"), linetype="dashed", color="red")
+subdf <- DVSB2[DVSB2$DateTime < Date2 & DVSB2$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-04-25 12:00:00"), linetype="dashed", color="red")
+ggplot(data=subdf, aes(DateTime,Level_air.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-04-25 12:00:00"), linetype="dashed", color="red")
+
 ######################################################################
 #### Remove times where PT was out of the water and error section ####
 ######################################################################
 # now NA the time when the PT was out of water 
-# time1 <- as.POSIXct("2025-04-18 12:00:00")
+time1 <- as.POSIXct("2025-06-03 09:45:00")
 # time2 <- as.POSIXct("2025-04-25 11:45:00")
 # time3 <- as.POSIXct("2025-04-25 11:30:00")
 # time4 <- as.POSIXct("2025-06-04 11:45:00")
 # time5 <- as.POSIXct("2025-06-04 11:30:00")
 # time6 <- as.POSIXct("2025-06-04 11:15:00")
-# 
-# DVSB2 <- DVSB2 %>%
-#   mutate(Baro_Cor_Lvl = ifelse(DateTime == time1, NA, Baro_Cor_Lvl))
+
+DVSB2 <- DVSB2 %>%
+  mutate(Baro_Cor_Lvl = ifelse(DateTime == time1, NA, Baro_Cor_Lvl))
 # DVSB2 <- DVSB2 %>%
 #   mutate(Baro_Cor_Lvl = ifelse(DateTime == time2, NA, Baro_Cor_Lvl))
 # DVSB2 <- DVSB2 %>%
@@ -201,7 +227,7 @@ DVSB2 <- DVSB2 %>%
   mutate(Baro_Cor_offset1 = if_else(DateTime >= move_time1, Baro_Cor_Lvl - offset1, Baro_Cor_Lvl))
 
 # second move correction
-move_time2 <- as.POSIXct("2025-06-03 09:45:00")
+move_time2 <- as.POSIXct("2025-06-03 10:00:00")
 
 before_move2 <- DVSB2 %>%
   filter(DateTime >= (move_time2 - hours(2)) & DateTime < move_time2) %>%
@@ -218,24 +244,24 @@ print(paste("Offset 2:", offset2))
 DVSB2 <- DVSB2 %>%
   mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
 
-# # third move correction 
-# move_time3 <- as.POSIXct("2025-06-03 09:45:00")
-# 
-# before_move3 <- DVSB2 %>%
-#   filter(DateTime >= (move_time3 - hours(2)) & DateTime < move_time3) %>%
-#   summarize(mean_before3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset2
-# 
-# after_move3 <- DVSB2 %>%
-#   filter(DateTime >= move_time3 & DateTime < (move_time3 + hours(2))) %>%
-#   summarize(mean_after3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset2
-# 
-# offset3 <- after_move3$mean_after3 - before_move3$mean_before3
-# print(paste("Offset 3:", offset3))
-# 
-# # apply the second correction
-# DVSB2 <- DVSB2 %>%
-#   mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
-# 
+# third move correction
+move_time3 <- as.POSIXct("2024-11-19 16:15:00")
+
+before_move3 <- DVSB2 %>%
+  filter(DateTime >= (move_time3 - hours(2)) & DateTime < move_time3) %>%
+  summarize(mean_before3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset2
+
+after_move3 <- DVSB2 %>%
+  filter(DateTime >= move_time3 & DateTime < (move_time3 + hours(2))) %>%
+  summarize(mean_after3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset2
+
+offset3 <- after_move3$mean_after3 - before_move3$mean_before3
+print(paste("Offset 3:", offset3))
+
+# apply the second correction
+DVSB2 <- DVSB2 %>%
+  mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
+
 # # fourth move correction 
 # move_time4 <- as.POSIXct("2025-05-21 12:45:00")
 # 
@@ -269,13 +295,9 @@ ggplot(DVSB2, aes(x = DateTime, y = Baro_Cor_offset2)) +
   geom_line() +
   labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
 
-# ggplot(DVSB2, aes(x = DateTime, y = Baro_Cor_offset3)) +
-#   geom_line() +
-#   labs(title = "Corrected Baro_Cor Over Time (Third Correction)", x = "Date", y = "Water Level (m)")
-# 
-# ggplot(DVSB2, aes(x = DateTime, y = Baro_Cor_offset4)) +
-#   geom_line() +
-#   labs(title = "Corrected Baro_Cor Over Time (Fourth Correction)", x = "Date", y = "Water Level (m)")
+ggplot(DVSB2, aes(x = DateTime, y = Baro_Cor_offset3)) +
+  geom_line() +
+  labs(title = "Corrected Baro_Cor Over Time (Third Correction)", x = "Date", y = "Water Level (m)")
 
 # discharge from L/s to m3/s in whole data set
 DVSB2$Q..L.s. <- as.numeric(DVSB2$Q..L.s.)
@@ -289,53 +311,69 @@ new_rating_data <- DVSB2 %>%
 ggplot(new_rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
-  labs(title = "Stage vs. Discharge (No Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+  labs(title = "Stage vs. Discharge (No Correction)", x = "Baro corrected level (m)", y = "Discharge (Q m3/s)") +
   theme_minimal()
 
 ggplot(new_rating_data, aes(x = Baro_Cor_offset1, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
-  labs(title = "Stage vs. Discharge (First Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+  labs(title = "Stage vs. Discharge (First Correction)", x = "Baro corrected level (m)", y = "Discharge (Q m3/s)") +
   theme_minimal()
 
 ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
-  labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+  labs(title = "Stage vs. Discharge (Second Correction)", x = "Baro corrected level (m)", y = "Discharge (Q m3/s)") +
+  theme_minimal()
+
+ggplot(new_rating_data, aes(x = Baro_Cor_offset3, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
+  labs(title = "Stage vs. Discharge (Third Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
   theme_minimal()
 
 ####################################
 #### Plot level with correction ####
 ####################################
-ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = actual_depth_m)) +
+ggplot(new_rating_data, aes(x = Baro_Cor_offset3, y = actual_depth_m)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
-  labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+  labs(title = "Stage vs. depth (Third Correction)", x = "Baro corrected level (m)", y = "Actual depth (m)") +
   theme_minimal()
 
 ########################
 #### Plot close ups ####
 ########################
-DVSB2_Feb <- DVSB2%>%
-  filter(month(DateTime) == 2)
-
-# plot after cleaning 
-ggplot(DVSB2_Feb, aes(x = DateTime, y = Baro_Cor_Lvl)) +
-  geom_line() +
-  labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
-ggplot(DVSB2_Feb, aes(x = DateTime, y = Baro_Cor_offset2)) +
-  geom_line() +
-  labs(title = "Baro_Cor_offset2", x = "Date", y = "Water Level (m)")
-
-#take the subset of the data for February when PT was moved
-Date1 <- as.Date("2025-06-01", "%Y-%m-%d")
-Date2 <- as.Date("2025-06-30", "%Y-%m-%d")
+# these are the moments when the level logger was adjusted or moved 
+#take the subset of the data
+# Cut zip tie loop
+Date1 <- as.Date("2024-11-19", "%Y-%m-%d")
+Date2 <- as.Date("2024-11-20", "%Y-%m-%d")
 subdf <- DVSB2[DVSB2$DateTime < Date2 & DVSB2$DateTime > Date1,]
-
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-09-26 12:00:00"), linetype="dashed", color="red")
-ggplot(data=subdf, aes(DateTime,Baro_Cor_offset2)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-09-26 12:00:00"), linetype="dashed", color="red")
+  geom_vline(xintercept = as.POSIXct("2024-11-19 16:15:00"), linetype="dashed", color="red") 
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset3)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-11-19 16:15:00"), linetype="dashed", color="red") 
+
+# Levelogger burried upon arrival. Adjusted up by 9.0 cm. Levelogger redeployed at 11:30:00 AM
+Date1 <- as.Date("2025-02-25", "%Y-%m-%d")
+Date2 <- as.Date("2025-03-05", "%Y-%m-%d")
+subdf <- DVSB2[DVSB2$DateTime < Date2 & DVSB2$DateTime > Date1,]
+# adjustment in February
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-02-28 11:30:00"), linetype="dashed", color="red")
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset3)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-02-28 11:30:00"), linetype="dashed", color="red")
+
+# Level logger moved down 1.0 cm using the fence post pounder
+Date1 <- as.Date("2025-06-03", "%Y-%m-%d")
+Date2 <- as.Date("2025-06-04", "%Y-%m-%d")
+subdf <- DVSB2[DVSB2$DateTime < Date2 & DVSB2$DateTime > Date1,]
+# spike?
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-06-03 09:00:00"), linetype="dashed", color="red")
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset3)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-06-03 09:00:00"), linetype="dashed", color="red")
 
 ###################
 #### Save file ####
@@ -350,3 +388,16 @@ drive_put(
   media = "data/offset_DVSB2.csv",
   path = as_id(drive_folder_id)
 )
+
+Date1 <- as.Date("2025-03-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-03-15", "%Y-%m-%d")
+subdf <- DVSB2[DVSB2$DateTime < Date2 & DVSB2$DateTime > Date1,]
+# sheet says we got to the site at 12:00:00
+ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-02-07 12:15:00"), linetype="dashed", color="red") 
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-02-07 11:45:00"), linetype="dashed", color="red") +
+  geom_vline(xintercept = as.POSIXct("2025-02-07 16:45:00"), linetype="dashed", color="red") 
+ggplot(data=subdf, aes(DateTime,Level_air.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-02-07 11:45:00"), linetype="dashed", color="red") +
+  geom_vline(xintercept = as.POSIXct("2025-02-07 16:45:00"), linetype="dashed", color="red") 

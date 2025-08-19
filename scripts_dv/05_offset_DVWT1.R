@@ -111,8 +111,8 @@ ggplot(DVWT1, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 #### Look at it closely ####
 ############################
 #take the subset of the data
-Date1 <- as.Date("024-11-19", "%Y-%m-%d")
-Date2 <- as.Date("024-11-20", "%Y-%m-%d")
+Date1 <- as.Date("2024-11-19", "%Y-%m-%d")
+Date2 <- as.Date("2024-11-20", "%Y-%m-%d")
 subdf <- DVWT1[DVWT1$DateTime < Date2 & DVWT1$DateTime > Date1,]
 #start of data
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
@@ -319,17 +319,6 @@ ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
 ########################
 #### Plot close ups ####
 ########################
-DVWT1_Feb <- DVWT1%>%
-  filter(month(DateTime) == 2)
-
-# plot after cleaning 
-ggplot(DVWT1_Feb, aes(x = DateTime, y = Baro_Cor_Lvl)) +
-  geom_line() +
-  labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
-ggplot(DVWT1_Feb, aes(x = DateTime, y = Baro_Cor_offset2)) +
-  geom_line() +
-  labs(title = "Baro_Cor_offset2", x = "Date", y = "Water Level (m)")
-
 #take the subset of the data for February when PT was moved
 Date1 <- as.Date("2025-06-01", "%Y-%m-%d")
 Date2 <- as.Date("2025-06-30", "%Y-%m-%d")

@@ -69,7 +69,7 @@ for (i in seq_along(pt_list)) {
   df <- pt_list[[i]]
   
   # make date into date format
-  df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
+  df$Date <- as.POSIXct(df$DateTime, format = "%Y-%m-%d")
   
   # DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep
   df$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",df$DateTime)] <- paste(
@@ -94,6 +94,9 @@ DVNWT4 <- pt_list[["DVNWT4.csv"]]
 Date1 <- as.Date("2025-04-01", "%Y-%m-%d")
 Date2 <- as.Date("2025-04-30", "%Y-%m-%d")
 subdf <- DVSB1[DVSB1$DateTime < Date2 & DVSB1$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,LEVEL)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-04-18 14:00:00"), linetype="dashed", color="red")
+subdf <- DVMS5[DVMS5$DateTime < Date2 & DVMS5$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,LEVEL)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-04-18 14:00:00"), linetype="dashed", color="red")
 
@@ -181,10 +184,11 @@ air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d %H:%M:%S
 # air_lower$Time.air <- format(air_lower$DateTime, "%H:%M:%S") # Extracts time as string
 
 # for upper
-# check datetime format
-air_upper$DateTime <- paste(air_upper$Date.air, air_upper$Time.air, sep = " ")
+# DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep
+air_upper$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_upper$DateTime)] <- paste(
+  air_upper$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_upper$DateTime)],"00:00:00")
 # convert the DateTime column to POSIXct
-air_upper$DateTime <- as.POSIXct(air_upper$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+air_upper$DateTime <- as.POSIXct(air_upper$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 #######################
 #### Plot air data ####
@@ -315,6 +319,13 @@ for (i in seq_along(compensated_upper)) {
   # display the plot in the plot panel
   print(p)
 }
+
+DVMS5 <- compensated_upper[["DVMS5.csv"]] 
+Date1 <- as.Date("2025-03-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-03-15", "%Y-%m-%d")
+subdf <- DVMS5[DVMS5$DateTime < Date2 & DVMS5$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-02-07 12:15:00"), linetype="dashed", color="red") 
 
 ####################################################
 #### Save merged and compensated slugs to Drive ####

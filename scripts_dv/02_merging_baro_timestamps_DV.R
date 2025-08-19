@@ -38,25 +38,34 @@ pt_list <- lapply(seq_along(pt_files$name), function(i) {
 # assign names to the list elements based on the file names
 names(pt_list) <- pt_files$name
 
+DVO_weatherstation <- pt_list[["DVO_WeatherStation.csv"]]
+DVO_error <- pt_list[["DVO_logger.csv"]]
+NWT5_241114 <-pt_list[["2137296_2024_11_14_DVNWT5_Barologger.csv"]]
+
 ################################
 #### Format DateTime column ####
 ################################
-# loop through each data frame in the list
+# add missing midnight time
 for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
-  # convert the Date and Time columns to Date and Time
+  
+  # make date into date format
   df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
   
-  # combine Date and Time columns into a new DateTime column
-  df$DateTime <- paste(df$Date, df$Time, sep = " ")
+  # DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep
+  df$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",df$DateTime)] <- paste(
+    df$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",df$DateTime)],"00:00:00")
   
   # convert the DateTime column to POSIXct
   df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
-  
   # update the data frame in the list
   pt_list[[i]] <- df
 }
+
+DVO_weatherstation <- pt_list[["DVO_WeatherStation.csv"]]
+DVO_error <- pt_list[["DVO_logger.csv"]]
+NWT5_241114 <-pt_list[["2137296_2024_11_14_DVNWT5_Barologger.csv"]]
 
 ####################################
 #### Combine data for each site ####
@@ -90,6 +99,18 @@ ggplot(data = combined_by_site[["DVNWT5"]], aes(x = DateTime, y = LEVEL.m)) +
   geom_line()
 ggplot(data = combined_by_site[["DVO"]], aes(x = DateTime, y = LEVEL.m)) + 
   geom_line()
+
+DVO <- combined_by_site[["DVO"]]
+Date1 <- as.Date("2025-03-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-03-15", "%Y-%m-%d")
+subdf <- DVO[DVO$DateTime < Date2 & DVO$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-02-07 12:15:00"), linetype="dashed", color="red") 
+
+DVNWT5 <- combined_by_site[["DVNWT5"]] 
+subdf <- DVNWT5[DVNWT5$DateTime < Date2 & DVNWT5$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-02-07 12:15:00"), linetype="dashed", color="red") 
 
 ##############################
 #### Save combined files  ####

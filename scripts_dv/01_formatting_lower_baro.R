@@ -41,24 +41,23 @@ air_lower <- air_lower %>%
     DateTime = Date_Time
   ) %>%
   mutate(
-    # change date format
-    DateTime = as.POSIXct(DateTime, format = "%m/%d/%Y %H:%M:%S"),
-    Date = as.Date(DateTime, format = "%Y-%m-%d"),
-    Time = hms::as_hms(DateTime),
     # change pressure units from mb to m
     LEVEL.m = (LEVEL.mb * 0.0101972)
     )
 # 1 mbar = 0.0101972 m
 
+# change date format
+air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%m/%d/%Y %H:%M:%S")
+air_lower$Date <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d")
+air_lower$Time <- hms::as_hms(air_lower$DateTime)
+
 # round time to nearest 15 #
 # create extra columns so you don't erase original time               
 air_lower$DateTimeNotRounded <- air_lower$DateTime
-
-# Transform to datetime format
-air_lower$DateTime <- as.POSIXct(air_lower$DateTime,format = "%Y-%m-%d %H:%M:%S")
+# transform to datetime format
 air_lower$DateTimeNotRounded <- as.POSIXct(air_lower$DateTimeNotRounded,format = "%Y-%m-%d %H:%M:%S")
 
-# Round DateTime to the nearest 15-minute interval 
+# round DateTime to the nearest 15-minute interval 
 air_lower$DateTime <- round_date(air_lower$DateTime, unit="15 mins")
 air_lower$TimeOnly <- round_date(air_lower$TimeOnly, unit="15 mins")
 
@@ -67,6 +66,17 @@ air_lower <- air_lower[duplicated(air_lower$DateTime), ]
 air_lower <- air_lower[duplicated(air_lower$DateTime), ]
 
 air_lower$Time <- format(air_lower$DateTime, "%H:%M:%S") # extracts time as string
+
+# plot
+ggplot(data = air_lower, aes(x = DateTime, y = LEVEL.m)) +
+  geom_line() + ggtitle("Baro logger data - lower sites")
+
+Date1 <- as.Date("2025-03-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-03-15", "%Y-%m-%d")
+subdf <- air_lower[air_lower$DateTime < Date2 & air_lower$DateTime > Date1,]
+# sheet says we got to the site at 12:00:00
+ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-02-07 12:15:00"), linetype="dashed", color="red") 
 
 #### baro logger data ####
 # this is the merged days baro folder
@@ -98,6 +108,17 @@ DVO_error <- DVO_error %>%
 # make time the same format in both files
 DVO_error$Time <- format(DVO_error$DateTime, "%H:%M:%S") # extracts time as string
 
+# plot
+ggplot(data = DVO_error, aes(x = DateTime, y = LEVEL.m)) +
+  geom_line() + ggtitle("Baro logger data - lower sites")
+
+Date1 <- as.Date("2024-09-01", "%Y-%m-%d")
+Date2 <- as.Date("2024-09-15", "%Y-%m-%d")
+subdf <- DVO_error[DVO_error$DateTime < Date2 & DVO_error$DateTime > Date1,]
+# sheet says we got to the site at 12:00:00
+ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-02-07 12:15:00"), linetype="dashed", color="red") 
+
 ##############################
 #### Save formatted file  ####
 ##############################
@@ -121,3 +142,4 @@ drive_put(
   media = "data/DVO_logger.csv",
   path = as_id(drive_folder_id)
 )
+
