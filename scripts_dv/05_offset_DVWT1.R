@@ -44,8 +44,11 @@ DVWT1$DateTime <- paste(DVWT1$Date.x, DVWT1$TimeOnly, sep = " ")
 DVWT1$DateTime <- as.POSIXct(DVWT1$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 # filter out rows with missing stage or discharge
-rating_data <- DVWT1 %>% 
+rating_data <- DVWT1 %>%
   filter(!is.na(Baro_Cor_Lvl), !is.na(Q))
+# level data
+level_data <- DVWT1 %>% 
+  filter(!is.na(Baro_Cor_Lvl), !is.na(Actual_Water_Depth_m))
 
 DVWT1$Q..L.s. <- as.numeric(DVWT1$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
@@ -80,11 +83,16 @@ ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
 #### Plot Water Level vs. Discharge ####
 ########################################
 # discharge from L/s to m3/s
-rating_data <- rating_data %>%
-  mutate(Q.m3s = Q..L.s./1000)
+level_data <- level_data %>%
+  mutate(Q.m3s = Q/1000)
 
-# plot with date info
-ggplot(rating_data, aes(x = actual_depth_m, y = Q.m3s)) +
+ggplot(level_data, aes(x = Actual_Water_Depth_m, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Actual water depth at sensor vs Discharge", x = "Water depth  (m)", y = "Discharge (Q m³/s)") +
+  theme_minimal()
+
+ggplot(level_data, aes(x = Baro_Cor_Lvl, y = Actual_Water_Depth_m)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Baro-corrected level vs. Actual water depth at sensor", x = "Baro-corrected level (m)", y = "Water depth  (m)") +

@@ -53,6 +53,10 @@ rating_data <- DVMS5 %>%
 DVMS5$Q..L.s. <- as.numeric(DVMS5$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 
+# level data
+level_data <- DVMS5 %>% 
+  filter(!is.na(Baro_Cor_Lvl), !is.na(Actual_Water_Depth_m))
+
 ########################################
 #### Plot pressure compensated data ####
 ########################################
@@ -80,21 +84,19 @@ ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
 #### Plot Water Level vs. Discharge ####
 ########################################
 # discharge from L/s to m3/s
-rating_data <- rating_data %>%
-  mutate(Q.m3s = Q..L.s./1000)
+level_data <- level_data %>%
+  mutate(Q.m3s = Q/1000)
 
-# plot with date info
-ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
-  geom_point(color = "blue") +
-  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
-  labs(title = "Baro-corrected level vs. Actual water depth at sensor", x = "Baro-corrected level (m)", y = "Water depth  (m)") +
-  theme_minimal()
-
-# plot with date info
-ggplot(rating_data, aes(x = actual_depth_m, y = Q.m3s)) +
+ggplot(level_data, aes(x = Actual_Water_Depth_m, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Actual water depth at sensor vs Discharge", x = "Water depth  (m)", y = "Discharge (Q m³/s)") +
+  theme_minimal()
+
+ggplot(level_data, aes(x = Baro_Cor_Lvl, y = Actual_Water_Depth_m)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Baro-corrected level vs. Actual water depth at sensor", x = "Baro-corrected level (m)", y = "Water depth  (m)") +
   theme_minimal()
 
 #################################################
@@ -239,7 +241,7 @@ after_move3 <- DVMS5 %>%
 offset3 <- after_move3$mean_after3 - before_move3$mean_before3
 print(paste("Offset 3:", offset3))
 
-# apply the second correction
+# apply the third correction
 DVMS5 <- DVMS5 %>%
   mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
 
@@ -257,28 +259,19 @@ after_move4 <- DVMS5 %>%
 offset4 <- after_move4$mean_after4 - before_move4$mean_before4
 print(paste("Offset 4:", offset4))
 
-# apply the second correction
+# apply the fourth correction
 DVMS5 <- DVMS5 %>%
   mutate(Baro_Cor_offset4 = if_else(DateTime >= move_time4, Baro_Cor_offset3 - offset4, Baro_Cor_offset3))
 
-# fifth move correction (2024-11-19 10:30:00)
-move_time5 <- as.POSIXct("2024-11-17 00:00:00")
-move_time6 <- as.POSIXct("2024-11-20 00:00:00")
+# known offset correction (2024-11-19, 2 cm)
+move_time5 <- as.POSIXct("2024-11-19 13:06:00")
+offset5 <- -0.02  # m offset from field notes
 
-before_move5 <- DVMS5 %>%
-  filter(DateTime >= (move_time5 - hours(2)) & DateTime < move_time5) %>%
-  summarize(mean_before5 = mean(Baro_Cor_offset4, na.rm = TRUE)) # Use Baro_Cor_offset4
-
-after_move6 <- DVMS5 %>%
-  filter(DateTime >= move_time6 & DateTime < (move_time6 + hours(2))) %>%
-  summarize(mean_after6 = mean(Baro_Cor_offset4, na.rm = TRUE)) # Use Baro_Cor_offset4
-
-offset5 <- after_move6$mean_after6 - before_move5$mean_before5
-print(paste("Offset 5:", offset5))
-
-# apply the second correction
+# apply the fifth correction
 DVMS5 <- DVMS5 %>%
-  mutate(Baro_Cor_offset5 = if_else(DateTime >= move_time6, Baro_Cor_offset4 - offset5, Baro_Cor_offset4))
+  mutate(Baro_Cor_offset5 = if_else(DateTime >= move_time5,
+                                    Baro_Cor_offset4 - offset5,
+                                    Baro_Cor_offset4))
 
 ##############################
 #### Plot with Correction ####
@@ -297,15 +290,15 @@ ggplot(DVMS5, aes(x = DateTime, y = Baro_Cor_offset2)) +
 
 ggplot(DVMS5, aes(x = DateTime, y = Baro_Cor_offset3)) +
   geom_line() +
-  labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
+  labs(title = "Corrected Baro_Cor Over Time (third Correction)", x = "Date", y = "Water Level (m)")
 
 ggplot(DVMS5, aes(x = DateTime, y = Baro_Cor_offset4)) +
   geom_line() +
-  labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
+  labs(title = "Corrected Baro_Cor Over Time (fourth Correction)", x = "Date", y = "Water Level (m)")
 
 ggplot(DVMS5, aes(x = DateTime, y = Baro_Cor_offset5)) +
   geom_line() +
-  labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
+  labs(title = "Corrected Baro_Cor Over Time (Fifth Correction)", x = "Date", y = "Water Level (m)")
 
 # discharge from L/s to m3/s in whole data set
 DVMS5$Q..L.s. <- as.numeric(DVMS5$Q..L.s.)
@@ -315,6 +308,8 @@ DVMS5 <- DVMS5 %>%
 # filter out rows with missing stage or discharge
 new_rating_data <- DVMS5 %>% 
   filter(!is.na(Baro_Cor_offset1), !is.na(Q.m3s))
+new_level_data <- DVMS5 %>% 
+  filter(!is.na(Baro_Cor_offset1), !is.na(Actual_Water_Depth_m))
 
 ggplot(new_rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
   geom_point(color = "blue") +
@@ -355,10 +350,10 @@ ggplot(new_rating_data, aes(x = Baro_Cor_offset5, y = Q.m3s)) +
 ####################################
 #### Plot level with correction ####
 ####################################
-ggplot(new_rating_data, aes(x = Baro_Cor_offset4, y = actual_depth_m)) +
+ggplot(new_level_data, aes(x = Baro_Cor_offset5, y = Actual_Water_Depth_m)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
-  labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+  labs(title = "Baro-corrected level vs. Actual water depth at sensor (Third Correction)", x = "Baro-corrected level (m)", y = "Water depth  (m)") +
   theme_minimal()
 
 ########################
@@ -368,7 +363,6 @@ ggplot(new_rating_data, aes(x = Baro_Cor_offset4, y = actual_depth_m)) +
 Date1 <- as.Date("2025-04-10", "%Y-%m-%d")
 Date2 <- as.Date("2025-04-12", "%Y-%m-%d")
 subdf <- DVMS5[DVMS5$DateTime < Date2 & DVMS5$DateTime > Date1,]
-
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-04-11 13:15:00"), linetype="dashed", color="red") 
 ggplot(data=subdf, aes(DateTime,Baro_Cor_offset1)) + geom_line() +
@@ -378,7 +372,6 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_offset1)) + geom_line() +
 Date1 <- as.Date("2024-10-17", "%Y-%m-%d")
 Date2 <- as.Date("2024-10-19", "%Y-%m-%d")
 subdf <- DVMS5[DVMS5$DateTime < Date2 & DVMS5$DateTime > Date1,]
-
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-10-18 09:15:00"), linetype="dashed", color="red")
 ggplot(data=subdf, aes(DateTime,Baro_Cor_offset2)) + geom_line() +
@@ -388,7 +381,6 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_offset2)) + geom_line() +
 Date1 <- as.Date("2024-11-16", "%Y-%m-%d")
 Date2 <- as.Date("2024-11-22", "%Y-%m-%d")
 subdf <- DVMS5[DVMS5$DateTime < Date2 & DVMS5$DateTime > Date1,]
-
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-05-23 10:15:00"), linetype="dashed", color="red")
 ggplot(data=subdf, aes(DateTime,Baro_Cor_offset5)) + geom_line() +
@@ -398,7 +390,6 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_offset5)) + geom_line() +
 Date1 <- as.Date("2025-06-01", "%Y-%m-%d")
 Date2 <- as.Date("2025-06-06", "%Y-%m-%d")
 subdf <- DVMS5[DVMS5$DateTime < Date2 & DVMS5$DateTime > Date1,]
-
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-05-23 10:15:00"), linetype="dashed", color="red")
 ggplot(data=subdf, aes(DateTime,Baro_Cor_offset5)) + geom_line() +
@@ -408,7 +399,6 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_offset5)) + geom_line() +
 Date1 <- as.Date("2024-08-05", "%Y-%m-%d")
 Date2 <- as.Date("2024-08-08", "%Y-%m-%d")
 subdf <- DVMS5[DVMS5$DateTime < Date2 & DVMS5$DateTime > Date1,]
-
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-05-23 10:15:00"), linetype="dashed", color="red")
 ggplot(data=subdf, aes(DateTime,Baro_Cor_offset5)) + geom_line() +

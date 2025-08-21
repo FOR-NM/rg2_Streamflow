@@ -211,23 +211,15 @@ print(paste("Offset 2:", offset2))
 DVMS1 <- DVMS1 %>%
   mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
 
-# # third move correction (2025-05-23 10:15:00)
-# move_time3 <- as.POSIXct("2025-05-23 10:15:00")
-# 
-# before_move3 <- DVMS1 %>%
-#   filter(DateTime >= (move_time3 - hours(2)) & DateTime < move_time3) %>%
-#   summarize(mean_before3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset1
-# 
-# after_move3 <- DVMS1 %>%
-#   filter(DateTime >= move_time3 & DateTime < (move_time3 + hours(2))) %>%
-#   summarize(mean_after3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset1
-# 
-# offset3 <- after_move3$mean_after3 - before_move3$mean_before3
-# print(paste("Offset 3:", offset3))
-# 
-# # apply the second correction
-# DVMS1 <- DVMS1 %>%
-#   mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
+# known offset correction (2024-11-19, 1.50 cm)
+move_time3 <- as.POSIXct("2024-11-19 14:29:00")
+offset3 <- -0.0150  # m offset from field notes
+
+# apply the third correction
+DVMS1 <- DVMS1 %>%
+  mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3,
+                                    Baro_Cor_offset2 - offset3,
+                                    Baro_Cor_offset2))
 
 ##############################
 #### Plot with Correction ####
@@ -240,9 +232,13 @@ ggplot(DVMS1, aes(x = DateTime, y = Baro_Cor_offset1)) +
   geom_line() +
   labs(title = "Corrected Baro_Cor Over Time (First Correction)", x = "Date", y = "Water Level (m)")
 
-# ggplot(DVMS1, aes(x = DateTime, y = Baro_Cor_offset2)) +
-#   geom_line() +
-#   labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
+ggplot(DVMS1, aes(x = DateTime, y = Baro_Cor_offset2)) +
+  geom_line() +
+  labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
+
+ggplot(DVMS1, aes(x = DateTime, y = Baro_Cor_offset3)) +
+  geom_line() +
+  labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
 
 # discharge from L/s to m3/s in whole data set
 DVMS1$Q..L.s. <- as.numeric(DVMS1$Q..L.s.)
@@ -265,17 +261,20 @@ ggplot(new_rating_data, aes(x = Baro_Cor_offset1, y = Q.m3s)) +
   labs(title = "Stage vs. Discharge (First Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
   theme_minimal()
 
-# ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
-#   geom_point(color = "blue") +
-#   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
-#   labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
-#   theme_minimal()
+ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
+  labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+  theme_minimal()
 
-# ggplot(new_rating_data, aes(x = Baro_Cor_offset3, y = Q.m3s)) +
-#   geom_point(color = "blue") +
-#   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
-#   labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
-#   theme_minimal()
+####################################
+#### Plot level with correction ####
+####################################
+ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = actual_depth_m)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
+  labs(title = "Baro-corrected level vs. Actual water depth at sensor (Second Correction)", x = "Baro-corrected level (m)", y = "Water depth  (m)") +
+  theme_minimal()
 
 ########################
 #### Plot close ups ####

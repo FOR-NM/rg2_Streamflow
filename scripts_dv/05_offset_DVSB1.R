@@ -49,6 +49,9 @@ DVSB1$DateTime <- as.POSIXct(DVSB1$DateTime, format = "%Y-%m-%d %H:%M:%S")
 # filter out rows with missing stage or discharge
 rating_data <- DVSB1 %>% 
   filter(!is.na(Baro_Cor_Lvl), !is.na(Q))
+# level data
+level_data <- DVSB1 %>% 
+  filter(!is.na(Baro_Cor_Lvl), !is.na(Actual_Water_Depth_m))
 
 DVSB1$Q..L.s. <- as.numeric(DVSB1$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
@@ -80,18 +83,16 @@ ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
 #### Plot Water Level vs. Discharge ####
 ########################################
 # discharge from L/s to m3/s
-rating_data <- rating_data %>%
-  mutate(Q.m3s = Q..L.s./1000)
+level_data <- level_data %>%
+  mutate(Q.m3s = Q/1000)
 
-# plot with date info
-ggplot(rating_data, aes(x = Baro_Cor_Lvl, y = actual_depth_m)) +
+ggplot(level_data, aes(x = Actual_Water_Depth_m, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
-  labs(title = "Baro-corrected level vs. Actual water depth at sensor", x = "Baro-corrected level (m)", y = "Water depth  (m)") +
+  labs(title = "Actual water depth at sensor vs Discharge", x = "Water depth  (m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
 
-# plot with date info
-ggplot(rating_data, aes(x = actual_depth_m, y = Q.m3s)) +
+ggplot(level_data, aes(x = Baro_Cor_Lvl, y = Actual_Water_Depth_m)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Baro-corrected level vs. Actual water depth at sensor", x = "Baro-corrected level (m)", y = "Water depth  (m)") +
@@ -239,6 +240,8 @@ DVSB1 <- DVSB1 %>%
 # filter out rows with missing stage or discharge
 new_rating_data <- DVSB1 %>% 
   filter(!is.na(Baro_Cor_offset1), !is.na(Q.m3s))
+new_level_data <- DVSB1 %>% 
+  filter(!is.na(Baro_Cor_offset1), !is.na(Actual_Water_Depth_m))
 
 ggplot(new_rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
   geom_point(color = "blue") +
@@ -261,10 +264,10 @@ ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
 ####################################
 #### Plot level with correction ####
 ####################################
-ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = actual_depth_m)) +
+ggplot(new_level_data, aes(x = Baro_Cor_offset2, y = Actual_Water_Depth_m)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
-  labs(title = "Stage vs. depth (Second Correction)", x = "Baro corrected level (m)", y = "Actual depth (m)") +
+  labs(title = "Baro-corrected level vs. Actual water depth at sensor (Second Correction)", x = "Baro-corrected level (m)", y = "Water depth  (m)") +
   theme_minimal()
 
 ########################

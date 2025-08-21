@@ -46,6 +46,7 @@ salt <- salt %>%
     Time = time_of_injection,
     background = background_spc_m_s_cm,
     salt = amount_of_salt_injected_g,
+    Actual_Water_Depth_m = actual_depth_m
   ) 
 
 # remove rows that I don't want
@@ -55,16 +56,13 @@ salt <- salt[ , -c(4, 8, 9, 12, 14:16)]
 salt["slug_flag"][salt["slug_flag"] == ''] <- NA
 salt["slug_notes"][salt["slug_notes"] == ''] <- NA
 
-########################################################
-#### Combine and format Date and Time in one column ####
-########################################################
 # convert the Date column to Date
 salt$Date <- as.POSIXct(salt$Date, format = "%m/%d/%Y")
 
 # combine Date and Time columns into a new DateTime column
 salt$DateTime <- paste(salt$Date, salt$Time, sep = " ")
 # convert the DateTime column to POSIXct
-salt$DateTime <- as.POSIXct(salt$DateTime, format = "%Y-%m-%d %H:%M:%S")
+salt$DateTime <- as.POSIXct(salt$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
 
 #######################################
 #### Load Q data from Google drive ####
@@ -91,13 +89,92 @@ Q <- Q[ , -c(3, 4, 7, 8)]
 
 colnames(Q)
 
+#########################################
+#### Load flow status of the streams ####
+#########################################
+(st <- drive_get("https://docs.google.com/spreadsheets/d/1ig_BVOc9yp33Gkn-nLVaEA3rKy1TdgNnd69zbz4KOsQ/edit?gid=0#gid=0"))
+3
+# download the file as a csv file
+drive_download(as_id(st$id), path = "googledrive/flowstatus.csv", type = "csv", overwrite = T)
+
+# fetch the file
+flowstatus <- read.csv("googledrive/flowstatus.csv")
+
+# rename columns and convert types
+flowstatus <- flowstatus %>%
+  # rename columns
+  dplyr::rename(
+    DataID = SiteID,
+    Time = YSI_StartTime,
+    slug_flag = Flow_Status
+  )
+
+# convert the Date column to Date
+flowstatus$Date <- as.POSIXct(flowstatus$Date, format = "%m/%d/%Y")
+
+# combine Date and Time columns into a new DateTime column
+flowstatus$DateTime <- paste(flowstatus$Date, flowstatus$Time, sep = " ")
+# convert the DateTime column to POSIXct
+flowstatus$DateTime <- as.POSIXct(flowstatus$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+# round DateTime to the nearest 15-minute interval 
+flowstatus$DateTime <- round_date(flowstatus$DateTime, unit="15 mins")
+
+# remove rows and columns that I don't want
+flowstatus <- flowstatus[ , -c(6:17)]
+flowstatus <- flowstatus[ -c(321:360),]
+
+# retain only dry moments
+flowstatus <- flowstatus %>%
+  filter(slug_flag == 'Dry')
+
+flowstatus <- flowstatus %>%
+  mutate(Q = 0)
+
+## reload to add actual water depth data ##
+actual_water_depth <- read.csv("googledrive/flowstatus.csv")
+
+# rename columns and convert types
+actual_water_depth <- actual_water_depth %>%
+  # rename columns
+  dplyr::rename(
+    DataID = SiteID,
+    Time = YSI_StartTime
+  ) 
+
+# convert the Date column to Date
+actual_water_depth$Date <- as.POSIXct(actual_water_depth$Date, format = "%m/%d/%Y")
+# combine Date and Time columns into a new DateTime column
+actual_water_depth$DateTime <- paste(actual_water_depth$Date, actual_water_depth$Time, sep = " ")
+# convert the DateTime column to POSIXct
+actual_water_depth$DateTime <- as.POSIXct(actual_water_depth$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+# round DateTime to the nearest 15-minute interval 
+actual_water_depth$DateTime <- round_date(actual_water_depth$DateTime, unit="15 mins")
+
+# retain only observed moments
+actual_water_depth <- actual_water_depth %>%
+  filter(Direct_Observation == 'yes')
+
+# remove rows and columns that I don't want
+actual_water_depth <- actual_water_depth[ , -c(6:14, 16, 17)]
+actual_water_depth <- actual_water_depth[ -c(321:360),]
+
+# change cm to m
+actual_water_depth$Actual_Water_Depth_cm <- as.numeric(actual_water_depth$Actual_Water_Depth_cm)
+actual_water_depth <- actual_water_depth %>%
+  mutate(Actual_Water_Depth_m = Actual_Water_Depth_cm/100)
+
 ########################################
 #### Merge depth and discharge data ####
 ########################################
 discharge_depth <- merge(Q, salt, by = c("DataID", "Date"), all.x = TRUE)
-
 # round DateTime to the nearest 15-minute interval 
 discharge_depth$DateTime <- round_date(discharge_depth$DateTime, unit="15 mins")
+
+# add flow status data
+discharge_depth <- bind_rows(discharge_depth, flowstatus)
+
+# add actual water depth data to table
+discharge_depth <- merge(discharge_depth, actual_water_depth, by = c("DataID", "Date", "DateTime", "Actual_Water_Depth_m"), all.x = TRUE, all.y = TRUE)
 
 ####################################################
 #### Load PT compensated data from Google drive ####
