@@ -1,7 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
 ## This script is to calculate PT offset for Dog Valley DVMS1 site
-## press Command+Option+O to collapse all sections and get an overview of the workflow
 ##==============================================================================
 
 ##################
@@ -298,6 +297,16 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-11-14 11:00:00"), linetype="dashed", color="red") 
 ggplot(data=subdf, aes(DateTime,Baro_Cor_offset2)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-11-14 11:00:00"), linetype="dashed", color="red") 
+
+#take the subset of the data for November when PT was moved
+Date1 <- as.Date("2025-05-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-06-30", "%Y-%m-%d")
+subdf <- DVMS1[DVMS1$DateTime < Date2 & DVMS1$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-06-23 08:00:00"), linetype="dashed", color="red") 
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset3)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-06-23 08:00:00"), linetype="dashed", color="red") 
 
 ###################
 #### Save file ####

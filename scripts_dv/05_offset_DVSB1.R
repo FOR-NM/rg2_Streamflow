@@ -42,16 +42,19 @@ DVSB1 <- read.csv("googledrive/DVSB1.csv")
 
 # convert Date column to Date type if not already
 # combine Date and Time columns into a new DateTime column
-DVSB1$DateTime <- paste(DVSB1$Date.air, DVSB1$Time.air, sep = " ")
+DVSB1$DateTime <- paste(DVSB1$Date.air, DVSB1$TimeOnly, sep = " ")
 # convert the DateTime column to POSIXct
 DVSB1$DateTime <- as.POSIXct(DVSB1$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
-# filter out rows with missing stage or discharge
+# filter out rows with missing stage or discharge and bad dicharge curves
 rating_data <- DVSB1 %>% 
   filter(!is.na(Baro_Cor_Lvl), !is.na(Q))
+rating_data <- DVSB1 %>% 
+  filter(slug_flag != c("Bad", "Př"))
 # level data
 level_data <- DVSB1 %>% 
   filter(!is.na(Baro_Cor_Lvl), !is.na(Actual_Water_Depth_m))
+
 
 DVSB1$Q..L.s. <- as.numeric(DVSB1$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
@@ -240,8 +243,11 @@ DVSB1 <- DVSB1 %>%
 # filter out rows with missing stage or discharge
 new_rating_data <- DVSB1 %>% 
   filter(!is.na(Baro_Cor_offset1), !is.na(Q.m3s))
+new_rating_data <- DVSB1 %>% 
+  filter(slug_flag != "Bad")
 new_level_data <- DVSB1 %>% 
   filter(!is.na(Baro_Cor_offset1), !is.na(Actual_Water_Depth_m))
+
 
 ggplot(new_rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
   geom_point(color = "blue") +
@@ -320,3 +326,4 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
 ggplot(data=subdf, aes(DateTime,Level_air.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-02-07 11:45:00"), linetype="dashed", color="red") +
   geom_vline(xintercept = as.POSIXct("2025-02-07 16:45:00"), linetype="dashed", color="red") 
+

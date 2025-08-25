@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to calculate discharge from compensated pressure data for Santa Fe USF03 site
+## This script is to calculate discharge from compensated pressure data for Santa Fe DVSB1 site
 ##==============================================================================
 
 ##################
@@ -26,50 +26,47 @@ file.remove(files)
 #################################
 #### load data from Google drive ####
 # this is the "offset" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1VIonkS5GXUsn34FEPu1lpkMgsgCvPXFw")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/136WGq6adaNROjaJN2YL63yJExKikM81A")
 
 # List all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
-#USF03
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="offset_USF03.csv"], 
-                            path = "googledrive/offset_USF03.csv",
+# DVSB1
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="offset_DVSB1.csv"], 
+                            path = "googledrive/offset_DVSB1.csv",
                             overwrite = T)
 # load file
-USF03 <- read.csv("googledrive/offset_USF03.csv")
+DVSB1 <- read.csv("googledrive/offset_DVSB1.csv")
 
 # convert Date column to Date type if not already
-USF03$Date <- as.Date(USF03$Date.x)
+DVSB1$Date <- as.Date(DVSB1$Date.x)
 # combine Date and Time columns into a new DateTime column
-USF03$DateTime <- paste(USF03$Date.x, USF03$Time, sep = " ")
+DVSB1$DateTime <- paste(DVSB1$Date.x, DVSB1$TimeOnly, sep = " ")
 # convert the DateTime column to POSIXct
-USF03$DateTime <- as.POSIXct(USF03$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+DVSB1$DateTime <- as.POSIXct(DVSB1$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 ########################################
 #### Make compensated data positive ####
 ########################################
 # filter out rows with missing stage or discharge
-rating_data <- USF03 %>% 
-  filter(!is.na(Baro_Cor_offset2), !is.na(Q))
-
-# check the structure of the cleaned data
-head(rating_data)
+rating_data <- DVSB1 %>% 
+  filter(!is.na(Baro_Cor_offset2), !is.na(Q), !Q == 0)
+rating_data <- rating_data %>% 
+  filter(slug_flag != "Bad")
+rating_data <- rating_data %>% 
+  filter(slug_flag != c("PW"))
 
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-ggplot(data = USF03, aes(x = DateTime, y = Baro_Cor_offset2)) +
-  geom_line() + ggtitle("USF03 compensated level data")
+ggplot(data = DVSB1, aes(x = DateTime, y = Baro_Cor_offset2)) +
+  geom_vline(xintercept = as.POSIXct("2025-06-23 12:00:00"), linetype="dashed") +
+  geom_line() + ggtitle("DVSB1 compensated level data")
 
 ##################################
 #### Plot Stage vs. Discharge ####
 ##################################
-ggplot(rating_data, aes(x = Baro_Cor_offset2, y = Q)) +
-  geom_point(color = "blue") +
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.m)", y = "Discharge (Q)") +
-  theme_minimal()
-
 # discharge from L/s to m3/s
 rating_data <- rating_data %>%
   mutate(Q.m3s = Q/1000)
@@ -84,10 +81,11 @@ ggplot(rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
 ###########################################
 #### Check for Log-Linear Relationship ####
 ###########################################
-ggplot(rating_data, aes(x = log(Baro_Cor_offset2), y = log(Q))) +
+ggplot(rating_data, aes(x = log(Baro_Cor_offset2), y = log(Q.m3s))) +
   geom_point(color = "blue") +
   labs(title = "Log-Log Plot of Water Level vs. Discharge", 
        x = "Log(Water Level)", y = "Log(Discharge)") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   theme_minimal()
 
 ####################
@@ -96,10 +94,10 @@ ggplot(rating_data, aes(x = log(Baro_Cor_offset2), y = log(Q))) +
 rating_data <- rating_data %>%
   mutate(Log_Stage = log(Baro_Cor_offset2),
          Log_Discharge = log(Q.m3s))
-
 log_model <- lm(Log_Discharge ~ Log_Stage, data = rating_data)
 
 summary(log_model)
+
 
 a <- exp(coef(log_model)[1])  # Back-transform intercept
 b <- coef(log_model)[2]       # Slope
@@ -140,7 +138,7 @@ a_log <- exp(coef(log_model)[1])  # Intercept
 b_log <- coef(log_model)[2]       # Slope
 
 # predict discharge for the entire dataset
-USF03 <- USF03 %>%
+DVSB1 <- DVSB1 %>%
   mutate(Predicted_Discharge_Log_m3s = a_log * (Baro_Cor_offset2 ^ b_log))
 
 ##########################
@@ -151,26 +149,26 @@ a_linear <- coef(linear_model)[1]  # Intercept
 b_linear <- coef(linear_model)[2]  # Slope
 
 # predict discharge for the entire dataset
-USF03 <- USF03 %>%
+DVSB1 <- DVSB1 %>%
   mutate(Predicted_Discharge_Linear_m3s = a_linear + b_linear * Baro_Cor_offset2)
 
 #############################
 #### Compare predictions ####
 #############################
 # visualize predictions
-plot(USF03$Baro_Cor_offset2, USF03$Predicted_Discharge_Log_m3s, col = "red", type = "l", lwd = 2,
+plot(DVSB1$Baro_Cor_offset2, DVSB1$Predicted_Discharge_Log_m3s, col = "red", type = "l", lwd = 2,
      xlab = "Stage (m)", ylab = "Discharge (m³/s)", main = "Discharge Predictions")
-lines(USF03$Baro_Cor_offset2, USF03$Predicted_Discharge_Linear_m3s, col = "green", lwd = 2)
+lines(DVSB1$Baro_Cor_offset2, DVSB1$Predicted_Discharge_Linear_m3s, col = "green", lwd = 2)
 legend("topleft", legend = c("Log-Transformed", "Linear"),
        col = c("red", "green"), lty = 1, lwd = 2)
 
 
 # discharge from L/s to m3/s for entire dataset
-USF03 <- USF03 %>%
+DVSB1 <- DVSB1 %>%
   mutate(Q.m3s = Q/1000)
 
 # compare Predicted vs. Observed Discharge
-ggplot(USF03, aes(x = Q.m3s)) +
+ggplot(DVSB1, aes(x = Q.m3s)) +
   geom_point(aes(y = Predicted_Discharge_Log_m3s, color = "Log Model")) +
   geom_point(aes(y = Predicted_Discharge_Linear_m3s, color = "Linear Model")) +
   labs(
@@ -182,13 +180,13 @@ ggplot(USF03, aes(x = Q.m3s)) +
   theme_minimal()
 
 # residuals
-USF03 <- USF03 %>%
+DVSB1 <- DVSB1 %>%
   mutate(
     Residual_Log = Q.m3s - Predicted_Discharge_Log_m3s,
     Residual_Linear = Q.m3s - Predicted_Discharge_Linear_m3s
   )
 
-ggplot(USF03, aes(x = Baro_Cor_offset2)) +
+ggplot(DVSB1, aes(x = Baro_Cor_offset2)) +
   geom_point(aes(y = Residual_Log, color = "Log Model")) +
   geom_point(aes(y = Residual_Linear, color = "Linear Model")) +
   labs(
@@ -202,15 +200,15 @@ ggplot(USF03, aes(x = Baro_Cor_offset2)) +
 ######################################
 #### Plot and compare predictions ####
 ######################################
-USF03$DateTime <- as.POSIXct(USF03$DateTime)
+DVSB1$DateTime <- as.POSIXct(DVSB1$DateTime)
 
-ggplot(USF03, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) +
+ggplot(DVSB1, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) +
   geom_point(color = "blue") +
   labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggplot(USF03, aes(x = DateTime, y = Predicted_Discharge_Linear_m3s)) +
+ggplot(DVSB1, aes(x = DateTime, y = Predicted_Discharge_Linear_m3s)) +
   geom_point(color = "blue") +
   labs(title = "Predicted Discharge (Linear)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "2 week") +
@@ -219,14 +217,13 @@ ggplot(USF03, aes(x = DateTime, y = Predicted_Discharge_Linear_m3s)) +
 ###################
 #### Save file ####
 ###################
-write.csv(USF03, "data/discharge_USF03.csv")
+write.csv(DVSB1, "data/discharge_DVSB1.csv")
 
 # this is the "predicted" folder 
-drive_folder_id <- "1fPDNinUQ3pCFFQXJ1dtLGbqEawyTmPUx"
+drive_folder_id <- "1FQCOmazrRF6MN9VGKHvlUq_WrM7LZC26"
 
 # upload file to the specified Google Drive folder
 drive_put(
-  media = "data/discharge_USF03.csv",
+  media = "data/discharge_DVSB1.csv",
   path = as_id(drive_folder_id)
 )
-
