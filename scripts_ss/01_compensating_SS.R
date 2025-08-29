@@ -19,15 +19,15 @@ library(dplyr)
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
 
-files <- list.files(path = "merged", full.names = TRUE)
+files <- list.files(path = "data", full.names = TRUE)
 file.remove(files)
 
 #################################
 #### Import & Visualize Data ####
 #################################
 #### load data from Google drive ####
-# This is the "inuse" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/194hsX_kF8xMs-9Uzq_yyaxoh_ywh6HMm")
+# This is the "combined by site" folder
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1ra2bNFXMRU8uckYuAq4-09tdlGq2nDmx")
 
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
@@ -51,27 +51,9 @@ for (i in seq_along(pt_csvs$id)) {
   pt_list[[pt_csvs$name[i]]] <- read.csv(local_path)
 }
 
-#### remove baro file from pt list ####
-# remove second item in this case, check position of baro file
-pt_list = pt_list[-2]
-
 # load the baro data separately
 # all sites will be merged with the one air data that South Sandy has
-air_data <- read.csv("googledrive/2024-12-16_SSM20_PTS_SN2191067_baro.csv")
-
-#####################
-#### Plot curves ####
-#####################
-# loop through each data frame in the list
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  # plot
-  p <- ggplot(data = df, aes(x = DateTime, y = LEVEL)) + 
-    geom_point() + ggtitle(paste(pt_csvs$name[i])) 
-  # display the plot in the plot panel
-  print(p)
-}
+air_data <- read.csv("googledrive/baro.csv")
 
 ################################
 #### Format DateTime column ####
@@ -101,9 +83,8 @@ air_data$DateTime <- as.POSIXct(air_data$DateTime, format = "%Y-%m-%d %I:%M:%S %
 # rounding the time up or down to the nearest consistent interval 
 # example: 10:04 gets converted to 10:05 for this we use the lubridate package
 
-pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTimeNotRounded <- pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTime
-
-pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTime <- round_date(pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTime, unit="15 mins")
+pt_list[["SST07.csv"]]$DateTimeNotRounded <- pt_list[["SST07.csv"]]$DateTime
+pt_list[["SST07.csv"]]$DateTime <- round_date(pt_list[["SST07.csv"]]$DateTime, unit="15 mins")
 
 str(pt_list)
 
@@ -128,13 +109,33 @@ for (i in seq_along(pt_list)) {
   
   #kPa to m
   df <- df %>%
-    mutate(LELVEL.m = (.[[4]] * 0.101972))
+    mutate(LEVEL.m = (LEVEL * 0.101972))
   # Update the data frame in the list
   pt_list[[i]] <- df
 }
 
 # check the contents of the list and make sure there are no NAs
 str(pt_list)
+
+#####################
+#### Plot curves ####
+#####################
+# loop through each data frame in the list
+for (i in seq_along(pt_list)) {
+  # access the current data frame
+  df <- pt_list[[i]]
+  # plot
+  p <- ggplot(data = df, aes(x = DateTime, y = LEVEL.m)) + 
+    geom_line() + ggtitle(paste(pt_csvs$name[i])) 
+  # display the plot in the plot panel
+  print(p)
+  # save the plot as a PNG file
+  ggsave(paste0("pt_figs/", pt_csvs$name[i], ".png"), plot = p)
+}
+
+#### remove baro file from pt list ####
+# remove second item in this case, check position of baro file
+pt_list = pt_list[-1]
 
 ######################################
 #### Merging PT with Air pressure ####

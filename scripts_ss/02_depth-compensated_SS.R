@@ -19,7 +19,7 @@ library(lubridate)
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
 
-files <- list.files(path = "merged", full.names = TRUE)
+files <- list.files(path = "data", full.names = TRUE)
 file.remove(files)
 
 ###############################################
@@ -137,10 +137,8 @@ for (i in seq_along(pt_list)) {
 #################################
 # rounding the time up or down to the nearest consistent interval 
 # example: 10:04 gets converted to 10:05 for this we use the lubridate package
-
-pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTimeNotRounded <- pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTime
-
-pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTime <- round_date(pt_list[["2024-12-16_SST07_PTS_SN2192880.csv"]]$DateTime, unit="15 mins")
+pt_list[["SST07"]]$DateTimeNotRounded <- pt_list[["SST07.csv"]]$DateTime
+pt_list[["SST07.csv"]]$DateTime <- round_date(pt_list[["SST07.csv"]]$DateTime, unit="15 mins")
 
 str(pt_list)
 
