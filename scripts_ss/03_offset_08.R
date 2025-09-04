@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to calculate PT offset for South Sandy SST04 site
+## This script is to calculate PT offset for South Sandy SST08 site
 ## press Command+Option+O to collapse all sections and get an overview of the workflow
 ##==============================================================================
 
@@ -21,7 +21,7 @@ file.remove(files)
 
 files <- list.files(path = "data", full.names = TRUE)
 file.remove(files)
- 
+
 #################################
 #### Import & Visualize Data ####
 #################################
@@ -33,38 +33,39 @@ pt <- googledrive::as_id("https://drive.google.com/drive/folders/11vn2jsiB7YEsrh
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
-#SST04
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="SST04.csv"], 
-                            path = "googledrive/SST04.csv",
+#SST08
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="SST08.csv"], 
+                            path = "googledrive/SST08.csv",
                             overwrite = T)
 # load file
-SST04 <- read.csv("googledrive/SST04.csv")
+SST08 <- read.csv("googledrive/SST08.csv")
 
 # convert Date column to Date type if not already
-SST04$Date <- as.Date(SST04$Date)
-SST04$DateTime <- as.POSIXct(SST04$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "MST")
-head(SST04)
+SST08$Date <- as.Date(SST08$Date)
+SST08$DateTime <- as.POSIXct(SST08$DateTime, format = "%Y-%m-%d %H:%M:%S", tz = "MST")
+head(SST08)
 
 # filter out rows with missing stage or discharge
-rating_data <- SST04 %>% 
+rating_data <- SST08 %>% 
   filter(!is.na(Baro_Cor_Lvl.m), !is.na(Q..L.s.))
-
+# removing one row that has no q measurement
+rating_data <- rating_data[-1,]
 # filter out the one row with negative baro lvl value 
-SST04 <- SST04 %>% 
+SST08 <- SST08 %>% 
   filter(Baro_Cor_Lvl.m >= 0)
 
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-ggplot(data = SST04, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
-  geom_line() + ggtitle("SST04 compensated level data")
+ggplot(data = SST08, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
+  geom_line() + ggtitle("SST08 compensated level data")
 
 ##################################
 #### Plot Stage vs. Discharge ####
 ##################################
 # discharge from L/s to m3/s
 rating_data <- rating_data %>%
-  mutate(Q.m3s = Q..L.s./1000)
+  mutate(Q.m3s = as.numeric(Q..L.s.)/1000)
 
 # plot with date info
 ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
@@ -87,7 +88,7 @@ ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = pt_depth_m)) +
 #################################################
 #### Find offset, when did the change happen ####
 #################################################
-ggplot(SST04, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
+ggplot(SST08, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
   geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-09-16"), linetype="dashed", color="red") +
   geom_vline(xintercept = as.POSIXct("2024-12-16"), linetype="dashed", color="red") +
@@ -97,35 +98,73 @@ ggplot(SST04, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
 ############################
 #### Look at it closely ####
 ############################
-Date1 <- as.Date("2024-09-15", "%Y-%m-%d")
-Date2 <- as.Date("2024-09-18", "%Y-%m-%d")
-subdf <- SST04[SST04$DateTime < Date2 & SST04$DateTime > Date1,]
+Date1 <- as.Date("2024-09-16", "%Y-%m-%d")
+Date2 <- as.Date("2024-09-17", "%Y-%m-%d")
+subdf <- SST08[SST08$DateTime < Date2 & SST08$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-09-16 12:15:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2024-09-16 10:15:00"), linetype="dashed", color="red") 
 
-Date1 <- as.Date("2024-12-10", "%Y-%m-%d")
-Date2 <- as.Date("2024-12-20", "%Y-%m-%d")
-subdf <- SST04[SST04$DateTime < Date2 & SST04$DateTime > Date1,]
+Date1 <- as.Date("2024-12-15", "%Y-%m-%d")
+Date2 <- as.Date("2024-12-17", "%Y-%m-%d")
+subdf <- SST08[SST08$DateTime < Date2 & SST08$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-12-16 12:00:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2024-12-16 09:45:00"), linetype="dashed", color="red") 
 
-Date1 <- as.Date("2025-04-23", "%Y-%m-%d")
+Date1 <- as.Date("2025-04-22", "%Y-%m-%d")
 Date2 <- as.Date("2025-04-25", "%Y-%m-%d")
-subdf <- SST04[SST04$DateTime < Date2 & SST04$DateTime > Date1,]
+subdf <- SST08[SST08$DateTime < Date2 & SST08$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2025-04-23 12:30:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2025-04-23 10:30:00"), linetype="dashed", color="red") 
+
+Date1 <- as.Date("2024-06-17", "%Y-%m-%d")
+Date2 <- as.Date("2024-06-19", "%Y-%m-%d")
+subdf <- SST08[SST08$DateTime < Date2 & SST08$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-06-18 17:00:00"), linetype="dashed", color="red") 
+
+######################################################################
+#### Remove times where PT was out of the water and error section ####
+######################################################################
+# now NA the time when the PT was out of water 
+time0 <- as.POSIXct("2024-12-16 09:45:00")
+time1 <- as.POSIXct("2025-04-23 10:30:00")
+
+# time2 <- as.POSIXct("2024-06-18 17:00:00")
+# time3 <- as.POSIXct("2024-09-16 14:15:00")
+# time4 <- as.POSIXct("2025-04-23 13:30:00")
+
+SST08 <- SST08 %>%
+  mutate(Baro_Cor_Lvl.m = ifelse(DateTime == time0, NA, Baro_Cor_Lvl.m))
+SST08 <- SST08 %>%
+  mutate(Baro_Cor_Lvl.m = ifelse(DateTime == time1, NA, Baro_Cor_Lvl.m))
+# SST08 <- SST08 %>%
+#   mutate(Baro_Cor_Lvl.m = ifelse(DateTime == time2, NA, Baro_Cor_Lvl.m))
+# SST08 <- SST08 %>%
+#   mutate(Baro_Cor_Lvl.m = ifelse(DateTime == time3, NA, Baro_Cor_Lvl.m))
+# SST08 <- SST08 %>%
+#   mutate(Baro_Cor_Lvl.m = ifelse(DateTime == time4, NA, Baro_Cor_Lvl.m))
+
+# remove beginning of data (error)
+Date1 <- as.Date("2024-06-18", "%Y-%m-%d")
+Date2 <- as.Date("2024-06-18", "%Y-%m-%d")
+SST08$Baro_Cor_Lvl.m[SST08$DateTime >= Date1 & SST08$DateTime <= Date2] <- NA
+
+# plot after cleaning
+ggplot(SST08, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
+  geom_line() +
+  labs(title = "Baro_Cor_Lvl.m", x = "Date", y = "Water Level (m)")
 
 ###########################################################################
 #### Find the average Baro_Cor_Lvl TWO HOURS before and after the move ####
 ###########################################################################
 # first move correction
-move_time1 <- as.POSIXct("2024-09-16 12:30:00")
+move_time1 <- as.POSIXct("2024-09-16 10:15:00")
 
-before_move1 <- SST04 %>%
+before_move1 <- SST08 %>%
   filter(DateTime >= (move_time1 - hours(2)) & DateTime < move_time1) %>%
   summarize(mean_before1 = mean(Baro_Cor_Lvl.m, na.rm = TRUE))
 
-after_move1 <- SST04 %>%
+after_move1 <- SST08 %>%
   filter(DateTime >= move_time1 & DateTime < (move_time1 + hours(2))) %>%
   summarize(mean_after1 = mean(Baro_Cor_Lvl.m, na.rm = TRUE))
 
@@ -133,17 +172,17 @@ offset1 <-  after_move1$mean_after1 - before_move1$mean_before1
 print(paste("Offset 1:", offset1))
 
 # apply the first correction
-SST04 <- SST04 %>%
+SST08 <- SST08 %>%
   mutate(Baro_Cor_offset1 = if_else(DateTime >= move_time1, Baro_Cor_Lvl.m - offset1, Baro_Cor_Lvl.m))
 
 # second move correction
-move_time2 <- as.POSIXct("2024-12-16 12:00:00")
+move_time2 <- as.POSIXct("2024-12-16 10:00:00")
 
-before_move2 <- SST04 %>%
+before_move2 <- SST08 %>%
   filter(DateTime >= (move_time2 - hours(2)) & DateTime < move_time2) %>%
   summarize(mean_before2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
 
-after_move2 <- SST04 %>%
+after_move2 <- SST08 %>%
   filter(DateTime >= move_time2 & DateTime < (move_time2 + hours(2))) %>%
   summarize(mean_after2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
 
@@ -151,46 +190,68 @@ offset2 <- after_move2$mean_after2 - before_move2$mean_before2
 print(paste("Offset 2:", offset2))
 
 # apply the second correction
-SST04 <- SST04 %>%
+SST08 <- SST08 %>%
   mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
+
+# third move correction
+move_time3 <- as.POSIXct("2025-04-23 10:45:00")
+
+before_move3 <- SST08 %>%
+  filter(DateTime >= (move_time3 - hours(2)) & DateTime < move_time3) %>%
+  summarize(mean_before3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset2
+
+after_move3 <- SST08 %>%
+  filter(DateTime >= move_time3 & DateTime < (move_time3 + hours(2))) %>%
+  summarize(mean_after3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset2
+
+offset3 <- after_move3$mean_after3 - before_move3$mean_before3
+print(paste("Offset 3:", offset3))
+
+# apply the second correction
+SST08 <- SST08 %>%
+  mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
 
 ##############################
 #### Plot with Correction ####
 ##############################
-ggplot(SST04, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
+ggplot(SST08, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
   geom_line() +
   labs(title = "Corrected Baro_Cor Over Time (First Correction)", x = "Date", y = "Water Level (m)")
-
-ggplot(SST04, aes(x = DateTime, y = Baro_Cor_offset1)) +
+ggplot(SST08, aes(x = DateTime, y = Baro_Cor_offset1)) +
   geom_line() +
   labs(title = "Corrected Baro_Cor Over Time (First Correction)", x = "Date", y = "Water Level (m)")
-
-ggplot(SST04, aes(x = DateTime, y = Baro_Cor_offset2)) +
+ggplot(SST08, aes(x = DateTime, y = Baro_Cor_offset2)) +
+  geom_line() +
+  labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
+ggplot(SST08, aes(x = DateTime, y = Baro_Cor_offset3)) +
   geom_line() +
   labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
 
 # discharge from L/s to m3/s in whole data set
-SST04$Q..L.s. <- as.numeric(SST04$Q..L.s.)
-SST04 <- SST04 %>%
+SST08$Q..L.s. <- as.numeric(SST08$Q..L.s.)
+SST08 <- SST08 %>%
   mutate(Q.m3s = Q..L.s./1000)
 
 # filter out rows with missing stage or discharge
-new_rating_data <- SST04 %>% 
-  filter(!is.na(Baro_Cor_offset2), !is.na(Q.m3s))
+new_rating_data <- SST08 %>% 
+  filter(!is.na(Baro_Cor_offset1), !is.na(Q.m3s))
 
 ggplot(new_rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
   labs(title = "Stage vs. Discharge (No Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q L/s)") +
   theme_minimal()
-
 ggplot(new_rating_data, aes(x = Baro_Cor_offset1, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
   labs(title = "Stage vs. Discharge (First Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q L/s)") +
   theme_minimal()
-
 ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
+  labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q L/s)") +
+  theme_minimal()
+ggplot(new_rating_data, aes(x = Baro_Cor_offset3, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
   labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q L/s)") +
@@ -201,31 +262,37 @@ ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
 ########################
 Date1 <- as.Date("2024-09-15", "%Y-%m-%d")
 Date2 <- as.Date("2024-09-18", "%Y-%m-%d")
-subdf <- SST04[SST04$DateTime < Date2 & SST04$DateTime > Date1,]
-
+subdf <- SST08[SST08$DateTime < Date2 & SST08$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-09-16 12:15:00"), linetype="dashed", color="red") 
-ggplot(data=subdf, aes(DateTime,Baro_Cor_offset2)) + geom_line() +
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset3)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-09-16 12:15:00"), linetype="dashed", color="red") 
 
 Date1 <- as.Date("2024-12-16", "%Y-%m-%d")
-Date2 <- as.Date("2024-12-17", "%Y-%m-%d")
-subdf <- SST04[SST04$DateTime < Date2 & SST04$DateTime > Date1,]
-
+Date2 <- as.Date("2024-12-18", "%Y-%m-%d")
+subdf <- SST08[SST08$DateTime < Date2 & SST08$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-12-16 12:00:00"), linetype="dashed", color="red") 
-ggplot(data=subdf, aes(DateTime,Baro_Cor_offset2)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-12-16 12:00:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2024-12-16 12:00:00"), linetype="dashed", color="red")
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset3)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-12-16 12:00:00"), linetype="dashed", color="red")
+
+Date1 <- as.Date("2025-04-23", "%Y-%m-%d")
+Date2 <- as.Date("2025-04-25", "%Y-%m-%d")
+subdf <- SST08[SST08$DateTime < Date2 & SST08$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-04-23 14:45:00"), linetype="dashed", color="red") 
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset3)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-04-23 14:45:00"), linetype="dashed", color="red") 
 
 ###################
 #### Save file ####
 ###################
-write.csv(SST04, "data/offset_SST04.csv")
+write.csv(SST08, "data/offset_SST08.csv")
 
+drive_folder_id <- "1GcRdU4UaBrxEmVhZYoZuTae6HxVZt3Gm"
 
 # upload file to the specified Google Drive folder
 drive_put(
-  media = "data/offset_SST04.csv",
+  media = "data/offset_SST08.csv",
   path = as_id(drive_folder_id)
 )
-

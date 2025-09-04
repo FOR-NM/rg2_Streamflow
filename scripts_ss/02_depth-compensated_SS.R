@@ -101,19 +101,18 @@ for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
   
-  # extract the file name
-  filename <- tools::file_path_sans_ext(pt_csvs$name[[i]])
-  
-  # extract the site identifier (text between the first two underscores)
-  site_id <- stringr::str_extract(filename, "(?<=_)[A-Za-z0-9]+(?=_PTS_)")
+  # extract the file name without the .csv extension
+  data_id <- tools::file_path_sans_ext(pt_csvs$name[[i]])
   
   # add the DataID column
   df <- df %>%
-    dplyr::mutate(DataID = site_id)
+    dplyr::mutate(DataID = data_id)
   
   # save the modified data frame back to the list
   pt_list[[i]] <- df
 }
+
+SST07 <- pt_list[["SST07.csv"]]
 
 ###################################
 #### Change to DateTime format ####
@@ -124,7 +123,7 @@ for (i in seq_along(pt_list)) {
   df <- pt_list[[i]]
   
   # combine Date and Time columns into a new DateTime column
-  df$DateTime <- paste(df$Date.x, df$Time.x, sep = " ")
+  df$DateTime <- paste(df$Date.y, df$Time.y, sep = " ")
   # convert the DateTime column to POSIXct
   df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
   
@@ -135,17 +134,18 @@ for (i in seq_along(pt_list)) {
 #################################
 #### Rounding time for SST07 ####
 #################################
-# rounding the time up or down to the nearest consistent interval 
-# example: 10:04 gets converted to 10:05 for this we use the lubridate package
-pt_list[["SST07"]]$DateTimeNotRounded <- pt_list[["SST07.csv"]]$DateTime
-pt_list[["SST07.csv"]]$DateTime <- round_date(pt_list[["SST07.csv"]]$DateTime, unit="15 mins")
-
-str(pt_list)
-
-# round DateTime to the nearest 15-minute interval across all files in pt_list
-for (i in seq_along(pt_list)) {
-  pt_list[[i]]$DateTime <- round_date(pt_list[[i]]$DateTime, unit = "15 mins")
-}
+# SST07 <- pt_list[["SST07.csv"]]
+# # rounding the time up or down to the nearest consistent interval 
+# # example: 10:04 gets converted to 10:05 for this we use the lubridate package
+# pt_list[["SST07"]]$DateTimeNotRounded <- pt_list[["SST07.csv"]]$DateTime
+# pt_list[["SST07.csv"]]$DateTime <- round_date(pt_list[["SST07.csv"]]$DateTime, unit="15 mins")
+# 
+# str(pt_list)
+# 
+# # round DateTime to the nearest 15-minute interval across all files in pt_list
+# for (i in seq_along(pt_list)) {
+#   pt_list[[i]]$DateTime <- round_date(pt_list[[i]]$DateTime, unit = "15 mins")
+# }
 
 #######################################
 #### Combine depth info to PT data ####
@@ -183,16 +183,16 @@ non_na_counts <- sapply(depth_merged, function(df) {
 # print the counts
 print(non_na_counts)
 
-SSM01 <- depth_merged[["2024-12-16_SSM01_PTS_SN2192882.csv"]]
-SSM20 <- depth_merged[["2024-12-16_SSM20_PTS_SN2192885.csv"]]
-SST13 <- depth_merged[["2024-12-16_SST13_PTS_SN2192886.csv"]]
-SST03 <- depth_merged[["2024-12-16_SST03_PTS_SN2192627.csv"]] # MOVED
-SST04 <- depth_merged[["2024-12-16_SST04_PTS_SN2192624.csv"]] # MOVED
-SST05 <- depth_merged[["2024-12-16_SST05_PTS_SN2192883.csv"]] # MOVED
-SST06 <- depth_merged[["2024-12-17_SST06_PTS_SN2186356.csv"]]
-SST07 <- depth_merged[["2024-12-16_SST07_PTS_SN2192880.csv"]] # MOVED?
-SST08 <- depth_merged[["2024-12-16_SST08_PTS_SN2192632.csv"]]
-SST09 <- depth_merged[["2024-12-16_SST09_PTS_SN2192621.csv"]]
+SSM01 <- depth_merged[["SSM01.csv"]]
+SSM20 <- depth_merged[["SSM20.csv"]]
+SST13 <- depth_merged[["SST13.csv"]]
+SST03 <- depth_merged[["SST03.csv"]] # MOVED
+SST04 <- depth_merged[["SST04.csv"]] # MOVED
+SST05 <- depth_merged[["SST05.csv"]] # MOVED
+SST06 <- depth_merged[["SST06.csv"]]
+SST07 <- depth_merged[["SST07.csv"]] # MOVED?
+SST08 <- depth_merged[["SST08.csv"]]
+SST09 <- depth_merged[["SST09.csv"]]
 
 #######################################
 #### Save merged PT files to Drive ####

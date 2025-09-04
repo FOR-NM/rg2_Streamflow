@@ -26,19 +26,19 @@ file.remove(files)
 #### Import & Visualize Data ####
 #################################
 #### load data from Google drive ####
-# this is the "depth" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/11vn2jsiB7YEsrhjI5_NnOSTA579NMtK4")
+# this is the "offset" folder
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1GcRdU4UaBrxEmVhZYoZuTae6HxVZt3Gm")
 
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
 #SSM01
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="2024-12-16_SSM01_PTS_SN2192882.csv"], 
-                            path = "googledrive/2024-12-16_SSM01_PTS_SN2192882.csv",
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="offset_SSM01.csv"], 
+                            path = "googledrive/offset_SSM01.csv",
                             overwrite = T)
 # load file
-SSM01 <- read.csv("googledrive/2024-12-16_SSM01_PTS_SN2192882.csv")
+SSM01 <- read.csv("googledrive/offset_SSM01.csv")
 
 # convert Date column to Date type if not already
 SSM01$Date <- as.Date(SSM01$Date.x)
