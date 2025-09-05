@@ -27,7 +27,7 @@ file.remove(files)
 #################################
 #### load data from Google drive ####
 # this is the "depth" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/11vn2jsiB7YEsrhjI5_NnOSTA579NMtK4")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1GcRdU4UaBrxEmVhZYoZuTae6HxVZt3Gm")
 
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
@@ -98,7 +98,6 @@ log_model <- lm(Log_Discharge ~ Log_Stage, data = rating_data)
 summary(log_model)
 
 a <- exp(coef(log_model)[1])  # back-transform intercept
-
 b <- coef(log_model)[2]       # slope
 
 #######################
@@ -225,3 +224,4 @@ drive_put(
   media = "data/discharge_SST04.csv",
   path = as_id(drive_folder_id)
 )
+

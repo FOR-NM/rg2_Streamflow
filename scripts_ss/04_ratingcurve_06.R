@@ -27,18 +27,18 @@ file.remove(files)
 #################################
 #### load data from Google drive ####
 # this is the "depth" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/11vn2jsiB7YEsrhjI5_NnOSTA579NMtK4")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1GcRdU4UaBrxEmVhZYoZuTae6HxVZt3Gm")
 
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
 #SST06
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="2024-12-17_SST06_PTS_SN2186356.csv"], 
-                            path = "googledrive/2024-12-17_SST06_PTS_SN2186356.csv",
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="offset_SST06.csv"], 
+                            path = "googledrive/offset_SST06.csv",
                             overwrite = T)
 # load file
-SST06 <- read.csv("googledrive/2024-12-17_SST06_PTS_SN2186356.csv")
+SST06 <- read.csv("googledrive/offset_SST06.csv")
 
 # convert Date column to Date type if not already
 SST06$Date <- as.Date(SST06$Date.x)
@@ -220,7 +220,6 @@ ggplot(SST06, aes(x = DateTime, y = Predicted_Discharge_Linear)) +
 ###################
 #### Save file ####
 ###################
-
 write.csv(SST06, "data/discharge_SST06.csv")
 
 drive_folder_id <- "1tkYDtcrI_wgbb16zufLJizcjfMzePtkw"

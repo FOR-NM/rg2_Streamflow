@@ -28,7 +28,7 @@ file.remove(files)
 #################################
 #### load data from Google drive ####
 # this is the "depth" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/11vn2jsiB7YEsrhjI5_NnOSTA579NMtK4")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1GcRdU4UaBrxEmVhZYoZuTae6HxVZt3Gm")
 
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
@@ -48,9 +48,9 @@ SST03$DateTime <- paste(SST03$Date, SST03$Time.x, sep = " ")
 SST03$DateTime <- as.POSIXct(SST03$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
 head(SST03)
 
-# Replace "Not Measured" with NA in the Q..L.s. column
-SST03$Q..L.s.[1] <- NA
-SST03$Q..L.s.[8552] <- NA ## THIS IS TO REMOVE MEASUREMENT FROM SEPTEMBER, SHOULD BE ABLE TO OFFSET 
+# # Replace "Not Measured" with NA in the Q..L.s. column
+# SST03$Q..L.s.[1] <- NA
+# SST03$Q..L.s.[8552] <- NA ## THIS IS TO REMOVE MEASUREMENT FROM SEPTEMBER, SHOULD BE ABLE TO OFFSET 
 
 # Filter out rows with missing stage or discharge
 rating_data <- SST03 %>% 
@@ -97,7 +97,6 @@ ggplot(rating_data, aes(x = Depth.at.PT..cm., y = Q.m3s)) +
 ###########################################
 #### Check for Log-Linear Relationship ####
 ###########################################
-
 ggplot(rating_data, aes(x = log(Baro_Cor_offset2), y = log(Q.m3s))) +
   geom_point(color = "blue") +
   labs(title = "Log-Log Plot of Water Level vs. Discharge", 

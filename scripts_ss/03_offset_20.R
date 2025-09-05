@@ -151,7 +151,7 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
 #   mutate(Baro_Cor_Lvl.m = ifelse(DateTime == time4, NA, Baro_Cor_Lvl.m))
 
 # remove beginning of data (error)
-Date1 <- as.Date("2024-06-17", "%Y-%m-%d")
+Date1 <- as.Date("2024-06-18", "%Y-%m-%d")
 Date2 <- as.Date("2024-06-19", "%Y-%m-%d")
 SSM20$Baro_Cor_Lvl.m[SSM20$DateTime >= Date1 & SSM20$DateTime <= Date2] <- NA
 

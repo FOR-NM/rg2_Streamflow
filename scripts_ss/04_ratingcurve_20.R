@@ -27,18 +27,18 @@ file.remove(files)
 #################################
 #### load data from Google drive ####
 # this is the "depth" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/11vn2jsiB7YEsrhjI5_NnOSTA579NMtK4")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1GcRdU4UaBrxEmVhZYoZuTae6HxVZt3Gm")
 
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
 #SSM20
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="2024-12-16_SSM20_PTS_SN2192885.csv"], 
-                            path = "googledrive/2024-12-16_SSM20_PTS_SN2192885.csv",
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="offset_SSM20.csv"], 
+                            path = "googledrive/offset_SSM20.csv",
                             overwrite = T)
 # load file
-SSM20 <- read.csv("googledrive/2024-12-16_SSM20_PTS_SN2192885.csv")
+SSM20 <- read.csv("googledrive/offset_SSM20.csv")
 
 # convert Date column to Date type if not already
 SSM20$Date <- as.Date(SSM20$Date.x)
@@ -47,7 +47,10 @@ head(SSM20)
 
 # filter out rows with missing stage or discharge
 rating_data <- SSM20 %>% 
-  filter(!is.na(Baro_Cor_Lvl.m), !is.na(Q..L.s.))
+  filter(!is.na(Baro_Cor_offset3), !is.na(Q..L.s.))
+
+# replace to NA before beginning of measurement
+SSM20$Baro_Cor_offset3[1:107] <- NA
 
 # check the structure of the cleaned data
 head(rating_data)
@@ -55,7 +58,7 @@ head(rating_data)
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-ggplot(data = SSM20, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
+ggplot(data = SSM20, aes(x = DateTime, y = Baro_Cor_offset3)) +
   geom_line() + ggtitle("SSM20 compensated level data")
 
 ##################################
@@ -66,7 +69,7 @@ rating_data <- rating_data %>%
   mutate(Q.m3s = Q..L.s./1000)
 
 # plot with date info
-ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
+ggplot(rating_data, aes(x = Baro_Cor_offset3, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
@@ -86,7 +89,7 @@ ggplot(rating_data, aes(x = pt_depth_m, y = Q.m3s)) +
 ###########################################
 #### Check for Log-Linear Relationship ####
 ###########################################
-ggplot(rating_data, aes(x = log(Baro_Cor_Lvl.m), y = log(Q.m3s))) +
+ggplot(rating_data, aes(x = log(Baro_Cor_offset3), y = log(Q.m3s))) +
   geom_point(color = "blue") +
   labs(title = "Log-Log Plot of Water Level vs. Discharge", 
        x = "Log(Water Level)", y = "Log(Discharge)") +
@@ -96,7 +99,7 @@ ggplot(rating_data, aes(x = log(Baro_Cor_Lvl.m), y = log(Q.m3s))) +
 #### Log model? ####
 ####################
 rating_data <- rating_data %>%
-  mutate(Log_Stage = log(Baro_Cor_Lvl.m),
+  mutate(Log_Stage = log(Baro_Cor_offset3),
          Log_Discharge = log(Q.m3s))
 
 log_model <- lm(Log_Discharge ~ Log_Stage, data = rating_data)
@@ -109,7 +112,7 @@ b <- coef(log_model)[2]       # Slope
 #######################
 #### Linear model? ####
 #######################
-linear_model <- lm(Q.m3s ~ Baro_Cor_Lvl.m, data = rating_data)
+linear_model <- lm(Q.m3s ~ Baro_Cor_offset3, data = rating_data)
 
 summary(linear_model)
 
@@ -117,18 +120,18 @@ summary(linear_model)
 #### Visualize models  ####
 ###########################
 # observed data
-plot(rating_data$Baro_Cor_Lvl.m, rating_data$Q.m3s,
+plot(rating_data$Baro_Cor_offset3, rating_data$Q.m3s,
      main = "Stage vs. Discharge",
      xlab = "Water Level (m)", ylab = "Discharge (m³/s)",
      pch = 19, col = "blue")
 
 # log-transformed model predictions
 pred_log <- exp(predict(log_model, newdata = rating_data))
-lines(rating_data$Baro_Cor_Lvl.m, pred_log, col = "red", lwd = 2)
+lines(rating_data$Baro_Cor_offset3, pred_log, col = "red", lwd = 2)
 
 # linear model predictions
 pred_linear <- predict(linear_model, newdata = rating_data)
-lines(rating_data$Baro_Cor_Lvl.m, pred_linear, col = "green", lwd = 2)
+lines(rating_data$Baro_Cor_offset3, pred_linear, col = "green", lwd = 2)
 
 # legend
 legend("topleft", legend = c("Observed", "Log-Transformed", "Linear"),
@@ -143,7 +146,7 @@ b_log <- coef(log_model)[2]       # Slope
 
 # predict discharge for the entire dataset
 SSM20 <- SSM20 %>%
-  mutate(Predicted_Discharge_Log = a_log * (Baro_Cor_Lvl.m ^ b_log))
+  mutate(Predicted_Discharge_Log = a_log * (Baro_Cor_offset3 ^ b_log))
 
 ##########################
 #### Predicted linear ####
@@ -154,15 +157,15 @@ b_linear <- coef(linear_model)[2]  # Slope
 
 # predict discharge for the entire dataset
 SSM20 <- SSM20 %>%
-  mutate(Predicted_Discharge_Linear = a_linear + b_linear * Baro_Cor_Lvl.m)
+  mutate(Predicted_Discharge_Linear = a_linear + b_linear * Baro_Cor_offset3)
 
 #############################
 #### Compare predictions ####
 #############################
 # visualize predictions
-plot(SSM20$Baro_Cor_Lvl.m, SSM20$Predicted_Discharge_Log, col = "red", type = "l", lwd = 2,
+plot(SSM20$Baro_Cor_offset3, SSM20$Predicted_Discharge_Log, col = "red", type = "l", lwd = 2,
      xlab = "Stage (m)", ylab = "Discharge (m³/s)", main = "Discharge Predictions")
-lines(SSM20$Baro_Cor_Lvl.m, SSM20$Predicted_Discharge_Linear, col = "green", lwd = 2)
+lines(SSM20$Baro_Cor_offset3, SSM20$Predicted_Discharge_Linear, col = "green", lwd = 2)
 legend("topleft", legend = c("Log-Transformed", "Linear"),
        col = c("red", "green"), lty = 1, lwd = 2)
 
@@ -189,7 +192,7 @@ SSM20 <- SSM20 %>%
     Residual_Linear = Q.m3s - Predicted_Discharge_Linear,
   )
 
-ggplot(SSM20, aes(x = Baro_Cor_Lvl.m)) +
+ggplot(SSM20, aes(x = Baro_Cor_offset3)) +
   geom_point(aes(y = Residual_Log, color = "Log Model")) +
   geom_point(aes(y = Residual_Linear, color = "Linear Model")) +
   labs(
@@ -206,7 +209,7 @@ ggplot(SSM20, aes(x = Baro_Cor_Lvl.m)) +
 SSM20$DateTime <- as.POSIXct(SSM20$DateTime)
 
 ggplot(SSM20, aes(x = DateTime, y = Predicted_Discharge_Log)) +
-  geom_point(color = "blue") +
+  geom_line(color = "blue") +
   labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "1 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))

@@ -27,7 +27,7 @@ file.remove(files)
 #################################
 #### load data from Google drive ####
 # this is the "depth" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/11vn2jsiB7YEsrhjI5_NnOSTA579NMtK4")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1GcRdU4UaBrxEmVhZYoZuTae6HxVZt3Gm")
 
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
@@ -50,7 +50,7 @@ SST07$Q..L.s.[1] <- NA
 
 # Filter out rows with missing stage or discharge
 rating_data <- SST07 %>% 
-  filter(!is.na(Baro_Cor_offset), !is.na(Q..L.s.))
+  filter(!is.na(Baro_Cor_offset2), !is.na(Q..L.s.))
 
 rating_data$Q..L.s. <- as.numeric(rating_data$Q..L.s.)
   
@@ -61,7 +61,7 @@ head(rating_data)
 #### Plot Stage vs. Discharge ####
 ##################################
 # but first stage
-ggplot(data = SST07, aes(x = DateTime, y = Baro_Cor_offset)) +
+ggplot(data = SST07, aes(x = DateTime, y = Baro_Cor_offset2)) +
   geom_line() + ggtitle("SST07 compensated level data")
 
 # # # discharge from L/s to m3/s
@@ -69,7 +69,7 @@ rating_data <- rating_data %>%
   mutate(Q.m3s = Q..L.s./1000)
 
 # plot with date info
-ggplot(rating_data, aes(x = Baro_Cor_offset, y = Q.m3s)) +
+ggplot(rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
@@ -88,7 +88,7 @@ ggplot(rating_data, aes(x = pt_depth_m, y = Q.m3s)) +
 ###########################################
 #### Check for Log-Linear Relationship ####
 ###########################################
-ggplot(rating_data, aes(x = log(Baro_Cor_offset), y = log(Q.m3s))) +
+ggplot(rating_data, aes(x = log(Baro_Cor_offset2), y = log(Q.m3s))) +
   geom_point(color = "blue") +
   labs(title = "Log-Log Plot of Water Level vs. Discharge", 
        x = "Log(Water Level)", y = "Log(Discharge)") +
@@ -98,7 +98,7 @@ ggplot(rating_data, aes(x = log(Baro_Cor_offset), y = log(Q.m3s))) +
 #### Log model? ####
 ####################
 rating_data <- rating_data %>%
-  mutate(Log_Stage = log(Baro_Cor_offset),
+  mutate(Log_Stage = log(Baro_Cor_offset2),
          Log_Discharge = log(Q.m3s))
 
 log_model <- lm(Log_Discharge ~ Log_Stage, data = rating_data)
@@ -111,7 +111,7 @@ b <- coef(log_model)[2]       # Slope
 #######################
 #### Linear model? ####
 #######################
-linear_model <- lm(Q.m3s ~ Baro_Cor_offset, data = rating_data)
+linear_model <- lm(Q.m3s ~ Baro_Cor_offset2, data = rating_data)
 
 summary(linear_model)
 
@@ -119,18 +119,18 @@ summary(linear_model)
 #### Visualize models  ####
 ###########################
 # observed data
-plot(rating_data$Baro_Cor_offset, rating_data$Q.m3s,
+plot(rating_data$Baro_Cor_offset2, rating_data$Q.m3s,
      main = "Stage vs. Discharge",
      xlab = "Water Level (m)", ylab = "Discharge (m³/s)",
      pch = 19, col = "blue")
 
 # log-transformed model predictions
 pred_log <- exp(predict(log_model, newdata = rating_data))
-lines(rating_data$Baro_Cor_offset, pred_log, col = "red", lwd = 2)
+lines(rating_data$Baro_Cor_offset2, pred_log, col = "red", lwd = 2)
 
 # linear model predictions
 pred_linear <- predict(linear_model, newdata = rating_data)
-lines(rating_data$Baro_Cor_offset, pred_linear, col = "green", lwd = 2)
+lines(rating_data$Baro_Cor_offset2, pred_linear, col = "green", lwd = 2)
 
 # legend
 legend("topleft", legend = c("Observed", "Log-Transformed", "Linear"),
@@ -145,7 +145,7 @@ b_log <- coef(log_model)[2]       # Slope
 
 # predict discharge for the entire dataset
 SST07 <- SST07 %>%
-  mutate(Predicted_Discharge_Log = a_log * (Baro_Cor_offset ^ b_log))
+  mutate(Predicted_Discharge_Log = a_log * (Baro_Cor_offset2 ^ b_log))
 
 ##########################
 #### Predicted linear ####
@@ -156,15 +156,15 @@ b_linear <- coef(linear_model)[2]  # Slope
 
 # predict discharge for the entire dataset
 SST07 <- SST07 %>%
-  mutate(Predicted_Discharge_Linear = a_linear + b_linear * Baro_Cor_offset)
+  mutate(Predicted_Discharge_Linear = a_linear + b_linear * Baro_Cor_offset2)
 
 #############################
 #### Compare predictions ####
 #############################
 # visualize predictions
-plot(SST07$Baro_Cor_offset, SST07$Predicted_Discharge_Log, col = "red", type = "l", lwd = 2,
+plot(SST07$Baro_Cor_offset2, SST07$Predicted_Discharge_Log, col = "red", type = "l", lwd = 2,
      xlab = "Stage (m)", ylab = "Discharge (m³/s)", main = "Discharge Predictions")
-lines(SST07$Baro_Cor_offset, SST07$Predicted_Discharge_Linear, col = "green", lwd = 2)
+lines(SST07$Baro_Cor_offset2, SST07$Predicted_Discharge_Linear, col = "green", lwd = 2)
 legend("topleft", legend = c("Log-Transformed", "Linear"),
        col = c("red", "green"), lty = 1, lwd = 2)
 
@@ -191,7 +191,7 @@ SST07 <- SST07 %>%
     Residual_Linear = Q.m3s - Predicted_Discharge_Linear
   )
 
-ggplot(SST07, aes(x = Baro_Cor_offset)) +
+ggplot(SST07, aes(x = Baro_Cor_offset2)) +
   geom_point(aes(y = Residual_Log, color = "Log Model")) +
   geom_point(aes(y = Residual_Linear, color = "Linear Model")) +
   labs(
@@ -231,3 +231,4 @@ drive_put(
   media = "data/discharge_SST07.csv",
   path = as_id(drive_folder_id)
 )
+

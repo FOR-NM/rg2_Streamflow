@@ -133,10 +133,15 @@ SST05 <- SST05 %>%
 SST05 <- SST05 %>%
   mutate(Baro_Cor_Lvl.m = ifelse(DateTime == time3, NA, Baro_Cor_Lvl.m))
 
+# remove beginning of data (error)
+Date1 <- as.Date("2024-06-17", "%Y-%m-%d")
+Date2 <- as.Date("2024-06-19", "%Y-%m-%d")
+SST05$Baro_Cor_Lvl.m[SST05$DateTime >= Date1 & SST05$DateTime <= Date2] <- NA
+
 # plot after cleaning
 ggplot(SST05, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
   geom_line() +
-  labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
+  labs(title = "Baro_Cor_Lvl.m", x = "Date", y = "Water Level (m)")
 
 ###########################################################################
 #### Find the average Baro_Cor_Lvl TWO HOURS before and after the move ####
