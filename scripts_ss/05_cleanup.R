@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to clean predicted discharge files for NM
+## This script is to clean predicted discharge files for South Sandy
 ##==============================================================================
 
 ##################
@@ -27,7 +27,7 @@ file.remove(files)
 #### Import data ####
 #####################
 # this is the predicted folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1fPDNinUQ3pCFFQXJ1dtLGbqEawyTmPUx")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1tkYDtcrI_wgbb16zufLJizcjfMzePtkw")
 
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
@@ -51,12 +51,9 @@ for (i in seq_along(pt_csvs$id)) {
   pt_list[[pt_csvs$name[i]]] <- read.csv(local_path)
 }
 
-# check the contents of the list
-str(pt_list)
-
 # look at it
-USF21 <- pt_list[["discharge_USF21.csv"]]
-USF20 <- pt_list[["discharge_USF20.csv"]]
+SSM01 <- pt_list[["discharge_SSM01.csv"]]
+SST13 <- pt_list[["discharge_SST13.csv"]]
 
 ############################
 #### Format date column #### 
@@ -66,7 +63,7 @@ for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
   # combine Date and Time columns into a new DateTime column
-  df$DateTime <- paste(df$Date, df$Time, sep = " ")
+  df$DateTime <- paste(df$Date.x, df$Time.x, sep = " ")
   
   # convert the DateTime column to POSIXct
   df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
@@ -74,23 +71,27 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
   
   # make date into date fomat
-  df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
+  df$Date.x <- as.Date(df$Date.x, format = "%Y-%m-%d")
+  
+  # make date into date fomat
+  df$Predicted_Discharge_Log.m3s <- as.numeric(df$Predicted_Discharge_Log)
+  
   # update the data frame in the list
   pt_list[[i]] <- df
 }
 
 # look at it
-USF21 <- pt_list[["discharge_USF21.csv"]]
-USF20 <- pt_list[["discharge_USF20.csv"]]
+SSM01 <- pt_list[["discharge_SSM01.csv"]]
+SST13 <- pt_list[["discharge_SST13.csv"]]
 
 ##################
 #### Clean up #### 
 ##################
 # columns that I don't want
-drops <- c("X.1", "X.2", "Date.x", "ms", "LEVEL", "X", "Date.air", "ms.x", "ms.y", "Level.air.kPa1", "TEMPERATURE", "TEMPERATURE.x", 
-           "TEMPERATURE.y", "Predicted_air1", "Predicted_air1_local", "Residual_local", "Date.air_new", "Date.y", 
-           "background", "salt", "medianSPC.x", "Q", "final_SPC", "final_index", "SPC_difference", "Time24h", "temp_at_start_of_salt_slug_c", 
-           "reach", "pt", "pt_depth_measurement_point_description", "relevant_notes")
+drops <- c("X.1", "X", "Date.y","Date.air", "Date", "Time.y", "Time", "ms.x", "LEVEL.kPa", "LEVEL.m", "Level_air.m", "ms.x", "ms.y", "Level.air.kPa1", 
+           "Pres.abs.kPa", "TEMPERATURE.x", "TEMPERATURE.air", "Measurement.Time", "Measurement.Type", "PT.SN..Solonist.",
+           "Depth.above.PT..cm....7", "Depth.above.PT..cm....13", "Flow.Conditions", "PT.Downloaded.", "Time.PT.Deployed", "Width..m.",
+           "Comments", "Q..L.s.")
 
 # loop through each data frame in the list
 for (i in seq_along(pt_list)) {
@@ -103,28 +104,12 @@ for (i in seq_along(pt_list)) {
 }
 
 # look at it
-USF03 <- pt_list[["discharge_USF03.csv"]]
-USF20 <- pt_list[["discharge_USF20.csv"]]
-USF21 <- pt_list[["discharge_USF21.csv"]]
-USF19 <- pt_list[["discharge_USF19.csv"]]
-
-###################################################
-#### Separate data in lower vs upper vs middle ####
-###################################################
-# # list of site names
-# uppersites <- c("USF21", "USF13", "USF14", "USF16", "USF19")
-# middlesites <- c("USF09", "USF10", "USF11")
-# lowersites <- c("USF03", "USF04", "USF05", "USF07", "USF20")
-# 
-# # create an empty lists to store the files
-# upper_list <- list()
-# middle_list <- list()
-# lower_list <- list()
-# 
-# # separate sites in lists
-# upper_list <- append(upper_list, c(pt_list["discharge_USF21.csv"], pt_list["discharge_USF13.csv"], pt_list["discharge_USF14.csv"], pt_list["discharge_USF16.csv"], pt_list["discharge_USF19.csv"]))
-# middle_list <- append(middle_list, c(pt_list["discharge_USF09.csv"], pt_list["discharge_USF10.csv"], pt_list["discharge_USF11.csv"]))
-# lower_list <- append(lower_list, c(pt_list["discharge_USF03.csv"], pt_list["discharge_USF04.csv"], pt_list["discharge_USF05.csv"], pt_list["discharge_USF20.csv"]))
+SSM01 <- pt_list[["discharge_SSM01.csv"]]
+SST13 <- pt_list[["discharge_SST13.csv"]]
+SSM20 <- pt_list[["discharge_SSM20.csv"]]
+SST06 <- pt_list[["discharge_SST06.csv"]]
+SST07 <- pt_list[["discharge_SST07.csv"]]
+SST09 <- pt_list[["discharge_SST09.csv"]]
 
 #####################
 #### Plot curves ####
@@ -134,7 +119,7 @@ for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
   # Plot
-  p <- ggplot(data = df, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) + 
+  p <- ggplot(data = df, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) + 
     geom_line() + ggtitle(paste(pt_csvs$name[i])) 
   # save the plot as a PNG file
   ggsave(paste0("pt_figs/", pt_csvs$name[i], ".png"), plot = p)
@@ -164,7 +149,7 @@ for (i in seq_along(pt_list)) {
   # convert to xts object
   xts_list[[i]] <- tryCatch({
     xts(df$Predicted_Discharge_Log_m3s, order.by = df$DateTime)
-    })
+  })
 }
 # keep original file names
 names(xts_list) <- names(pt_list)
@@ -229,17 +214,17 @@ for (i in seq_along(smooth_df)) {
 #### Save merged PT files to Drive ####
 #######################################
 # loop through each data frame in the list
-for (i in seq_along(smooth_df)) {
+for (i in seq_along(pt_list)) {
   # Access the current data frame
-  df <- smooth_df[[i]]
+  df <- pt_list[[i]]
   
   # save new data frame
-  write.csv(df, paste0("data/", names(smooth_df)[i]), row.names=FALSE, quote=FALSE)
+  write.csv(df, paste0("data/", names(pt_list)[i]), row.names=FALSE, quote=FALSE)
   
   # define the local folder path and the target folder ID in Google Drive
-  file <- paste0("data/", names(smooth_df)[i])
+  file <- paste0("data/", names(pt_list)[i])
   # this is the "smooth" folder
-  drive_folder_id <- "1y2bMWCS48cROq_BO5HkaNWmFIxdJUON0"
+  drive_folder_id <- "1e3I99uqgBETgbxOeju2Ot-QhQAfb6GGq"
   
   # upload file to the specified Google Drive folder
   drive_put(

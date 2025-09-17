@@ -1,0 +1,245 @@
+##==============================================================================
+## Project: QuEST
+## This script is to plot predicted discharge for SS
+##==============================================================================
+
+##################
+#### Packages ####
+##################
+library(ggplot2)
+library(dplyr)
+library(purrr)  # for map functions
+library(dataRetrieval) # download USGS discharge data
+
+####################################
+## Clear folders that we will use ##
+####################################
+# list and delete all files in the folder
+files <- list.files(path = "googledrive", full.names = TRUE)
+file.remove(files)
+
+files <- list.files(path = "merged", full.names = TRUE)
+file.remove(files)
+
+####################
+#### Import data ####
+#####################
+# this is the smooth folder
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1e3I99uqgBETgbxOeju2Ot-QhQAfb6GGq")
+
+# list all CSV files in the folder
+pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
+3
+## call all the files in the salt slugs folder ##
+# create empty list to store data frames
+pt_list <- list()
+
+# loop over each file in the `pt_csvs` data frame
+for (i in seq_along(pt_csvs$id)) {
+  # define the local file path
+  local_path <- file.path("googledrive", pt_csvs$name[i])
+  
+  # download the file
+  googledrive::drive_download(
+    file = pt_csvs$id[i],
+    path = local_path,
+    overwrite = T
+  )
+  # read the CSV file and add it to the list
+  pt_list[[pt_csvs$name[i]]] <- read.csv(local_path)
+}
+
+#######################################
+#### Format date and other columns #### 
+#######################################
+# loop through each data frame in the list
+for (i in seq_along(pt_list)) {
+  # access the current data frame
+  df <- pt_list[[i]]
+  # combine Date and Time columns into a new DateTime column
+  df$DateTime <- paste(df$Date.x, df$Time.x, sep = " ")
+  
+  # convert the DateTime column to POSIXct
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+  # update the data frame in the list
+  pt_list[[i]] <- df
+  
+  # make date into date format
+  df$Date.x <- as.Date(df$Date.x, format = "%Y-%m-%d")
+  # format other columns
+  df$Mean.Depth..m. <- as.numeric(df$Mean.Depth..m.)
+  df$Mean.Velocity..m.s. <- as.numeric(df$Mean.Velocity..m.s.)
+  
+  # update the data frame in the list
+  pt_list[[i]] <- df
+}
+
+# look at it
+SSM01 <- pt_list[["discharge_SSM01.csv"]]
+SST13 <- pt_list[["discharge_SST13.csv"]]
+SSM20 <- pt_list[["discharge_SSM20.csv"]]
+SST06 <- pt_list[["discharge_SST06.csv"]]
+SST07 <- pt_list[["discharge_SST07.csv"]]
+SST09 <- pt_list[["discharge_SST09.csv"]]
+
+####################################################
+#### Plot discharge data together for all sites #### 
+###################################################
+# combine all data frames into one
+combined_df <- pt_list %>%
+  bind_rows()  # Automatically adds a row for each df, keeping column names
+
+# plot the data
+ggplot(combined_df, aes(x = DateTime, y = Predicted_Discharge_Log.m3s, color = DataID)) +
+  geom_line() +
+  labs(
+    x = "Date",
+    y = "Discharge (m³/s)",
+    color = "Site"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+# Filter out large discharge sites
+combined_df_filtered <- combined_df %>%
+  filter(!DataID %in% c("SSM01", "SSM20", "SST13", "SST04"))
+
+# plot the data
+ggplot(combined_df_filtered, aes(x = DateTime, y = Predicted_Discharge_Log.m3s, color = DataID)) +
+  geom_line() +
+  labs(
+    x = "Date",
+    y = "Discharge (m³/s)",
+    color = "Site"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+##################################
+#### Pull USGS discharge data ####
+##################################
+siteNo <- "02465493" #South Sandy Creek closest USGS code
+pCode <- "00060" # discharge code
+start.date <- "2024-06-01"
+end.date <- "2025-08-01"
+
+USGS <- readNWISuv(siteNumbers = siteNo,
+                   parameterCd = pCode,
+                   startDate = start.date,
+                   endDate = end.date)
+
+USGS <- renameNWISColumns(USGS)
+# parameter_units: ft3/s
+
+# rename DateTime
+USGS$DateTime <- USGS$dateTime
+
+### convert ft3/s to m3/s ###
+USGS <- USGS %>%
+  mutate(Flow_Inst.m = (Flow_Inst * 0.02832 ))
+
+# plot
+ts <- ggplot(data = USGS,
+             aes(dateTime, Flow_Inst.m)) +
+  geom_line()
+ts
+
+##############################
+#### Plot USGS with USF03 ####
+##############################
+# merge discharge with scan data
+merged_df <- merge(USGS, SSM20, by = c("DateTime"), all.x = TRUE)
+
+# plot discharge for all sites
+ggplot(data = merged_df, aes(x = DateTime)) +
+  # map color inside aes() to create a legend
+  geom_line(aes(y = Flow_Inst.m, color = "USGS")) +
+  geom_line(aes(y = Predicted_Discharge_Log.m3s, color = "SSM20")) +
+  labs(x = "DateTime", y = "Discharge (m³/s)", color = "Scan sites") +  # add legend titles
+  labs(title = "Discharge in m3/s for each site") +
+  theme_minimal()
+
+
+#################################
+#### Plotting daily averages ####
+#################################
+# this is the smooth folder
+da <- googledrive::as_id("https://drive.google.com/drive/folders/17zLOfcBqiw1-b7WoG-INL9DOeQ-VTGBq")
+
+# list all CSV files in the folder
+da_csvs <- googledrive::drive_ls(path = da, type = "csv")
+3
+## call all the files in the salt slugs folder ##
+# create empty list to store data frames
+da_list <- list()
+
+# loop over each file in the `pt_csvs` data frame
+for (i in seq_along(da_csvs$id)) {
+  # define the local file path
+  local_path <- file.path("googledrive", da_csvs$name[i])
+  
+  # download the file
+  googledrive::drive_download(
+    file = da_csvs$id[i],
+    path = local_path,
+    overwrite = T
+  )
+  # read the CSV file and add it to the list
+  da_list[[da_csvs$name[i]]] <- read.csv(local_path)
+}
+
+# check the contents of the list
+str(da_list)
+
+############################
+#### Format date column #### 
+############################
+# loop through each data frame in the list
+for (i in seq_along(da_list)) {
+  # access the current data frame
+  df <- da_list[[i]]
+  
+  # convert the DateTime column to POSIXct
+  df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
+  
+  # update the data frame in the list
+  da_list[[i]] <- df
+}
+
+# look at it
+USF21 <- da_list[["discharge_USF21.csv"]]
+USF20 <- da_list[["discharge_USF20.csv"]]
+USF03 <- da_list[["discharge_USF03.csv"]]
+
+####################################################
+#### Plot discharge data together for all sites #### 
+####################################################
+# combine all data frames into one
+combined_df <- da_list %>%
+  bind_rows()  # Automatically adds a row for each df, keeping column names
+
+# plot the data
+ggplot(combined_df, aes(x = Date, y = smooth_dailyaverage.m3s, color = DataID)) +
+  geom_line() +
+  labs(
+    x = "Date",
+    y = "Discharge (m³/s)",
+    color = "Site"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+# Filter out large discharge sites
+combined_df_filtered <- combined_df %>%
+  filter(!DataID %in% c("USF03", "USF05", "USF20"))
+
+# plot the data
+ggplot(combined_df_filtered, aes(x = Date, y = smooth_dailyaverage.m3s, color = DataID)) +
+  geom_line() +
+  labs(
+    x = "Date",
+    y = "Discharge (m³/s)",
+    color = "Site"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "right")
