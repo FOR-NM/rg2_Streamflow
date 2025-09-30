@@ -58,25 +58,20 @@ head(rating_data)
 ########################################
 # filter out rows with missing Baro NAs
 BRM01_baro <- BRM01 %>% 
-  filter(!is.na(Baro_Cor_adjusted.m))
+  filter(!is.na(Baro_Cor_Lvl.m))
 
-ggplot(data = BRM01_baro, aes(x = DateTime, y = Baro_Cor_adjusted.m)) +
+ggplot(data = BRM01_baro, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
   geom_line() + ggtitle("BRM01 compensated level data")
 
 ggplot(data = BRM01_baro, aes(x = DateTime, y = LEVEL.m)) +
   geom_line() + ggtitle("BRM01 level data in m")
 
-ggplot(data = BRM01_baro, aes(x = DateTime, y = pres.psi)) +
-  geom_line() + ggtitle("BRM01 level data in m")
+ggplot(data = BRM01_baro, aes(x = DateTime, y = pres_m)) +
+  geom_line() + ggtitle("Pressure data in m")
 
 ##################################
 #### Plot Stage vs. Discharge ####
 ##################################
-ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q_L_per_s)) +
-  geom_point(color = "blue") +
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.m)", y = "Discharge (Q)") +
-  theme_minimal()
-
 # discharge from L/s to m3/s
 rating_data <- rating_data %>%
   mutate(Q.m3s = Q_L_per_s/1000)

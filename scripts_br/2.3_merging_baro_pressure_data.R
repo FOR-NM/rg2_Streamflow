@@ -26,11 +26,11 @@ baro_logger <- googledrive::as_id("https://drive.google.com/drive/folders/1JZ60F
 # list all CSV files in the folder
 baro <- googledrive::drive_ls(path = baro_logger)
 # choose the specific file by name
-baro <- baro %>% filter(name == "2025-06-04_BARO_RAW.csv")
+baro <- baro %>% filter(name == "2025-09-19_BARO_RAW.csv")
 # download the most recent CSV file
-drive_download(as_id(baro$id), path = "googledrive/2025-06-04_BARO_RAW.csv", overwrite = TRUE)
+drive_download(as_id(baro$id), path = "googledrive/2025-09-19_BARO_RAW.csv", overwrite = TRUE)
 # fetch the file
-baro_log <- read.csv("googledrive/2025-06-04_BARO_RAW.csv", skip = 1)
+baro_log <- read.csv("googledrive/2025-09-19_BARO_RAW.csv", skip = 1)
 
 # convert the DateTime column to POSIXct
 baro_log$DateTime <- as.POSIXct(baro_log$Date.Time..GMT.05.00, format = "%m/%d/%y %I:%M:%S %p")
@@ -59,6 +59,13 @@ pres <- bind_rows(baro_log, fayetteville) %>%
   arrange(DateTime) %>%  # 
   distinct(DateTime, .keep_all = TRUE) # remove duplicates
 
+###################
+#### Plot data ####
+###################
+ggplot(data = pres, aes(x = DateTime, y = pres_m)) +
+  geom_vline(xintercept = as.POSIXct("2025-03-14 12:00:00"), linetype="dashed", color="red") +
+  geom_line() + ggtitle("Pressure data")
+
 ############################
 #### Save combined file ####
 ############################
@@ -73,3 +80,4 @@ drive_put(
   media = 'air_br/air_br.csv',
   path = as_id(drive_folder_id)
 )
+

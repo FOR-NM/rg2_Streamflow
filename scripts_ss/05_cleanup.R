@@ -88,7 +88,7 @@ SST13 <- pt_list[["discharge_SST13.csv"]]
 #### Clean up #### 
 ##################
 # columns that I don't want
-drops <- c("X.1", "X", "Date.y","Date.air", "Date", "Time.y", "Time", "ms.x", "LEVEL.kPa", "LEVEL.m", "Level_air.m", "ms.x", "ms.y", "Level.air.kPa1", 
+drops <- c("X.1", "X.2", "X", "Date.y","Date.air", "Date", "Time.y", "Time", "ms.x", "LEVEL.kPa", "LEVEL.m", "Level_air.m", "ms.x", "ms.y", "Level.air.kPa1", 
            "Pres.abs.kPa", "TEMPERATURE.x", "TEMPERATURE.air", "Measurement.Time", "Measurement.Type", "PT.SN..Solonist.",
            "Depth.above.PT..cm....7", "Depth.above.PT..cm....13", "Flow.Conditions", "PT.Downloaded.", "Time.PT.Deployed", "Width..m.",
            "Comments", "Q..L.s.")
@@ -107,8 +107,10 @@ for (i in seq_along(pt_list)) {
 SSM01 <- pt_list[["discharge_SSM01.csv"]]
 SST13 <- pt_list[["discharge_SST13.csv"]]
 SSM20 <- pt_list[["discharge_SSM20.csv"]]
+SST05 <- pt_list[["discharge_SST05.csv"]]
 SST06 <- pt_list[["discharge_SST06.csv"]]
 SST07 <- pt_list[["discharge_SST07.csv"]]
+SST08 <- pt_list[["discharge_SST08.csv"]]
 SST09 <- pt_list[["discharge_SST09.csv"]]
 
 #####################
@@ -122,7 +124,7 @@ for (i in seq_along(pt_list)) {
   p <- ggplot(data = df, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) + 
     geom_line() + ggtitle(paste(pt_csvs$name[i])) 
   # save the plot as a PNG file
-  ggsave(paste0("pt_figs/", pt_csvs$name[i], ".png"), plot = p)
+  #ggsave(paste0("pt_figs/", pt_csvs$name[i], ".png"), plot = p)
   # display the plot in the plot panel
   print(p)
 }
@@ -148,9 +150,10 @@ for (i in seq_along(pt_list)) {
   df <- pt_list[[i]]
   # convert to xts object
   xts_list[[i]] <- tryCatch({
-    xts(df$Predicted_Discharge_Log_m3s, order.by = df$DateTime)
+    xts(df$Predicted_Discharge_Log.m3s, order.by = df$DateTime)
   })
 }
+
 # keep original file names
 names(xts_list) <- names(pt_list)
 

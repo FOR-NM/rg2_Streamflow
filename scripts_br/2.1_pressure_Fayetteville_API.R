@@ -3,7 +3,6 @@
 ## Getting pressure data from Meteostat site using API
 ## Meteostat site: https://meteostat.net/en/place/us/fayetteville-ar?s=KFYV0&t=2025-05-21/2025-05-28
 ## API site: https://rapidapi.com/meteostat/api/meteostat/playground/apiendpoint_5db9ec45-3df4-417b-a481-a037efc8cd9d
-## press Command+Option+O to collapse all sections and get an overview of the workflow
 ## used Fayetteville as closest station
 ##==============================================================================
 
