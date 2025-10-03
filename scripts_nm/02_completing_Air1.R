@@ -1,7 +1,5 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to merge PT and barometric (air pressure) data for the New Mexico sites
-## press Command+Option+O to collapse all sections and get an overview of the workflow!
 ##==============================================================================
 
 ##################

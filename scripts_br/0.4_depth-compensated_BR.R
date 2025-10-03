@@ -7,7 +7,6 @@
 ##################
 #### Packages ####
 ##################
-library(googledrive)
 library(ggplot2)
 library(dplyr)
 library(lubridate)
@@ -191,3 +190,4 @@ for (i in seq_along(depth_merged)) {
     path = as_id(drive_folder_id)
   )
 }
+

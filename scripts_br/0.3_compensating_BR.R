@@ -22,12 +22,15 @@ file.remove(files)
 files <- list.files(path = "data", full.names = TRUE)
 file.remove(files)
 
+files <- list.files(path = "pt_figs", full.names = TRUE)
+file.remove(files)
+
 #################################
 #### Import & Visualize Data ####
 #################################
 #### load data from Google drive ####
 # this is the "merged_days" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1lff8pbyXG9w0XoNaToxMGNAIjkKWyjHs")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1SbXzLapTIa_dt02JVba4PcsbQaJeFZtD")
 
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
@@ -97,7 +100,7 @@ for (i in seq_along(pt_list)) {
   print(p)
   
   # save the plot as a PNG file
-  #ggsave(paste0("pt_figs/", gsub(".csv", "", pt_csvs$name[i]), "_raw.png"), plot = p)
+  #  ggsave(paste0("pt_figs/", gsub(".csv", "", pt_csvs$name[i]), "_raw.png"), plot = p)
 }
 
 #######################################
@@ -109,29 +112,29 @@ for (i in seq_along(pt_list)) {
 # I downloaded and merged station pressure in a separate script. 
 # See 01_pressure_Fayetteville_API.R, 02_merging_timestamps_pressure_Fayetteville.R and 02.5_merging_pressure.R
 
-#----- Only using Fayetteville station data for now, not baro logger data ----# 
-
-# # this is the Baro folder
-# air <- googledrive::as_id("https://drive.google.com/drive/folders/1BB6nEoVQOrCd_uHEW9n66kR8HCSUUmbC")
-# # list all CSV files in the folder
-# pres <- googledrive::drive_ls(path = air)
-# # choose the specific file by name
-# press <- pres %>% filter(name == "air_br.csv")
-# # download it
-# drive_download(as_id(press$id), path = "data/pressure_fv.csv", overwrite = TRUE)
-# # fetch the file
-# pressure <- read.csv("data/pressure_fv.csv")
-
-# this is the Fayetteville folder
-air <- googledrive::as_id("https://drive.google.com/drive/folders/1FgFNGzv0Rh5t62V8SRFdwK6sd_ktwcRD")
+# this is the Baro folder
+air <- googledrive::as_id("https://drive.google.com/drive/folders/1BB6nEoVQOrCd_uHEW9n66kR8HCSUUmbC")
 # list all CSV files in the folder
 pres <- googledrive::drive_ls(path = air)
 # choose the specific file by name
-press <- pres %>% filter(name == "fayetteville_pressure.csv")
+press <- pres %>% filter(name == "air_br.csv")
 # download it
 drive_download(as_id(press$id), path = "data/pressure_fv.csv", overwrite = TRUE)
 # fetch the file
 pressure <- read.csv("data/pressure_fv.csv")
+
+# #----- Only using Fayetteville station data for now, not baro logger data ----# 
+# 
+# # this is the Fayetteville folder
+# air <- googledrive::as_id("https://drive.google.com/drive/folders/1FgFNGzv0Rh5t62V8SRFdwK6sd_ktwcRD")
+# # list all CSV files in the folder
+# pres <- googledrive::drive_ls(path = air)
+# # choose the specific file by name
+# press <- pres %>% filter(name == "fayetteville_pressure.csv")
+# # download it
+# drive_download(as_id(press$id), path = "data/pressure_fv.csv", overwrite = TRUE)
+# # fetch the file
+# pressure <- read.csv("data/pressure_fv.csv")
 
 # DateTime at midnight is missing 00:00:00 time, so filling in that time using grep
 pressure$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",pressure$DateTime)] <- paste(
@@ -159,11 +162,6 @@ for (i in names(pt_list)) {
   merged_list[[i]] <- merge(pt_list[[i]], pressure, by = "DateTime")
 }
 
-BRMQ1 <- merged_list[["BRMQ1.csv"]]
-BRM01 <- merged_list[["BRM01.csv"]]
-BRAA1 <- merged_list[["BRM01.csv"]]
-BRA01 <- merged_list[["BRA01.csv"]]
-
 ##################################
 #### Format some column names ####
 ##################################
@@ -177,6 +175,11 @@ for (i in seq_along(merged_list)) {
                   TEMPERATURE.C = TEMPERATURE)
   merged_list[[i]] <-  df
 }
+
+BRMQ1 <- merged_list[["BRMQ1.csv"]]
+BRM01 <- merged_list[["BRM01.csv"]]
+BRAA1 <- merged_list[["BRM01.csv"]]
+BRA01 <- merged_list[["BRA01.csv"]]
 
 ########################################
 #### Manual Barometric Compensation ####
@@ -206,7 +209,7 @@ for (i in names(merged_list)) {
   df <- merged_list[[i]]
   # compensate
   df <- df %>%
-    mutate(Baro_Cor_Lvl.m = (.[["LEVEL.m"]] - .[["pres_m"]]))
+    mutate(Baro_Cor_Lvl.m = (.[["LEVEL.m"]] - .[["Final_Local_Pressure"]]))
   # adjust
   # df <- df %>%
   #   mutate(Baro_Cor_adjusted.m = (.[["LEVEL.m"]] - .[["pres_m"]] + 0.071))

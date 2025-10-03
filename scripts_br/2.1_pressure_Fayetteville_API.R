@@ -23,8 +23,8 @@ url <- "https://meteostat.p.rapidapi.com/stations/hourly"
 # had to download data month by month since it is only allowed to do 30 days at a time for hourly data
 queryString <- list(
   station = "KFYV0", # this code is for Fayetteville and not Springdale (KASG0)
-  start = "2025-07-01",
-  end = "2025-07-31"
+  start = "2025-09-01",
+  end = "2025-09-30"
 )
 
 # make the GET request to the API
@@ -59,4 +59,5 @@ str(parsed_mes)
 mes_df <- parsed_mes$data
 
 # save files
-write.csv(mes_df, "2025-07.csv")
+write.csv(mes_df, "2025-09.csv")
+
