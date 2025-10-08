@@ -45,15 +45,15 @@ drive_download(as_id(velocityQ$id), path = "googledrive/BR_FLO.xlsx", type = "xl
 VQ <- readxl::read_xlsx("googledrive/BR_FLO.xlsx")
 
 ### remove some columns ###
-SSQ <- SSQ[,-c(1, 4:6, 10:12, 14:17, 19:22)]
+SSQ <- SSQ[,-c(1, 4:7, 9:13, 15:17, 19:24)]
 
 ### rename some columns ###
 # rename column to match all other data
 SSQ <- SSQ %>% 
   rename("Q_L_per_s" = "Q",
-         "Time" = "Time24h",
-         "flag" = "flag.x",
-         "flag_notes" = "flag_notes.x")
+         "Time" = "Time24h.x",
+         "flag" = "flag",
+         "flag_notes" = "flag_notes")
 
 VQ <- VQ %>% 
   rename( "DataID" = "Site")
@@ -73,16 +73,11 @@ VQ$DateTime <- paste(VQ$Date, VQ$Time, sep = " ")
 # convert the DateTime column to POSIXct
 VQ$DateTime <- as.POSIXct(VQ$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
-# now for SSQ
-# format time
-SSQ$Time <- as.POSIXct(SSQ$Time, format = "%I:%M:%S %p")
-SSQ$Time <- format(SSQ$Time, "%H:%M:%S")
-
 # convert the injection DateTime column to POSIXct
 SSQ$Date <- as.Date(SSQ$Date, format = "%Y-%m-%d")
 
 # convert the DateTime column to POSIXct
-SSQ$DateTime <- as.POSIXct(SSQ$DateTime, format = "%Y-%m-%d %H:%M:%S")
+SSQ$DateTime <- as.POSIXct(SSQ$DateTime.y, format = "%Y-%m-%d %H:%M:%S")
 
 ######################
 #### Combine data ####

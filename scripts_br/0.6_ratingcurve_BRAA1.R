@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to calculate discharge from compensated pressure data for Brush Creek BRA01 site
+## This script is to calculate discharge from compensated pressure data for Brush Creek BRAA1 site
 ## press Command+Option+O to collapse all sections and get an overview of the workflow
 ##==============================================================================
 
@@ -33,34 +33,34 @@ pt <- googledrive::as_id("https://drive.google.com/drive/folders/1E3pAdlfgxluBGm
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
 
-#BRA01
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="offset_BRA01.csv"], 
-                            path = "googledrive/offset_BRA01.csv",
+#BRAA1
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="offset_BRAA1.csv"], 
+                            path = "googledrive/offset_BRAA1.csv",
                             overwrite = T)
 # load file
-BRA01 <- read.csv("googledrive/offset_BRA01.csv")
+BRAA1 <- read.csv("googledrive/offset_BRAA1.csv")
 
 # convert Date column to Date type if not already
-BRA01$DateTime <- paste(BRA01$Date.x, BRA01$Time.x, sep = " ")
+BRAA1$DateTime <- paste(BRAA1$Date.x, BRAA1$Time.x, sep = " ")
 # convert the DateTime column to POSIXct
-BRA01$DateTime <- as.POSIXct(BRA01$DateTime, format = "%Y-%m-%d %H:%M:%S")
+BRAA1$DateTime <- as.POSIXct(BRAA1$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 # filter out rows with missing stage or discharge
-rating_data <- BRA01 %>% 
+rating_data <- BRAA1 %>% 
   filter(!is.na(Baro_Cor_offset7), !is.na(Q_L_per_s))
 
 # check the structure of the cleaned data
 head(rating_data)
 
 # filter out rows with missing Baro NAs
-BRA01_baro <- BRA01 %>% 
+BRAA1_baro <- BRAA1 %>% 
   filter(!is.na(Baro_Cor_offset7))
 
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-ggplot(data = BRA01_baro, aes(x = DateTime, y = Baro_Cor_offset7)) +
-  geom_line() + ggtitle("BRA01 compensated level data")
+ggplot(data = BRAA1_baro, aes(x = DateTime, y = Baro_Cor_offset7)) +
+  geom_line() + ggtitle("BRAA1 compensated level data")
 
 ##################################
 #### Plot Stage vs. Discharge ####
@@ -142,7 +142,7 @@ a_log <- exp(coef(log_model)[1])  # Intercept
 b_log <- coef(log_model)[2]       # Slope
 
 # predict discharge for the entire dataset
-BRA01 <- BRA01 %>%
+BRAA1 <- BRAA1 %>%
   mutate(Predicted_Discharge_Log.m3s = a_log * (Baro_Cor_offset7 ^ b_log))
 
 ##########################
@@ -153,25 +153,25 @@ a_linear <- coef(linear_model)[1]  # Intercept
 b_linear <- coef(linear_model)[2]  # Slope
 
 # predict discharge for the entire dataset
-BRA01 <- BRA01 %>%
+BRAA1 <- BRAA1 %>%
   mutate(Predicted_Discharge_Linear.m3s = a_linear + b_linear * Baro_Cor_offset7)
 
 #############################
 #### Compare predictions ####
 #############################
 # visualize predictions
-plot(BRA01$Baro_Cor_offset7, BRA01$Predicted_Discharge_Log.m3s, col = "red", type = "l", lwd = 2,
+plot(BRAA1$Baro_Cor_offset7, BRAA1$Predicted_Discharge_Log.m3s, col = "red", type = "l", lwd = 2,
      xlab = "Stage (m)", ylab = "Discharge (m³/s)", main = "Discharge Predictions")
-lines(BRA01$Baro_Cor_offset7, BRA01$Predicted_Discharge_Linear.m3s, col = "green", lwd = 2)
+lines(BRAA1$Baro_Cor_offset7, BRAA1$Predicted_Discharge_Linear.m3s, col = "green", lwd = 2)
 legend("topleft", legend = c("Log-Transformed", "Linear", "Polynomial"),
        col = c("red", "green"), lty = 1, lwd = 2)
 
 # discharge from L/s to m3/s for entire dataset
-BRA01 <- BRA01 %>%
+BRAA1 <- BRAA1 %>%
   mutate(Q.m3s = Q..L.s./1000)
 
 # compare Predicted vs. Observed Discharge
-ggplot(BRA01, aes(x = Q.m3s)) +
+ggplot(BRAA1, aes(x = Q.m3s)) +
   geom_point(aes(y = Predicted_Discharge_Log.m3s, color = "Log Model")) +
   geom_point(aes(y = Predicted_Discharge_Linear.m3s, color = "Linear Model")) +
   labs(
@@ -183,13 +183,13 @@ ggplot(BRA01, aes(x = Q.m3s)) +
   theme_minimal()
 
 # residuals
-BRA01 <- BRA01 %>%
+BRAA1 <- BRAA1 %>%
   mutate(
     Residual_Log = Q.m3s - Predicted_Discharge_Log.m3s,
     Residual_Linear = Q.m3s - Predicted_Discharge_Linear.m3s,
   )
 
-ggplot(BRA01, aes(x = Baro_Cor_offset7)) +
+ggplot(BRAA1, aes(x = Baro_Cor_offset7)) +
   geom_point(aes(y = Residual_Log, color = "Log Model")) +
   geom_point(aes(y = Residual_Linear, color = "Linear Model")) +
   labs(
@@ -203,15 +203,15 @@ ggplot(BRA01, aes(x = Baro_Cor_offset7)) +
 ######################################
 #### Plot and compare predictions ####
 ######################################
-BRA01$DateTime <- as.POSIXct(BRA01$DateTime)
+BRAA1$DateTime <- as.POSIXct(BRAA1$DateTime)
 
-ggplot(BRA01, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
+ggplot(BRAA1, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
   geom_line(color = "blue") +
   labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "1 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggplot(BRA01, aes(x = DateTime, y = Predicted_Discharge_Linear.m3s)) +
+ggplot(BRAA1, aes(x = DateTime, y = Predicted_Discharge_Linear.m3s)) +
   geom_line(color = "blue") +
   labs(title = "Predicted Discharge (Linear)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "1 week") +
@@ -220,13 +220,12 @@ ggplot(BRA01, aes(x = DateTime, y = Predicted_Discharge_Linear.m3s)) +
 ###################
 #### Save file ####
 ###################
-write.csv(BRA01, "data/discharge_BRA01.csv")
+write.csv(BRAA1, "data/discharge_BRAA1.csv")
 
 drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"
 
 # upload file to the specified Google Drive folder
 drive_put(
-  media = "data/discharge_BRA01.csv",
+  media = "data/discharge_BRAA1.csv",
   path = as_id(drive_folder_id)
 )
-

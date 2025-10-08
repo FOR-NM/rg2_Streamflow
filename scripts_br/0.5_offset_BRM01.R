@@ -348,7 +348,6 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
 ggplot(data=subdf, aes(DateTime,Baro_Cor_offset5)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-12-12 09:15:00"), linetype="dashed", color="red") 
 
-
 Date1 <- as.Date("2025-01-21", "%Y-%m-%d")
 Date2 <- as.Date("2025-01-25", "%Y-%m-%d")
 subdf <- BRM01[BRM01$DateTime < Date2 & BRM01$DateTime > Date1,]
