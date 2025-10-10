@@ -21,7 +21,7 @@ file.remove(files)
 ###############################
 ### get salt slug discharge ###
 # this is the "most recent Q" folder for salt slugs
-saltslugQ <- googledrive::as_id("https://drive.google.com/drive/folders/1gpOD-zGjB-4ZtmoL7XonQdOUlYbQbgMm")
+saltslugQ <- googledrive::as_id("https://drive.google.com/drive/folders/1fkh_o6Dj0INLiQrTM-ti1P8YG-yBnzvX")
 # list all CSV files in the folder
 ssq <- googledrive::drive_ls(path = saltslugQ)
 3
@@ -45,15 +45,14 @@ drive_download(as_id(velocityQ$id), path = "googledrive/BR_FLO.xlsx", type = "xl
 VQ <- readxl::read_xlsx("googledrive/BR_FLO.xlsx")
 
 ### remove some columns ###
-SSQ <- SSQ[,-c(1, 4:7, 9:13, 15:17, 19:24)]
+SSQ <- SSQ[,-c(1, 9:12, 14:29)]
 
 ### rename some columns ###
 # rename column to match all other data
 SSQ <- SSQ %>% 
   rename("Q_L_per_s" = "Q",
          "Time" = "Time24h.x",
-         "flag" = "flag",
-         "flag_notes" = "flag_notes")
+         "flag" = "flag.x",)
 
 VQ <- VQ %>% 
   rename( "DataID" = "Site")
@@ -77,7 +76,7 @@ VQ$DateTime <- as.POSIXct(VQ$DateTime, format = "%Y-%m-%d %H:%M:%S")
 SSQ$Date <- as.Date(SSQ$Date, format = "%Y-%m-%d")
 
 # convert the DateTime column to POSIXct
-SSQ$DateTime <- as.POSIXct(SSQ$DateTime.y, format = "%Y-%m-%d %H:%M:%S")
+SSQ$DateTime <- as.POSIXct(SSQ$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 ######################
 #### Combine data ####

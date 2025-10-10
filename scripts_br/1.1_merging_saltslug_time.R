@@ -95,8 +95,8 @@ discharge_depth <- merge(Q, PT_sites, by = c("DataID", "Date"), all.x = TRUE)
 # write files to local data folder
 write.csv(discharge_depth, 'data/Q_BR.csv')
 
-# this is the Fayetteville folder
-drive_folder_id <- "1gpOD-zGjB-4ZtmoL7XonQdOUlYbQbgMm"
+# this is the Final discharge files folder
+drive_folder_id <- "1fkh_o6Dj0INLiQrTM-ti1P8YG-yBnzvX"
 
 # upload file to the specified Google Drive folder
 drive_put(
