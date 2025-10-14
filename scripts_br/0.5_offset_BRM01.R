@@ -23,10 +23,9 @@ file.remove(files)
 files <- list.files(path = "pt_figs", full.names = TRUE)
 file.remove(files)
 
-#################################
-#### Import & Visualize Data ####
-#################################
-#### Load data from Google drive ####
+#####################
+#### Import Data ####
+#####################
 # this is the "depth" folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1n17b_9yf5DCO_h6uPya5vBPz2dh13L3v")
 
@@ -51,9 +50,9 @@ BRM01$DateTime <- as.POSIXct(BRM01$DateTime, format = "%Y-%m-%d %H:%M:%S")
 rating_data <- BRM01 %>% 
   filter(!is.na(Baro_Cor_Lvl.m), !is.na(Q_L_per_s))
 
-# filter out bad discharge curves
-rating_data <- rating_data %>% 
-  filter(is.na(flag ))
+# # filter out bad discharge curves
+# rating_data <- rating_data %>% 
+#   filter(is.na(flag ))
 
 # check the structure of the cleaned data
 head(rating_data)
@@ -137,17 +136,23 @@ subdf <- BRM01[BRM01$DateTime < Date2 & BRM01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-02-28 07:52:00"), linetype="dashed", color="red") 
 
-Date1 <- as.Date("2025-04-16", "%Y-%m-%d")
-Date2 <- as.Date("2025-04-18", "%Y-%m-%d")
+Date1 <- as.Date("2025-04-10", "%Y-%m-%d")
+Date2 <- as.Date("2025-04-19", "%Y-%m-%d")
 subdf <- BRM01[BRM01$DateTime < Date2 & BRM01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-04-17 09:15:00"), linetype="dashed", color="red") 
 
-Date1 <- as.Date("2025-06-23", "%Y-%m-%d")
-Date2 <- as.Date("2025-06-27", "%Y-%m-%d")
+Date1 <- as.Date("2025-05-10 ", "%Y-%m-%d")
+Date2 <- as.Date("2025-06-30", "%Y-%m-%d")
 subdf <- BRM01[BRM01$DateTime < Date2 & BRM01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2025-06-26 07:13:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2025-06-16 07:13:00"), linetype="dashed", color="red") 
+
+Date1 <- as.Date("2025-05-10 ", "%Y-%m-%d")
+Date2 <- as.Date("2025-05-30", "%Y-%m-%d")
+subdf <- BRM01[BRM01$DateTime < Date2 & BRM01$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-05-15 12:00:00"), linetype="dashed", color="red") 
 
 Date1 <- as.Date("2025-08-21", "%Y-%m-%d")
 Date2 <- as.Date("2025-08-23", "%Y-%m-%d")
@@ -207,7 +212,7 @@ BRM01 <- BRM01 %>%
   mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
 
 ### third move correction
-move_time3 <- as.POSIXct("2025-04-17 09:15:00")  
+move_time3 <- as.POSIXct("2024-12-12 09:00:00")  
 before_move <- BRM01 %>%
   filter(DateTime >= (move_time3 - hours(2)) & DateTime < move_time3) %>%
   summarize(mean_before = mean(Baro_Cor_offset2, na.rm = TRUE))
@@ -222,7 +227,7 @@ BRM01 <- BRM01 %>%
   mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
 
 ### fourth move correction
-move_time4 <- as.POSIXct("2024-12-12 09:00:00")  
+move_time4 <- as.POSIXct("2025-01-23 09:00:00")  
 before_move <- BRM01 %>%
   filter(DateTime >= (move_time4 - hours(2)) & DateTime < move_time4) %>%
   summarize(mean_before = mean(Baro_Cor_offset3, na.rm = TRUE))
@@ -237,7 +242,7 @@ BRM01 <- BRM01 %>%
   mutate(Baro_Cor_offset4 = if_else(DateTime >= move_time4, Baro_Cor_offset3 - offset4, Baro_Cor_offset3))
 
 ### fifth move correction
-move_time5 <- as.POSIXct("2025-01-23 09:00:00")  
+move_time5 <- as.POSIXct("2025-04-17 09:15:00")
 before_move <- BRM01 %>%
   filter(DateTime >= (move_time5 - hours(2)) & DateTime < move_time5) %>%
   summarize(mean_before = mean(Baro_Cor_offset4, na.rm = TRUE))

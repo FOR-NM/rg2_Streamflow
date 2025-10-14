@@ -49,19 +49,19 @@ BRM01$DateTime <- as.POSIXct(BRM01$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 # filter out rows with missing stage or discharge
 rating_data <- BRM01 %>% 
-  filter(!is.na(Baro_Cor_offset5), !is.na(Q_L_per_s), is.na(flag))
+  filter(!is.na(Baro_Cor_offset4), !is.na(Q_L_per_s), is.na(flag))
 
 # check the structure of the cleaned data
 head(rating_data)
 
 # filter out rows with missing Baro NAs
 BRM01_baro <- BRM01 %>% 
-  filter(!is.na(Baro_Cor_offset5))
+  filter(!is.na(Baro_Cor_offset4))
 
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-ggplot(data = BRM01_baro, aes(x = DateTime, y = Baro_Cor_offset5)) +
+ggplot(data = BRM01_baro, aes(x = DateTime, y = Baro_Cor_offset4)) +
   geom_line() + ggtitle("BRM01 compensated level data")
 ggplot(data = BRM01_baro, aes(x = DateTime, y = LEVEL.m)) +
   geom_line() + ggtitle("BRM01 level data in m")
@@ -76,7 +76,7 @@ rating_data <- rating_data %>%
   mutate(Q.m3s = Q_L_per_s/1000)
 
 # plot with date info
-ggplot(rating_data, aes(x = Baro_Cor_offset5, y = Q.m3s)) +
+ggplot(rating_data, aes(x = Baro_Cor_offset4, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
@@ -85,7 +85,7 @@ ggplot(rating_data, aes(x = Baro_Cor_offset5, y = Q.m3s)) +
 ###########################################
 #### Check for Log-Linear Relationship ####
 ###########################################
-ggplot(rating_data, aes(x = log(Baro_Cor_offset5), y = log(Q.m3s))) +
+ggplot(rating_data, aes(x = log(Baro_Cor_offset4), y = log(Q.m3s))) +
   geom_point(color = "blue") +
   labs(title = "Log-Log Plot of Water Level vs. Discharge", 
        x = "Log(Water Level)", y = "Log(Discharge)") +
@@ -95,7 +95,7 @@ ggplot(rating_data, aes(x = log(Baro_Cor_offset5), y = log(Q.m3s))) +
 #### Log model? ####
 ####################
 rating_data <- rating_data %>%
-  mutate(Log_Stage = log(Baro_Cor_offset5),
+  mutate(Log_Stage = log(Baro_Cor_offset4),
          Log_Discharge = log(Q.m3s))
 
 log_model <- lm(Log_Discharge ~ Log_Stage, data = rating_data)
@@ -108,7 +108,7 @@ b <- coef(log_model)[2]       # Slope
 #######################
 #### Linear model? ####
 #######################
-linear_model <- lm(Q.m3s ~ Baro_Cor_offset5, data = rating_data)
+linear_model <- lm(Q.m3s ~ Baro_Cor_offset4, data = rating_data)
 
 summary(linear_model)
 
@@ -116,7 +116,7 @@ summary(linear_model)
 #### Visualize models ####
 ##########################
 # observed data
-plot(rating_data$Baro_Cor_offset5, rating_data$Q.m3s,
+plot(rating_data$Baro_Cor_offset4, rating_data$Q.m3s,
      main = "Stage vs. Discharge",
      xlab = "Water Level (m)", ylab = "Discharge (m³/s)",
      pch = 19, col = "blue")
@@ -124,11 +124,11 @@ plot(rating_data$Baro_Cor_offset5, rating_data$Q.m3s,
 
 # log-transformed model predictions
 pred_log <- exp(predict(log_model, newdata = rating_data))
-lines(rating_data$Baro_Cor_offset5, pred_log, col = "red", lwd = 2)
+lines(rating_data$Baro_Cor_offset4, pred_log, col = "red", lwd = 2)
 
 # linear model predictions
 pred_linear <- predict(linear_model, newdata = rating_data)
-lines(rating_data$Baro_Cor_offset5, pred_linear, col = "green", lwd = 2)
+lines(rating_data$Baro_Cor_offset4, pred_linear, col = "green", lwd = 2)
 
 # legend
 legend("topleft", legend = c("Observed", "Log-Transformed", "Linear"),
@@ -143,7 +143,7 @@ b_log <- coef(log_model)[2]       # Slope
 
 # predict discharge for the entire dataset
 BRM01 <- BRM01 %>%
-  mutate(Predicted_Discharge_Log.m3s = a_log * (Baro_Cor_offset5 ^ b_log))
+  mutate(Predicted_Discharge_Log.m3s = a_log * (Baro_Cor_offset4 ^ b_log))
 
 ##########################
 #### Predicted linear ####
@@ -154,15 +154,15 @@ b_linear <- coef(linear_model)[2]  # Slope
 
 # predict discharge for the entire dataset
 BRM01 <- BRM01 %>%
-  mutate(Predicted_Discharge_Linear = a_linear + b_linear * Baro_Cor_offset5)
+  mutate(Predicted_Discharge_Linear = a_linear + b_linear * Baro_Cor_offset4)
 
 #############################
 #### Compare predictions ####
 #############################
 # visualize predictions
-plot(BRM01$Baro_Cor_offset5, BRM01$Predicted_Discharge_Log.m3s, col = "red", type = "l", lwd = 2,
+plot(BRM01$Baro_Cor_offset4, BRM01$Predicted_Discharge_Log.m3s, col = "red", type = "l", lwd = 2,
      xlab = "Stage (m)", ylab = "Discharge (m³/s)", main = "Discharge Predictions")
-lines(BRM01$Baro_Cor_offset5, BRM01$Predicted_Discharge_Linear, col = "green", lwd = 2)
+lines(BRM01$Baro_Cor_offset4, BRM01$Predicted_Discharge_Linear, col = "green", lwd = 2)
 legend("topleft", legend = c("Log-Transformed", "Linear"),
        col = c("red", "green"), lty = 1, lwd = 2)
 
@@ -190,7 +190,7 @@ BRM01 <- BRM01 %>%
     Residual_Linear = Q.m3s - Predicted_Discharge_Linear
   )
 
-ggplot(BRM01, aes(x = Baro_Cor_offset5)) +
+ggplot(BRM01, aes(x = Baro_Cor_offset4)) +
   geom_point(aes(y = Residual_Log, color = "Log Model")) +
   geom_point(aes(y = Residual_Linear, color = "Linear Model")) +
   labs(
