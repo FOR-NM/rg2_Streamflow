@@ -58,7 +58,7 @@ discharge$DateTimeNotRounded <- as.POSIXct(discharge$DateTimeNotRounded,format =
 # round DateTime to the nearest hour
 discharge$DateTime <- round_date(discharge$DateTime, unit="1 hour")
 
-# check if it worked!
+# check if it worked
 str(discharge)
 
 ####################################################
@@ -126,6 +126,7 @@ for (i in seq_along(pt_list)) {
 BRMQ1 <- pt_list[["BRMQ1.csv"]]
 BRM01 <- pt_list[["BRM01.csv"]]
 BRAA1 <- pt_list[["BRAA1.csv"]]
+BRM05 <- pt_list[["BRM05.csv"]]
 
 #######################################
 #### Combine depth info to PT data ####

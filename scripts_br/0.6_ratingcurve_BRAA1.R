@@ -75,6 +75,14 @@ ggplot(rating_data, aes(x = Baro_Cor_offset7, y = Q.m3s)) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
+# filter out rows with missing stage or discharge
+rating_data <- rating_data %>% 
+  filter(!Date.y %in% c("2025-05-12", "2025-05-15"))
+ggplot(rating_data, aes(x = Baro_Cor_offset7, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+  theme_minimal()
 
 # # plot discharge vs manual stage measurement
 # ggplot(rating_data, aes(x = pt_depth_m, y = Q.m3s)) +

@@ -99,30 +99,43 @@ ggplot(BRA01, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
 ############################
 #### Look at it closely ####
 ############################
-# tornado storm
-Date1 <- as.Date("2024-11-01", "%Y-%m-%d")
-Date2 <- as.Date("2024-11-10", "%Y-%m-%d")
+Date1 <- as.Date("2024-10-01", "%Y-%m-%d")
+Date2 <- as.Date("2024-10-30", "%Y-%m-%d")
 subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-11-04 09:20:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2024-10-25 11:00:00"), linetype="dashed", color="red") 
+
+# tornado storm
+Date1 <- as.Date("2024-11-01", "%Y-%m-%d")
+Date2 <- as.Date("2024-11-15", "%Y-%m-%d")
+subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-11-05 08:00:00"), linetype="dashed", color="red") 
 
 Date1 <- as.Date("2024-11-01", "%Y-%m-%d")
 Date2 <- as.Date("2024-11-15", "%Y-%m-%d")
 subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-11-08 09:20:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2024-11-08 10:00:00"), linetype="dashed", color="red") 
 
 Date1 <- as.Date("2024-10-01", "%Y-%m-%d")
 Date2 <- as.Date("2024-12-30", "%Y-%m-%d")
 subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-11-04 09:20:00"), linetype="dashed", color="red") +
   geom_vline(xintercept = as.POSIXct("2024-11-08 09:20:00"), linetype="dashed", color="red") 
 
-Date1 <- as.Date("2024-11-08", "%Y-%m-%d")
-Date2 <- as.Date("2024-11-15", "%Y-%m-%d")
+Date1 <- as.Date("2024-11-01", "%Y-%m-%d")
+Date2 <- as.Date("2024-11-20", "%Y-%m-%d")
 subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-11-12 10:00:00"), linetype="dashed", color="red")
+  geom_vline(xintercept = as.POSIXct("2024-11-12 15:00:00"), linetype="dashed", color="red")
+
+Date1 <- as.Date("2024-11-01", "%Y-%m-%d")
+Date2 <- as.Date("2024-11-25", "%Y-%m-%d")
+subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-11-19 16:00:00"), linetype="dashed", color="red")
 
 Date1 <- as.Date("2024-12-10", "%Y-%m-%d")
 Date2 <- as.Date("2024-12-14", "%Y-%m-%d")
@@ -142,11 +155,12 @@ subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-03-03 10:00:00"), linetype="dashed", color="red") 
 
-Date1 <- as.Date("2025-03-20", "%Y-%m-%d")
-Date2 <- as.Date("2025-03-30", "%Y-%m-%d")
+Date1 <- as.Date("2025-03-15", "%Y-%m-%d")
+Date2 <- as.Date("2025-04-30", "%Y-%m-%d")
 subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2025-03-26 10:00:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2025-03-26 10:00:00"), linetype="dashed", color="red") +
+  geom_vline(xintercept = as.POSIXct("2025-04-09 10:00:00"), linetype="dashed", color="red") 
 
 Date1 <- as.Date("2025-04-16", "%Y-%m-%d")
 Date2 <- as.Date("2025-04-18", "%Y-%m-%d")
@@ -160,20 +174,26 @@ subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-05-15 13:00:00"), linetype="dashed", color="red") 
 
-Date1 <- as.Date("2025-06-15", "%Y-%m-%d")
+Date1 <- as.Date("2025-06-01", "%Y-%m-%d")
 Date2 <- as.Date("2025-06-20", "%Y-%m-%d")
 subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-06-17 15:00:00"), linetype="dashed", color="red") 
 
-Date1 <- as.Date("2025-07-10", "%Y-%m-%d")
-Date2 <- as.Date("2025-07-20", "%Y-%m-%d")
+Date1 <- as.Date("2025-06-20", "%Y-%m-%d")
+Date2 <- as.Date("2025-06-29", "%Y-%m-%d")
+subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-06-26 12:00:00"), linetype="dashed", color="red") 
+
+Date1 <- as.Date("2025-07-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-08-30", "%Y-%m-%d")
 subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-07-17 10:20:00"), linetype="dashed", color="red") 
 
-Date1 <- as.Date("2025-08-26", "%Y-%m-%d")
-Date2 <- as.Date("2025-08-28", "%Y-%m-%d")
+Date1 <- as.Date("2025-08-20", "%Y-%m-%d")
+Date2 <- as.Date("2025-08-30", "%Y-%m-%d")
 subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-08-27 13:20:00"), linetype="dashed", color="red") 
@@ -199,12 +219,26 @@ BRA01 <- BRA01 %>%
 ###########################################################################
 #### Find the average Baro_Cor_Lvl TWO HOURS before and after the move ####
 ###########################################################################
+# ### move correction cero
+# move_time0 <- as.POSIXct("2024-11-08 10:00:00")  
+# before_move <- BRA01 %>%
+#   filter(DateTime >= (move_time0 - hours(2)) & DateTime < move_time0) %>%
+#   summarize(mean_before = mean(Baro_Cor_Lvl.m, na.rm = TRUE))
+# after_move <- BRA01 %>%
+#   filter(DateTime >= move_time0 & DateTime < (move_time0 + hours(2))) %>%
+#   summarize(mean_after = mean(Baro_Cor_Lvl.m, na.rm = TRUE))
+# # compute offset
+# offset0 <- after_move$mean_after - before_move$mean_before
+# print(offset0)
+# # apply the first correction
+# BRA01 <- BRA01 %>%
+#   mutate(Baro_Cor_offset0 = if_else(DateTime >= move_time0, Baro_Cor_Lvl.m - offset0, Baro_Cor_Lvl.m))
+
 ### first move correction
-move_time1 <- as.POSIXct("2024-11-12 11:00:00")  
+move_time1 <- as.POSIXct("2024-11-12 15:00:00")  
 before_move <- BRA01 %>%
   filter(DateTime >= (move_time1 - hours(2)) & DateTime < move_time1) %>%
   summarize(mean_before = mean(Baro_Cor_Lvl.m, na.rm = TRUE))
-move_time1 <- as.POSIXct("2024-11-12 15:00:00")  
 after_move <- BRA01 %>%
   filter(DateTime >= move_time1 & DateTime < (move_time1 + hours(2))) %>%
   summarize(mean_after = mean(Baro_Cor_Lvl.m, na.rm = TRUE))
@@ -216,7 +250,7 @@ BRA01 <- BRA01 %>%
   mutate(Baro_Cor_offset1 = if_else(DateTime >= move_time1, Baro_Cor_Lvl.m - offset1, Baro_Cor_Lvl.m))
 
 ### second move correction
-move_time2 <- as.POSIXct("2024-12-12 09:00:00")  
+move_time2 <- as.POSIXct("2024-11-19 16:00:00") #2024-12-12 09:00:00#
 before_move <- BRA01 %>%
   filter(DateTime >= (move_time2 - hours(2)) & DateTime < move_time2) %>%
   summarize(mean_before = mean(Baro_Cor_offset1, na.rm = TRUE))
@@ -231,7 +265,7 @@ BRA01 <- BRA01 %>%
   mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
 
 ### third move correction
-move_time3 <- as.POSIXct("2025-03-03 10:00:00")
+move_time3 <- as.POSIXct("2025-03-03 11:00:00")
 before_move <- BRA01 %>%
   filter(DateTime >= (move_time3 - hours(2)) & DateTime < move_time3) %>%
   summarize(mean_before = mean(Baro_Cor_offset2, na.rm = TRUE))
@@ -245,7 +279,7 @@ print(offset3)
 BRA01 <- BRA01 %>%
   mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
 
-move_time4 <- as.POSIXct("2025-04-17 09:00:00")
+move_time4 <- as.POSIXct("2025-05-15 12:00:00") #2025-04-17 09:00:00
 before_move <- BRA01 %>%
   filter(DateTime >= (move_time4 - hours(2)) & DateTime < move_time4) %>%
   summarize(mean_before = mean(Baro_Cor_offset3, na.rm = TRUE))
@@ -259,7 +293,7 @@ print(offset4)
 BRA01 <- BRA01 %>%
   mutate(Baro_Cor_offset4 = if_else(DateTime >= move_time4, Baro_Cor_offset3 - offset4, Baro_Cor_offset3))
 
-move_time5 <- as.POSIXct("2025-05-15 12:00:00")
+move_time5 <- as.POSIXct("2025-06-26 12:00:00")
 before_move <- BRA01 %>%
   filter(DateTime >= (move_time5 - hours(2)) & DateTime < move_time5) %>%
   summarize(mean_before = mean(Baro_Cor_offset4, na.rm = TRUE))
@@ -273,7 +307,7 @@ print(offset5)
 BRA01 <- BRA01 %>%
   mutate(Baro_Cor_offset5 = if_else(DateTime >= move_time5, Baro_Cor_offset4 - offset5, Baro_Cor_offset4))
 
-move_time6 <- as.POSIXct("2025-06-17 08:00:00")
+move_time6 <- as.POSIXct("2025-06-17 09:00:00")
 before_move <- BRA01 %>%
   filter(DateTime >= (move_time6 - hours(2)) & DateTime < move_time6) %>%
   summarize(mean_before = mean(Baro_Cor_offset5, na.rm = TRUE))
@@ -288,11 +322,10 @@ print(offset6)
 BRA01 <- BRA01 %>%
   mutate(Baro_Cor_offset6 = if_else(DateTime >= move_time6, Baro_Cor_offset5 - offset6, Baro_Cor_offset5))
 
-move_time7 <- as.POSIXct("2025-06-26 11:00:00")
+move_time7 <- as.POSIXct("2024-11-05 08:00:00")
 before_move <- BRA01 %>%
   filter(DateTime >= (move_time7 - hours(2)) & DateTime < move_time7) %>%
   summarize(mean_before = mean(Baro_Cor_offset6, na.rm = TRUE))
-move_time7 <- as.POSIXct("2025-06-26 12:00:00")
 after_move <- BRA01 %>%
   filter(DateTime >= move_time7 & DateTime < (move_time7 + hours(2))) %>%
   summarize(mean_after = mean(Baro_Cor_offset6, na.rm = TRUE))
@@ -303,6 +336,19 @@ print(offset7)
 BRA01 <- BRA01 %>%
   mutate(Baro_Cor_offset7 = if_else(DateTime >= move_time7, Baro_Cor_offset6 - offset7, Baro_Cor_offset6))
 
+# move_time8 <- as.POSIXct("")
+# before_move <- BRA01 %>%
+#   filter(DateTime >= (move_time8 - hours(40)) & DateTime < move_time8) %>%
+#   summarize(mean_before = mean(Baro_Cor_offset7, na.rm = TRUE))
+# after_move <- BRA01 %>%
+#   filter(DateTime >= move_time8 & DateTime < (move_time8 + hours(2))) %>%
+#   summarize(mean_after = mean(Baro_Cor_offset7, na.rm = TRUE))
+# # compute offset
+# offset8 <- after_move$mean_after - before_move$mean_before
+# print(offset8)
+# # apply the seventh correction
+# BRA01 <- BRA01 %>%
+#   mutate(Baro_Cor_offset8 = if_else(DateTime >= move_time8, Baro_Cor_offset7 - offset8, Baro_Cor_offset7))
 
 ###############################
 ####  Plot with Correction ####
@@ -311,15 +357,15 @@ ggplot(BRA01, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
   geom_line() +
   #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
   labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
+ggplot(BRA01, aes(x = DateTime, y = Baro_Cor_offset1)) +
+  geom_line() +
+  #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
+  labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
 ggplot(BRA01, aes(x = DateTime, y = Baro_Cor_offset2)) +
   geom_line() +
   #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
   labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
 ggplot(BRA01, aes(x = DateTime, y = Baro_Cor_offset3)) +
-  geom_line() +
-  #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
-  labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
-ggplot(BRA01, aes(x = DateTime, y = Baro_Cor_offset2)) +
   geom_line() +
   #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
   labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
@@ -340,6 +386,11 @@ ggplot(BRA01, aes(x = DateTime, y = Baro_Cor_offset7)) +
   #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
   labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
 
+# ggplot(BRA01, aes(x = DateTime, y = Baro_Cor_offset8)) +
+#   geom_line() +
+#   #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
+#   labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
+
 ###################################################
 #### Plot Stage vs. Discharge after correction ####
 ###################################################
@@ -352,6 +403,16 @@ rating_data_offset <- BRA01 %>%
   filter(!is.na(Baro_Cor_Lvl.m), !is.na(Q.m3s))
 
 ggplot(rating_data_offset, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+  theme_minimal()
+ggplot(rating_data_offset, aes(x = Baro_Cor_offset1, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+  theme_minimal()
+ggplot(rating_data_offset, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
@@ -381,28 +442,41 @@ ggplot(rating_data_offset, aes(x = Baro_Cor_offset7, y = Q.m3s)) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
+# ggplot(rating_data_offset, aes(x = Baro_Cor_offset8, y = Q.m3s)) +
+#   geom_point(color = "blue") +
+#   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+#   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+#   theme_minimal()
 
 ########################
 #### Plot close ups ####
 ########################
 Date1 <- as.Date("2024-11-01", "%Y-%m-%d")
-Date2 <- as.Date("2024-11-20", "%Y-%m-%d")
+Date2 <- as.Date("2024-11-25", "%Y-%m-%d")
 subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-11-12 09:15:00"), linetype="dashed", color="red") 
-ggplot(data=subdf, aes(DateTime,Baro_Cor_offset8)) + geom_line() +
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset6)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-11-12 09:15:00"), linetype="dashed", color="red") 
+
+Date1 <- as.Date("2024-12-01", "%Y-%m-%d")
+Date2 <- as.Date("2024-12-20", "%Y-%m-%d")
+subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-12-12 10:00:00"), linetype="dashed", color="red") 
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset6)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-12-12 10:00:00"), linetype="dashed", color="red") 
 
 Date1 <- as.Date("2025-03-01", "%Y-%m-%d")
 Date2 <- as.Date("2025-03-05", "%Y-%m-%d")
 subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-03-03 10:00:00"), linetype="dashed", color="red") 
-ggplot(data=subdf, aes(DateTime,Baro_Cor_offset8)) + geom_line() +
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset6)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-03-03 10:00:00"), linetype="dashed", color="red") 
 
-Date1 <- as.Date("2025-04-15", "%Y-%m-%d")
-Date2 <- as.Date("2025-04-19", "%Y-%m-%d")
+Date1 <- as.Date("2025-04-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-04-30", "%Y-%m-%d")
 subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-04-17 09:00:00"), linetype="dashed", color="red") 
@@ -417,8 +491,8 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
 ggplot(data=subdf, aes(DateTime,Baro_Cor_offset7)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-05-15 12:00:00"), linetype="dashed", color="red") 
 
-Date1 <- as.Date("2025-06-01", "%Y-%m-%d")
-Date2 <- as.Date("2025-06-30", "%Y-%m-%d")
+Date1 <- as.Date("2025-06-10", "%Y-%m-%d")
+Date2 <- as.Date("2025-06-23", "%Y-%m-%d")
 subdf <- BRA01[BRA01$DateTime < Date2 & BRA01$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-06-17 08:00:00"), linetype="dashed", color="red") 
