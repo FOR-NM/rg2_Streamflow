@@ -208,10 +208,28 @@ ggplot(DVNWT3, aes(x = Baro_positive)) +
 DVNWT3$DateTime <- as.POSIXct(DVNWT3$DateTime)
 
 ggplot(DVNWT3, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) +
-  geom_point(color = "blue") +
-  labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
+  geom_line(color = "blue") +
+  labs(title = "Predicted Discharge", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(DVNWT3, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) +
+  geom_line(color = "blue") +
+  labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
+  scale_x_datetime(date_breaks = "2 week") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_y_continuous(trans = "log")
+
+#take the subset of the data for February when PT was moved
+Date1 <- as.Date("2025-04-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-05-01", "%Y-%m-%d")
+subdf <- DVNWT3[DVNWT3$DateTime < Date2 & DVNWT3$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Predicted_Discharge_Log_m3s)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-04-01 10:15:00"), linetype="dashed", color="red") 
+ggplot(data=subdf, aes(DateTime,Predicted_Discharge_Log_m3s)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-05-02 10:15:00"), linetype="dashed", color="red") 
+
 
 ggplot(DVNWT3, aes(x = DateTime, y = Predicted_Discharge_Linear_m3s)) +
   geom_point(color = "blue") +

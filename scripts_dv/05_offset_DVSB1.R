@@ -158,6 +158,13 @@ subdf <- DVSB1[DVSB1$DateTime < Date2 & DVSB1$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-05-16 08:30:00"), linetype="dashed", color="red")
 
+# Is this normal?
+Date1 <- as.Date("2024-10-01", "%Y-%m-%d")
+Date2 <- as.Date("2024-12-31", "%Y-%m-%d")
+subdf <- DVSB1[DVSB1$DateTime < Date2 & DVSB1$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2024-11-30 08:30:00"), linetype="dashed", color="red")
+
 ######################################################################
 #### Remove times where PT was out of the water and error section ####
 ######################################################################
@@ -186,36 +193,28 @@ ggplot(DVSB1, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 ###########################################################################
 # first move correction (2025-02-07 12:15:00)
 move_time1 <- as.POSIXct("2025-02-07 12:15:00")
-
 before_move1 <- DVSB1 %>%
   filter(DateTime >= (move_time1 - hours(2)) & DateTime < move_time1) %>%
   summarize(mean_before1 = mean(Baro_Cor_Lvl, na.rm = TRUE))
-
 after_move1 <- DVSB1 %>%
   filter(DateTime >= move_time1 & DateTime < (move_time1 + hours(2))) %>%
   summarize(mean_after1 = mean(Baro_Cor_Lvl, na.rm = TRUE))
-
 offset1 <-  after_move1$mean_after1 - before_move1$mean_before1
 print(paste("Offset 1:", offset1))
-
 # apply the first correction
 DVSB1 <- DVSB1 %>%
   mutate(Baro_Cor_offset1 = if_else(DateTime >= move_time1, Baro_Cor_Lvl - offset1, Baro_Cor_Lvl))
 
 # second move correction (2025-04-18 14:00:00)
 move_time2 <- as.POSIXct("2025-04-18 14:00:00")
-
 before_move2 <- DVSB1 %>%
   filter(DateTime >= (move_time2 - hours(2)) & DateTime < move_time2) %>%
   summarize(mean_before2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
-
 after_move2 <- DVSB1 %>%
   filter(DateTime >= move_time2 & DateTime < (move_time2 + hours(2))) %>%
   summarize(mean_after2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
-
 offset2 <- after_move2$mean_after2 - before_move2$mean_before2
 print(paste("Offset 2:", offset2))
-
 # apply the second correction
 DVSB1 <- DVSB1 %>%
   mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
@@ -292,6 +291,17 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_offset1)) + geom_line() +
 #take the subset of the data for April when PT was moved
 Date1 <- as.Date("2025-04-17", "%Y-%m-%d")
 Date2 <- as.Date("2025-04-19", "%Y-%m-%d")
+subdf <- DVSB1[DVSB1$DateTime < Date2 & DVSB1$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-04-18 14:45:00"), linetype="dashed", color="red")
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset2)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-04-18 14:45:00"), linetype="dashed", color="red")
+ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-04-18 14:45:00"), linetype="dashed", color="red")
+
+Date1 <- as.Date("2024-11-17", "%Y-%m-%d")
+Date2 <- as.Date("2024-12-19", "%Y-%m-%d")
 subdf <- DVSB1[DVSB1$DateTime < Date2 & DVSB1$DateTime > Date1,]
 
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
