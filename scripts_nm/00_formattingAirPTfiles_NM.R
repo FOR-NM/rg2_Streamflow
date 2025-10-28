@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## Script to format all the Pressure Transducer (Level Logger) to a cleaner state and upload them back to Drive
+## Script to format Air Pressure Transducers and upload them back to Drive
 ## press Command+Option+O to collapse all sections and get an overview of the workflow!
 ##==============================================================================
 ##############
@@ -20,8 +20,8 @@ file.remove(files)
 #### Import Data ####
 #####################
 # set up Google Drive folder
-# this is the "inuse" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1i7G-q7FV0_bszqeCdJ6Otz8b9xhpU1cx")
+# this is the "raw air" folder
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1jhw-miI7fPaP8947HCbJ1idnIl6g1A8c")
 
 # list and filter CSV files with "pt" in their names
 pt_files <- googledrive::drive_ls(path = pt, type = "csv")
@@ -36,7 +36,7 @@ pt_list <- lapply(seq_along(pt_files$name), function(i) {
   )
   
   # read the CSV file, skipping the first 11 rows (header is on row 12)
-  read.csv(paste0("googledrive/", pt_files$name[i]), skip = 11, header = TRUE)
+  read.csv(paste0("googledrive/", pt_files$name[i]), skip = 10, header = TRUE)
 })
 
 # assign names to the list elements based on the file names
@@ -105,4 +105,3 @@ for (i in seq_along(pt_list)) {
     path = as_id(drive_folder_id)
   )
 }
-

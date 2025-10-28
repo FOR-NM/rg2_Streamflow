@@ -89,7 +89,8 @@ drops <- c("X.1", "X.2", "X.3", "X", "Date.x","Date.y", "Date.air", "LEVEL", "TE
            "ms.x", "ms.y", "medianSPC.x", "Q", "medianSPC.y", "Level_air.m", "final_SPC", "final_index", "SPC_difference",
            "time_arrived_if_applicable", "stage_depth_m", "mean_stream_width_m","sensor_deployment_time", "salt", 
            "Direct_Observation.x", "Direct_Observation", "Direct_Observation.y", "Flow_Status", "Flow_Status.x","Flow_Status.y",
-           "Time.y", "Time.x", "Time.air", "Predicted_Discharge_Linear_m3s", "Residual_Linear", "LEVEL.kPa")
+           "Time.y", "Time.x", "Time.air", "Predicted_Discharge_Linear_m3s", "Residual_Linear", "LEVEL.kPa",
+           "slug_flag", "slug_notes")
 
 # loop through each data frame in the list
 for (i in seq_along(pt_list)) {
