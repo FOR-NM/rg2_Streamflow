@@ -17,8 +17,6 @@ library(dplyr)
 # list and delete all files in the folder
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
-files <- list.files(path = "merged", full.names = TRUE)
-file.remove(files)
 files <- list.files(path = "data", full.names = TRUE)
 file.remove(files)
 
@@ -166,7 +164,7 @@ str(pt_list)
 # check individual data frame
 USF19 <- pt_list[["USF19.csv"]]
 
-# remove upper sites
+# remove lower sites
 pt_list = pt_list[-c(1:5)]
 # check the contents of the list
 str(pt_list)
@@ -191,8 +189,37 @@ for (i in seq_along(pt_list)) {
 str(pt_list)
 # check individual data frame
 
-USF21<- pt_list[["USF21.csv"]]
-USF16<- pt_list[["USF16.csv"]]
+#################################################
+#### Rounding the time for some of the sites ####
+#################################################
+USF13 <- pt_list[["USF13.csv"]]
+USF14 <- pt_list[["USF14.csv"]]
+USF16 <- pt_list[["USF16.csv"]]
+USF19 <- pt_list[["USF19.csv"]]
+USF21 <- pt_list[["USF21.csv"]]
+
+# transform to datetime format
+USF13$DateTime <- as.POSIXct(USF13$DateTime,format = "%Y-%m-%d %H:%M:%S")
+USF14$DateTime <- as.POSIXct(USF14$DateTime,format = "%Y-%m-%d %H:%M:%S")
+USF16$DateTime <- as.POSIXct(USF16$DateTime,format = "%Y-%m-%d %H:%M:%S")
+USF19$DateTime <- as.POSIXct(USF19$DateTime,format = "%Y-%m-%d %H:%M:%S")
+USF21$DateTime <- as.POSIXct(USF21$DateTime,format = "%Y-%m-%d %H:%M:%S")
+
+#USF13$DateTimeNotRounded <- as.POSIXct(USF13$DateTimeNotRounded,format = "%Y-%m-%d %H:%M:%S")
+
+# round DateTime to the nearest 15-minute interval 
+USF13$DateTime <- round_date(USF13$DateTime, unit="15 mins")
+USF14$DateTime <- round_date(USF14$DateTime, unit="15 mins")
+USF16$DateTime <- round_date(USF16$DateTime, unit="15 mins")
+USF19$DateTime <- round_date(USF19$DateTime, unit="15 mins")
+USF21$DateTime <- round_date(USF21$DateTime, unit="15 mins")
+
+# return to list
+pt_list$USF13.csv <- USF13
+pt_list$USF14.csv <- USF14
+pt_list$USF16.csv <- USF16
+pt_list$USF19.csv <- USF19
+pt_list$USF21.csv <- USF21
 
 #######################################
 #### Combine depth info to PT data ####

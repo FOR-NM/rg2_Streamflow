@@ -70,7 +70,7 @@ rating_data <- rating_data %>%
   mutate(Q.m3s = Q_L_per_s/1000)
 
 # plot with date info
-ggplot(rating_data, aes(x = Baro_Cor_offset7, y = Q.m3s)) +
+ggplot(rating_data, aes(x = Baro_Cor_offset6, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
@@ -79,7 +79,7 @@ ggplot(rating_data, aes(x = Baro_Cor_offset7, y = Q.m3s)) +
 # filter out rows with missing stage or discharge
 rating_data <- rating_data %>% 
   filter(!Date.y %in% c("2024-12-06", "2025-01-07", "2025-04-17"))
-ggplot(rating_data, aes(x = Baro_Cor_offset7, y = Q.m3s)) +
+ggplot(rating_data, aes(x = Baro_Cor_offset6, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
@@ -95,7 +95,7 @@ ggplot(rating_data, aes(x = Baro_Cor_offset7, y = Q.m3s)) +
 ###########################################
 #### Check for Log-Linear Relationship ####
 ###########################################
-ggplot(rating_data, aes(x = log(Baro_Cor_offset7), y = log(Q.m3s))) +
+ggplot(rating_data, aes(x = log(Baro_Cor_offset6), y = log(Q.m3s))) +
   geom_point(color = "blue") +
   labs(title = "Log-Log Plot of Water Level vs. Discharge", 
        x = "Log(Water Level)", y = "Log(Discharge)") +
@@ -105,7 +105,7 @@ ggplot(rating_data, aes(x = log(Baro_Cor_offset7), y = log(Q.m3s))) +
 #### Log model? ####
 ####################
 rating_data <- rating_data %>%
-  mutate(Log_Stage = log(Baro_Cor_offset7),
+  mutate(Log_Stage = log(Baro_Cor_offset6),
          Log_Discharge = log(Q.m3s))
 
 log_model <- lm(Log_Discharge ~ Log_Stage, data = rating_data)
@@ -118,7 +118,7 @@ b <- coef(log_model)[2]       # Slope
 #######################
 #### Linear model? ####
 #######################
-linear_model <- lm(Q.m3s ~ Baro_Cor_offset7, data = rating_data)
+linear_model <- lm(Q.m3s ~ Baro_Cor_offset6, data = rating_data)
 
 summary(linear_model)
 

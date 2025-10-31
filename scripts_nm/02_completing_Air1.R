@@ -24,7 +24,7 @@ file.remove(files)
 #### Import air data ####
 #########################
 # this is the merged days folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1aUwQq19HnlyIxnMHMH3HtybzvA_Zcrwu")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1BsASDFjFci_7mndSKj6T5uXKxW1UZoaP")
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
@@ -38,11 +38,7 @@ googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="AIR3.csv"],
                             overwrite = T)
 air_middle <- read.csv("googledrive/AIR3.csv")
 
-# this is the inuse folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1i7G-q7FV0_bszqeCdJ6Otz8b9xhpU1cx")
-# list all CSV files in the folder
-pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="2025-06-16_USF_AIR1.csv"], 
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="AIR1.csv"], 
                             path = "googledrive/AIR1.csv",
                             overwrite = T)
 air_lower <- read.csv("googledrive/AIR1.csv")
@@ -259,14 +255,14 @@ merged_air <- merged_air %>%
 ###################
 #### Save file ####
 ###################
-write.csv(merged_air, "data/AIR1.csv")
+write.csv(merged_air, "data/AIR1_complete.csv")
 
 # this is the "merged days" folder 
-drive_folder_id <- "1aUwQq19HnlyIxnMHMH3HtybzvA_Zcrwu"
+drive_folder_id <- "1BsASDFjFci_7mndSKj6T5uXKxW1UZoaP"
 
 # upload file to the specified Google Drive folder
 drive_put(
-  media = "data/AIR1.csv",
+  media = "data/AIR1_complete.csv",
   path = as_id(drive_folder_id)
 )
 

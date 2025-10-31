@@ -19,9 +19,6 @@ library(lubridate)
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
 
-files <- list.files(path = "merged", full.names = TRUE)
-file.remove(files)
-
 ##############################################
 #### Load PT depth data from Google drive ####
 ##############################################
@@ -97,7 +94,7 @@ googledrive::drive_download(file = discharge_csv$id[discharge_csv$name=="Q.csv"]
 Q = read.csv("googledrive/Q.csv")
 
 # convert the Date column to Date
-Q$Date <- as.Date(Q$Date, format = "%Y-%m-%d", tz = "MST")
+Q$Date <- as.Date(Q$Date, format = "%Y-%m-%d")
 
 # remove duplicate rows
 Q <- Q[ , -c(3, 7, 8)]
@@ -139,10 +136,6 @@ for (i in seq_along(pt_csvs$id)) {
 
 # check the contents of the list
 str(pt_list)
-
-# look at it
-USF20 <- pt_list[["USF20.csv"]]
-USF07 <- pt_list[["USF07.csv"]]
 
 ###################################
 #### Add DataID column to csvs ####
@@ -191,14 +184,34 @@ for (i in seq_along(pt_list)) {
 # check the contents of the list and make sure there are no NAs
 str(pt_list)
 
-# round seconds to the 00 interval 
-USF07$DateTime <- floor_date(USF07$DateTime, unit="minute")
-# return to list
-pt_list$USF07.csv <- USF07
-
-# check individual data frame
-USF20 <- pt_list[["USF20.csv"]]
+#################################################
+#### Rounding the time for some of the sites ####
+#################################################
+USF03 <- pt_list[["USF03.csv"]]
+USF04 <- pt_list[["USF04.csv"]]
+USF05 <- pt_list[["USF05.csv"]]
 USF07 <- pt_list[["USF07.csv"]]
+USF20 <- pt_list[["USF20.csv"]]
+
+# transform to datetime format
+USF03$DateTime <- as.POSIXct(USF03$DateTime,format = "%Y-%m-%d %H:%M:%S")
+USF04$DateTime <- as.POSIXct(USF04$DateTime,format = "%Y-%m-%d %H:%M:%S")
+USF05$DateTime <- as.POSIXct(USF05$DateTime,format = "%Y-%m-%d %H:%M:%S")
+USF07$DateTime <- as.POSIXct(USF07$DateTime,format = "%Y-%m-%d %H:%M:%S")
+
+# round DateTime to the nearest 15-minute interval 
+USF07$DateTime <- floor_date(USF07$DateTime, unit="minute")
+
+USF03$DateTime <- round_date(USF03$DateTime, unit="15 mins")
+USF04$DateTime <- round_date(USF04$DateTime, unit="15 mins")
+USF05$DateTime <- round_date(USF05$DateTime, unit="15 mins")
+USF07$DateTime <- round_date(USF07$DateTime, unit="15 mins")
+
+# return to list
+pt_list$USF03.csv <- USF03
+pt_list$USF04.csv <- USF04
+pt_list$USF05.csv <- USF05
+pt_list$USF07.csv <- USF07
 
 #######################################
 #### Combine depth info to PT data ####

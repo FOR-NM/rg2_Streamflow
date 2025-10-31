@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## Script to merge same site PT sites in one file (using timestamp) for Santa Fe watershed
+## Script to merge same site air PT in one file (using timestamp) for Santa Fe watershed
 ##==============================================================================
 
 library(readxl) #to read excel 
@@ -19,7 +19,7 @@ file.remove(files)
 ##########################
 #### list and download all files in the folder ####
 # this is the "02_inuse" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1i7G-q7FV0_bszqeCdJ6Otz8b9xhpU1cx")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1czHQWopN5_uw6wnU0m1hvjJuHI4D6ABP")
 # list all CSV files in the folder
 pt_files <- googledrive::drive_ls(path = pt)
 3
@@ -32,14 +32,14 @@ pt_list <- lapply(seq_along(pt_files$name), function(i) {
     overwrite = TRUE
   )
   
-  # read the CSV file, skipping the first 11 rows (header is on row 12)
+  # read the CSV file, skipping the first 10 rows (header is on row 11)
   read.csv(paste0("googledrive/", pt_files$name[i]), header = TRUE)
 })
 
 # assign names to the list elements based on the file names
 names(pt_list) <- pt_files$name
 
-USF20 <- pt_list[["2024-10-24_USF20_WaterLevel.csv"]]
+AIR2 <- pt_list[["2024-10-29_USF_AIR2.csv"]]
 
 ################################
 #### Format DateTime column ####
@@ -61,7 +61,7 @@ for (i in seq_along(pt_list)) {
 #### Combine data for each site ####
 ####################################
 # site names
-site_names <- c("USF03", "USF04", "USF05", "USF07", "USF20", "USF13", "USF14", "USF16", "USF19", "USF21")
+site_names <- c("AIR1", "AIR2", "AIR3")
 
 # group files in `pt_list` by matching `site_names` in file names
 pt_list_by_site <- lapply(site_names, function(site) {
@@ -84,8 +84,7 @@ combined_by_site <- lapply(pt_list_by_site, function(site_data_list) {
     distinct(DateTime, .keep_all = TRUE) # remove duplicates
 })
 
-USF03 <- combined_by_site[["USF03"]]
-USF07 <- combined_by_site[["USF07"]]
+AIR2 <- combined_by_site[["AIR2"]]
 
 ##############################
 #### Save combined files  ####
@@ -96,8 +95,8 @@ lapply(names(combined_by_site), function(site) {
   file <- paste0("data/", site, ".csv")
   # save each data frame
   write.csv(combined_by_site[[site]], file, row.names = FALSE, quote = FALSE)
-  # this is the "merged_days" folder
-  drive_folder_id <- "1aUwQq19HnlyIxnMHMH3HtybzvA_Zcrwu"
+  # this is the "merged_days_air" folder
+  drive_folder_id <- "1BsASDFjFci_7mndSKj6T5uXKxW1UZoaP"
   # upload the file to Google Drive
   drive_put(
     media = file,

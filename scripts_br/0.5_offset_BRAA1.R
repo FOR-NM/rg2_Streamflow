@@ -83,18 +83,28 @@ ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
   theme_minimal()
 
-#################################################
-#### Find offset, when did the change happen ####
-#################################################
-ggplot(BRAA1, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
-  geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-11-08 03:20:00"), linetype="dashed", color="red") +
-  geom_vline(xintercept = as.POSIXct("2024-11-12 11:08:00"), linetype="dashed", color="red") +
-  geom_vline(xintercept = as.POSIXct("2024-12-12 08:40:00"), linetype="dashed", color="red") +
-  geom_vline(xintercept = as.POSIXct("2025-01-23 09:08:00"), linetype="dashed", color="red") +
-  geom_vline(xintercept = as.POSIXct("2025-02-28 07:52:00"), linetype="dashed", color="red") +
-  geom_vline(xintercept = as.POSIXct("2025-06-26 07:13:00"), linetype="dashed", color="red") +
-  labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
+# add a "Season" column
+rating_data <- rating_data %>%
+  mutate(Month = month(Date.x),Season = case_when(
+    Month %in% c(12, 1, 2) ~ "Winter",
+    Month %in% c(3, 4, 5) ~ "Spring",
+    Month %in% c(6, 7, 8) ~ "Summer",
+    Month %in% c(9, 10, 11) ~ "Fall"
+  ))
+# coloring by Season
+ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s, color = Season)) +
+  geom_point(size = 3) +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
+  labs(
+    title = "Stage vs. Discharge by Season - BRAA1",
+    x = "Stage (LEVEL m)",
+    y = "Discharge (Q m³/s)",
+    color = "Season"
+  ) +
+  scale_color_manual(
+    values = c(
+      "Winter" = "#1f77b4","Spring" = "#2ca02c","Summer" = "#ff7f0e","Fall" = "#d62728")) +
+  theme_minimal()
 
 ############################
 #### Look at it closely ####
@@ -396,6 +406,54 @@ ggplot(rating_data_offset, aes(x = Baro_Cor_offset8, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+  theme_minimal()
+
+########################
+#### Plot by season ####
+########################
+# add a "Season" column
+rating_data_offset <- rating_data_offset %>%
+  mutate(Month = month(Date.x),Season = case_when(
+    Month %in% c(12, 1, 2) ~ "Winter",
+    Month %in% c(3, 4, 5) ~ "Spring",
+    Month %in% c(6, 7, 8) ~ "Summer",
+    Month %in% c(9, 10, 11) ~ "Fall"
+  ))
+# coloring by Season
+ggplot(rating_data_offset, aes(x = Baro_Cor_offset6, y = Q.m3s, color = Season)) +
+  geom_point(size = 3) +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
+  labs(
+    title = "Stage vs. Discharge by Season - BRAA1",
+    x = "Stage (LEVEL m)",
+    y = "Discharge (Q m³/s)",
+    color = "Season"
+  ) +
+  scale_color_manual(
+    values = c(
+      "Winter" = "#1f77b4","Spring" = "#2ca02c","Summer" = "#ff7f0e","Fall" = "#d62728")) +
+  theme_minimal()
+
+#####################################################
+#### Plot before and after good baro logger data ####
+#####################################################
+# add a column for before/after April 13
+rating_data_offset <- rating_data_offset %>%
+  mutate(
+    Date.x = as.Date(Date.x),  # ensure it's a proper Date
+    Period = if_else(Date.x < as.Date("2025-04-13"), "Before April 13", "After April 13")
+  )
+# Plot divided by before/after April 13
+ggplot(rating_data_offset, aes(x = Baro_Cor_offset6, y = Q.m3s, color = Period)) +
+  geom_point(size = 3) +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
+  labs(
+    title = "Stage vs. Discharge (Before and After April 13) - BRAA1",
+    x = "Stage (LEVEL m)",
+    y = "Discharge (Q m³/s)",
+    color = "Period"
+  ) +
+  scale_color_manual(values = c("Before April 13" = "#1f77b4", "After April 13" = "#ff7f0e")) +
   theme_minimal()
 
 ########################

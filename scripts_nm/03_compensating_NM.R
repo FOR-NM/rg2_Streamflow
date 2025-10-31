@@ -20,9 +20,6 @@ library(hms)
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
 
-files <- list.files(path = "merged", full.names = TRUE)
-file.remove(files)
-
 #####################
 #### Import data ####
 #####################
@@ -147,8 +144,8 @@ pt_air <- googledrive::as_id("https://drive.google.com/drive/folders/1BsASDFjFci
 # list all CSV files in the folder
 pt_csvs_air <- googledrive::drive_ls(path = pt_air, type = "csv")
 # call the specific file you want
-googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="AIR1.csv"], 
-                            path = "googledrive/AIR1.csv",
+googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="AIR1_complete.csv"], 
+                            path = "googledrive/AIR1_complete.csv",
                             overwrite = T)
 googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="AIR2.csv"], 
                             path = "googledrive/AIR2.csv",
@@ -159,7 +156,7 @@ googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="AIR3.csv"],
 
 air_upper <- read.csv("googledrive/AIR2.csv")
 air_middle <-  read.csv("googledrive/AIR3.csv")
-air_lower <- read.csv("googledrive/AIR1.csv")
+air_lower <- read.csv("googledrive/AIR1_complete.csv")
 
 # changing some column names
 air_upper <- air_upper %>%
@@ -194,33 +191,57 @@ str(air_lower$DateTime)
 air_lower$Date.air_new <- as.Date(air_lower$DateTime) # Extracts date
 air_lower$Time.air <- format(air_lower$DateTime, "%H:%M:%S") # Extracts time as string
 
-#############################################################
-#### Rounding the time for USF07, USF13, USF16 and USF19 ####
-#############################################################
+#################################################
+#### Rounding the time for some of the sites ####
+#################################################
+USF03 <- lower_list[["USF03.csv"]]
+USF04 <- lower_list[["USF04.csv"]]
+USF05 <- lower_list[["USF05.csv"]]
 USF07 <- lower_list[["USF07.csv"]]
 USF13 <- upper_list[["USF13.csv"]]
+USF14 <- upper_list[["USF14.csv"]]
 USF16 <- upper_list[["USF16.csv"]]
 USF19 <- upper_list[["USF19.csv"]]
+USF21 <- upper_list[["USF21.csv"]]
 
 # transform to datetime format
+USF03$DateTime <- as.POSIXct(USF03$DateTime,format = "%Y-%m-%d %H:%M:%S")
+USF04$DateTime <- as.POSIXct(USF04$DateTime,format = "%Y-%m-%d %H:%M:%S")
+USF05$DateTime <- as.POSIXct(USF05$DateTime,format = "%Y-%m-%d %H:%M:%S")
 USF07$DateTime <- as.POSIXct(USF07$DateTime,format = "%Y-%m-%d %H:%M:%S")
 USF13$DateTime <- as.POSIXct(USF13$DateTime,format = "%Y-%m-%d %H:%M:%S")
+USF14$DateTime <- as.POSIXct(USF14$DateTime,format = "%Y-%m-%d %H:%M:%S")
 USF16$DateTime <- as.POSIXct(USF16$DateTime,format = "%Y-%m-%d %H:%M:%S")
 USF19$DateTime <- as.POSIXct(USF19$DateTime,format = "%Y-%m-%d %H:%M:%S")
+USF21$DateTime <- as.POSIXct(USF21$DateTime,format = "%Y-%m-%d %H:%M:%S")
+air_upper$DateTime <- as.POSIXct(air_upper$DateTime,format = "%Y-%m-%d %H:%M:%S")
 
 #USF13$DateTimeNotRounded <- as.POSIXct(USF13$DateTimeNotRounded,format = "%Y-%m-%d %H:%M:%S")
 
 # round DateTime to the nearest 15-minute interval 
 USF07$DateTime <- floor_date(USF07$DateTime, unit="minute")
+
+USF03$DateTime <- round_date(USF03$DateTime, unit="15 mins")
+USF04$DateTime <- round_date(USF04$DateTime, unit="15 mins")
+USF05$DateTime <- round_date(USF05$DateTime, unit="15 mins")
+USF07$DateTime <- round_date(USF07$DateTime, unit="15 mins")
 USF13$DateTime <- round_date(USF13$DateTime, unit="15 mins")
+USF14$DateTime <- round_date(USF14$DateTime, unit="15 mins")
 USF16$DateTime <- round_date(USF16$DateTime, unit="15 mins")
 USF19$DateTime <- round_date(USF19$DateTime, unit="15 mins")
+USF21$DateTime <- round_date(USF21$DateTime, unit="15 mins")
+air_upper$DateTime <- round_date(air_upper$DateTime, unit="15 mins")
 
 # return to list
+lower_list$USF03.csv <- USF03
+lower_list$USF04.csv <- USF04
+lower_list$USF05.csv <- USF05
 lower_list$USF07.csv <- USF07
 upper_list$USF13.csv <- USF13
+upper_list$USF14.csv <- USF14
 upper_list$USF16.csv <- USF16
 upper_list$USF19.csv <- USF19
+upper_list$USF21.csv <- USF21
 
 USF07 <- lower_list[["USF07.csv"]]
 
@@ -289,7 +310,7 @@ for (i in names(merged_upper)) {
   
   # compensate
   df <- df %>%
-    mutate(Baro_Cor_Lvl = (.[[7]] - .[[13]]))
+    mutate(Baro_Cor_Lvl = (LELVEL.m - Level_air.m))
   
   compensated_upper[[i]] <-  df
 }
@@ -316,8 +337,52 @@ isna <- is.na(compensated_lower$USF20)
 
 # look at it
 USF21 <- compensated_upper[["USF21.csv"]]
+USF16 <- compensated_upper[["USF16.csv"]]
 USF20 <- compensated_lower[["USF20.csv"]]
 USF07 <- compensated_lower[["USF07.csv"]]
+
+######################################
+#### Plot baro compensated curves ####
+######################################
+# loop through each data frame in the list
+for (i in seq_along(compensated_upper)) {
+  # access the current data frame
+  df <- compensated_upper[[i]]
+  
+  # get the name of the current data frame (list element)**
+  df_name <- names(compensated_upper)[i]
+  
+  # plot
+  p <- ggplot(data = df, aes(x = DateTime, y = Baro_Cor_Lvl)) + 
+    geom_point() +
+    # **Add the title using the retrieved name**
+    labs(title = df_name)
+  
+  # save the plot as a PNG file
+  ggsave(paste0("pt_figs/", df_name, ".png"), plot = p)
+  # display the plot in the plot panel
+  print(p)
+}
+
+# loop through each data frame in the list
+for (i in seq_along(compensated_lower)) {
+  # access the current data frame
+  df <- compensated_lower[[i]]
+
+  # get the name of the current data frame (list element)**
+  df_name <- names(compensated_lower)[i]
+  
+  # lot
+  p <- ggplot(data = df, aes(x = DateTime, y = Baro_Cor_Lvl)) + 
+    geom_point() +
+    # **Add the title using the retrieved name**
+    labs(title = df_name)
+  
+  # save the plot as a PNG file
+  ggsave(paste0("pt_figs/", df_name, ".png"), plot = p)
+  # display the plot in the plot panel
+  print(p)
+}
 
 ####################################################
 #### Save merged and compensated slugs to Drive ####

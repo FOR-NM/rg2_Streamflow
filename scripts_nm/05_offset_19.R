@@ -55,13 +55,13 @@ rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 
 # make compensated backup 
 USF19$Baro_backup <- USF19$Baro_Cor_Lvl
+
 ########################################
 #### Plot pressure compensated data ####
 ########################################
 # filter out the one row with negative baro lvl value 
 # USF19 <- USF19 %>% 
 #   filter(Baro_Cor_Lvl >= 0)
-
 ggplot(data = USF19, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_line() + ggtitle("USF19 compensated level data")
 ggplot(data = USF19, aes(x = DateTime, y = LELVEL.m)) +
@@ -110,23 +110,29 @@ ggplot(USF19, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 Date1 <- as.Date("2024-10-29", "%Y-%m-%d")
 Date2 <- as.Date("2024-10-30", "%Y-%m-%d")
 subdf <- USF19[USF19$DateTime < Date2 & USF19$DateTime > Date1,]
-
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-10-29 15:10:00"), linetype="dashed", color="red") 
+
+#take the subset of the data for October when PT was moved
+Date1 <- as.Date("2025-06-04", "%Y-%m-%d")
+Date2 <- as.Date("2025-06-06", "%Y-%m-%d")
+subdf <- USF19[USF19$DateTime < Date2 & USF19$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-06-05 13:43:36"), linetype="dashed", color="red") 
 
 ####################################################
 #### Remove times where PT was out of the water ####
 ####################################################
 time1 <- as.POSIXct("2024-10-29 12:30:00")
-# time2 <- as.POSIXct("2024-10-29 10:30:00")
-# time3 <- as.POSIXct("2025-06-05 10:15:00")
-# 
+time2 <- as.POSIXct("2025-06-05 13:43:36")
+time3 <- as.POSIXct("2025-06-05 13:28:36")
+
 USF19 <- USF19 %>%
   mutate(Baro_Cor_Lvl = ifelse(DateTime == time1, NA, Baro_Cor_Lvl))
-# USF19 <- USF19 %>%
-#   mutate(Baro_Cor_Lvl = ifelse(DateTime == time2, NA, Baro_Cor_Lvl))
-# USF19 <- USF19 %>%
-#   mutate(Baro_Cor_Lvl = ifelse(DateTime == time3, NA, Baro_Cor_Lvl))
+USF19 <- USF19 %>%
+  mutate(Baro_Cor_Lvl = ifelse(DateTime == time2, NA, Baro_Cor_Lvl))
+USF19 <- USF19 %>%
+  mutate(Baro_Cor_Lvl = ifelse(DateTime == time3, NA, Baro_Cor_Lvl))
 
 # plot after cleaning
 ggplot(USF19, aes(x = DateTime, y = Baro_Cor_Lvl)) +
@@ -140,39 +146,31 @@ ggplot(USF19, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 ###########################################################################
 # first move correction (2024-10-29 15:00:00)
 move_time1 <- as.POSIXct("2024-10-29 15:10:00")
-
 before_move1 <- USF19 %>%
   filter(DateTime >= (move_time1 - hours(2)) & DateTime < move_time1) %>%
   summarize(mean_before1 = mean(Baro_Cor_Lvl, na.rm = TRUE))
-
 after_move1 <- USF19 %>%
   filter(DateTime >= move_time1 & DateTime < (move_time1 + hours(2))) %>%
   summarize(mean_after1 = mean(Baro_Cor_Lvl, na.rm = TRUE))
-
 offset1 <-  after_move1$mean_after1 - before_move1$mean_before1
 print(paste("Offset 1:", offset1))
-
 # apply the first correction
 USF19 <- USF19 %>%
   mutate(Baro_Cor_offset1 = if_else(DateTime >= move_time1, Baro_Cor_Lvl - offset1, Baro_Cor_Lvl))
 
-# # second move correction (2025-06-05 08:30:00)
-# move_time2 <- as.POSIXct("2025-06-05 08:30:00")
-# 
-# before_move2 <- USF19 %>%
-#   filter(DateTime >= (move_time2 - hours(2)) & DateTime < move_time2) %>%
-#   summarize(mean_before2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
-# 
-# after_move2 <- USF19 %>%
-#   filter(DateTime >= move_time2 & DateTime < (move_time2 + hours(2))) %>%
-#   summarize(mean_after2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
-# 
-# offset2 <- after_move2$mean_after2 - before_move2$mean_before2
-# print(paste("Offset 2:", offset2))
-# 
-# # apply the second correction
-# USF19 <- USF19 %>%
-#   mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
+# second move correction 
+move_time2 <- as.POSIXct("2025-06-05 13:58:36")
+before_move2 <- USF19 %>%
+  filter(DateTime >= (move_time2 - hours(2)) & DateTime < move_time2) %>%
+  summarize(mean_before2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
+after_move2 <- USF19 %>%
+  filter(DateTime >= move_time2 & DateTime < (move_time2 + hours(2))) %>%
+  summarize(mean_after2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
+offset2 <- after_move2$mean_after2 - before_move2$mean_before2
+print(paste("Offset 2:", offset2))
+# apply the second correction
+USF19 <- USF19 %>%
+  mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
 
 ##############################
 #### Plot with Correction ####
@@ -180,14 +178,12 @@ USF19 <- USF19 %>%
 ggplot(USF19, aes(x = DateTime, y = Baro_Cor_Lvl)) +
   geom_line() +
   labs(title = "Corrected Baro_Cor Over Time (No Correction)", x = "Date", y = "Water Level (m)")
-
 ggplot(USF19, aes(x = DateTime, y = Baro_Cor_offset1)) +
   geom_line() +
   labs(title = "Corrected Baro_Cor Over Time (First Correction)", x = "Date", y = "Water Level (m)")
-
-# ggplot(USF19, aes(x = DateTime, y = Baro_Cor_offset2)) +
-#   geom_line() +
-#   labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
+ggplot(USF19, aes(x = DateTime, y = Baro_Cor_offset2)) +
+  geom_line() +
+  labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
 
 # discharge from L/s to m3/s in whole data set
 USF19$Q..L.s. <- as.numeric(USF19$Q..L.s.)
@@ -203,42 +199,37 @@ ggplot(new_rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
   labs(title = "Stage vs. Discharge (No Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q L/s)") +
   theme_minimal()
-
 ggplot(new_rating_data, aes(x = Baro_Cor_offset1, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
   labs(title = "Stage vs. Discharge (First Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q L/s)") +
   theme_minimal()
-
-# ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
-#   geom_point(color = "blue") +
-#   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
-#   labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q L/s)") +
-#   theme_minimal()
+ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
+  labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q L/s)") +
+  theme_minimal()
 
 ########################
 #### Plot close ups ####
 ########################
-USF19_october <- USF19%>%
-  filter(month(DateTime) == 10)
-
-# plot after cleaning 
-ggplot(USF19_october, aes(x = DateTime, y = Baro_Cor_Lvl)) +
-  geom_line() +
-  labs(title = "Baro_Cor_Lvl", x = "Date", y = "Water Level (m)")
-ggplot(USF19_october, aes(x = DateTime, y = Baro_Cor_offset1)) +
-  geom_line() +
-  labs(title = "Baro_Cor_offset1", x = "Date", y = "Water Level (m)")
+#take the subset of the data for October when PT was moved
+Date1 <- as.Date("2025-06-04", "%Y-%m-%d")
+Date2 <- as.Date("2025-06-06", "%Y-%m-%d")
+subdf <- USF19[USF19$DateTime < Date2 & USF19$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-06-05 13:58:36"), linetype="dashed", color="red")
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset2)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-06-05 13:58:36"), linetype="dashed", color="red")
 
 #take the subset of the data for October when PT was moved
 Date1 <- as.Date("2024-10-29", "%Y-%m-%d")
 Date2 <- as.Date("2024-10-30", "%Y-%m-%d")
 subdf <- USF19[USF19$DateTime < Date2 & USF19$DateTime > Date1,]
-
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-10-29 15:10:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2024-10-29 15:10:00"), linetype="dashed", color="red")
 ggplot(data=subdf, aes(DateTime,Baro_Cor_offset1)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-10-29 15:10:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2024-10-29 15:10:00"), linetype="dashed", color="red")
 
 ###################
 #### Save file ####

@@ -247,33 +247,33 @@ print(offset4)
 BRD01 <- BRD01 %>%
   mutate(Baro_Cor_offset4 = if_else(DateTime >= move_time4, Baro_Cor_offset3 - offset4, Baro_Cor_offset3))
 
-move_time5 <- as.POSIXct("2025-05-05 16:00:00")
-before_move <- BRD01 %>%
-  filter(DateTime >= (move_time5 - hours(5)) & DateTime < move_time5) %>%
-  summarize(mean_before = mean(Baro_Cor_offset4, na.rm = TRUE))
-after_move <- BRD01 %>%
-  filter(DateTime >= move_time5 & DateTime < (move_time5 + hours(5))) %>%
-  summarize(mean_after = mean(Baro_Cor_offset4, na.rm = TRUE))
-# compute offset
-offset5 <- after_move$mean_after - before_move$mean_before
-print(offset5)
-# apply the fifth correction
-BRD01 <- BRD01 %>%
-  mutate(Baro_Cor_offset5 = if_else(DateTime >= move_time5, Baro_Cor_offset4 - offset5, Baro_Cor_offset4))
-
-move_time6 <- as.POSIXct("2025-04-29 09:00:00")
-before_move <- BRD01 %>%
-  filter(DateTime >= (move_time6 - hours(2)) & DateTime < move_time6) %>%
-  summarize(mean_before = mean(Baro_Cor_offset5, na.rm = TRUE))
-after_move <- BRD01 %>%
-  filter(DateTime >= move_time6 & DateTime < (move_time6 + hours(2))) %>%
-  summarize(mean_after = mean(Baro_Cor_offset5, na.rm = TRUE))
-# compute offset
-offset6 <- after_move$mean_after - before_move$mean_before
-print(offset6)
-# apply the sixth correction
-BRD01 <- BRD01 %>%
-  mutate(Baro_Cor_offset6 = if_else(DateTime >= move_time6, Baro_Cor_offset5 - offset6, Baro_Cor_offset5))
+# move_time5 <- as.POSIXct("2025-05-05 16:00:00")
+# before_move <- BRD01 %>%
+#   filter(DateTime >= (move_time5 - hours(5)) & DateTime < move_time5) %>%
+#   summarize(mean_before = mean(Baro_Cor_offset4, na.rm = TRUE))
+# after_move <- BRD01 %>%
+#   filter(DateTime >= move_time5 & DateTime < (move_time5 + hours(5))) %>%
+#   summarize(mean_after = mean(Baro_Cor_offset4, na.rm = TRUE))
+# # compute offset
+# offset5 <- after_move$mean_after - before_move$mean_before
+# print(offset5)
+# # apply the fifth correction
+# BRD01 <- BRD01 %>%
+#   mutate(Baro_Cor_offset5 = if_else(DateTime >= move_time5, Baro_Cor_offset4 - offset5, Baro_Cor_offset4))
+# 
+# move_time6 <- as.POSIXct("2025-04-29 09:00:00")
+# before_move <- BRD01 %>%
+#   filter(DateTime >= (move_time6 - hours(2)) & DateTime < move_time6) %>%
+#   summarize(mean_before = mean(Baro_Cor_offset5, na.rm = TRUE))
+# after_move <- BRD01 %>%
+#   filter(DateTime >= move_time6 & DateTime < (move_time6 + hours(2))) %>%
+#   summarize(mean_after = mean(Baro_Cor_offset5, na.rm = TRUE))
+# # compute offset
+# offset6 <- after_move$mean_after - before_move$mean_before
+# print(offset6)
+# # apply the sixth correction
+# BRD01 <- BRD01 %>%
+#   mutate(Baro_Cor_offset6 = if_else(DateTime >= move_time6, Baro_Cor_offset5 - offset6, Baro_Cor_offset5))
 
 # move_time7 <- as.POSIXct("2025-06-26 11:00:00")
 # before_move <- BRD01 %>%
@@ -289,7 +289,6 @@ BRD01 <- BRD01 %>%
 # # apply the seventh correction
 # BRD01 <- BRD01 %>%
 #   mutate(Baro_Cor_offset7 = if_else(DateTime >= move_time7, Baro_Cor_offset6 - offset7, Baro_Cor_offset6))
-
 
 ###############################
 ####  Plot with Correction ####
@@ -359,15 +358,63 @@ ggplot(rating_data_offset, aes(x = Baro_Cor_offset4, y = Q.m3s)) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
-ggplot(rating_data_offset, aes(x = Baro_Cor_offset5, y = Q.m3s)) +
-  geom_point(color = "blue") +
-  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+# ggplot(rating_data_offset, aes(x = Baro_Cor_offset5, y = Q.m3s)) +
+#   geom_point(color = "blue") +
+#   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+#   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+#   theme_minimal()
+# ggplot(rating_data_offset, aes(x = Baro_Cor_offset6, y = Q.m3s)) +
+#   geom_point(color = "blue") +
+#   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+#   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+#   theme_minimal()
+
+########################
+#### Plot by season ####
+########################
+# add a "Season" column
+rating_data_offset <- rating_data_offset %>%
+  mutate(Month = month(Date.x),Season = case_when(
+    Month %in% c(12, 1, 2) ~ "Winter",
+    Month %in% c(3, 4, 5) ~ "Spring",
+    Month %in% c(6, 7, 8) ~ "Summer",
+    Month %in% c(9, 10, 11) ~ "Fall"
+  ))
+# coloring by Season
+ggplot(rating_data_offset, aes(x = Baro_Cor_offset4, y = Q.m3s, color = Season)) +
+  geom_point(size = 3) +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
+  labs(
+    title = "Stage vs. Discharge by Season - BRD01",
+    x = "Stage (LEVEL m)",
+    y = "Discharge (Q m³/s)",
+    color = "Season"
+  ) +
+  scale_color_manual(
+    values = c(
+      "Winter" = "#1f77b4","Spring" = "#2ca02c","Summer" = "#ff7f0e","Fall" = "#d62728")) +
   theme_minimal()
-ggplot(rating_data_offset, aes(x = Baro_Cor_offset6, y = Q.m3s)) +
-  geom_point(color = "blue") +
-  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+
+#####################################################
+#### Plot before and after good baro logger data ####
+#####################################################
+# add a column for before/after April 13
+rating_data_offset <- rating_data_offset %>%
+  mutate(
+    Date.x = as.Date(Date.x),  # ensure it's a proper Date
+    Period = if_else(Date.x < as.Date("2025-04-13"), "Before April 13", "After April 13")
+  )
+# Plot divided by before/after April 13
+ggplot(rating_data_offset, aes(x = Baro_Cor_offset4, y = Q.m3s, color = Period)) +
+  geom_point(size = 3) +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
+  labs(
+    title = "Stage vs. Discharge (Before and After April 13) - BRD01",
+    x = "Stage (LEVEL m)",
+    y = "Discharge (Q m³/s)",
+    color = "Period"
+  ) +
+  scale_color_manual(values = c("Before April 13" = "#1f77b4", "After April 13" = "#ff7f0e")) +
   theme_minimal()
 
 ########################
