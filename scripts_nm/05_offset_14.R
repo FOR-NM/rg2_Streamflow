@@ -123,12 +123,12 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
 ####################################################
 #### Remove times where PT was out of the water ####
 ####################################################
-# # remove what looks like error section in January and part of February
-# Date1 <- as.Date("2024-12-06", "%Y-%m-%d")
-# Date2 <- as.Date("2025-01-18", "%Y-%m-%d")
-# USF14$Baro_Cor_Lvl[USF14$DateTime >= Date1 & USF14$DateTime <= Date2] <- NA
-# ggplot(data = USF14, aes(x = DateTime, y = Baro_Cor_Lvl)) +
-#   geom_line() + ggtitle("USF14 compensated level data")
+# remove what looks like error section in January and part of February
+Date1 <- as.Date("2024-12-06", "%Y-%m-%d")
+Date2 <- as.Date("2025-01-18", "%Y-%m-%d")
+USF14$Baro_Cor_Lvl[USF14$DateTime >= Date1 & USF14$DateTime <= Date2] <- NA
+ggplot(data = USF14, aes(x = DateTime, y = Baro_Cor_Lvl)) +
+  geom_line() + ggtitle("USF14 compensated level data")
 
 time1 <- as.POSIXct("2024-10-29 10:45:00")
 time2 <- as.POSIXct("2024-10-29 11:00:00")

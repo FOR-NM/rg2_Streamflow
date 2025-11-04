@@ -52,7 +52,7 @@ USF19$DateTime <- as.POSIXct(USF19$DateTime, format = "%Y-%m-%d %H:%M:%S")
 ########################################
 # add +1 to all baro compensated values
 USF19 <- USF19 %>% 
-  mutate(Baro_positive = Baro_Cor_offset1 + 1)
+  mutate(Baro_positive = Baro_Cor_offset2 + 1)
 
 # filter out rows with missing stage or discharge
 rating_data <- USF19 %>% 
@@ -64,7 +64,7 @@ head(rating_data)
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-ggplot(data = USF19, aes(x = DateTime, y = Baro_Cor_offset1)) +
+ggplot(data = USF19, aes(x = DateTime, y = Baro_Cor_offset2)) +
   geom_line() + ggtitle("USF19 compensated level data")
 
 ggplot(data = USF19, aes(x = DateTime, y = Baro_positive)) +

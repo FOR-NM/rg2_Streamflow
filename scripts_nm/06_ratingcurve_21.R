@@ -63,19 +63,9 @@ ggplot(data = USF21, aes(x = DateTime, y = Baro_Cor_offset1)) +
 ##################################
 #### Plot Stage vs. Discharge ####
 ##################################
-ggplot(rating_data, aes(x = Baro_Cor_offset1, y = Q)) +
-  geom_point(color = "blue") +
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.m)", y = "Discharge (Q)") +
-  theme_minimal()
-
 # discharge from L/s to m3/s
 rating_data <- rating_data %>%
   mutate(Q.m3s = Q/1000)
-
-ggplot(rating_data, aes(x = Baro_Cor_offset1, y = Q.m3s)) +
-  geom_point(color = "blue") +
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.m)", y = "Discharge (Q)") +
-  theme_minimal()
 
 # plot with date info
 ggplot(rating_data, aes(x = Baro_Cor_offset1, y = Q.m3s)) +
@@ -83,6 +73,10 @@ ggplot(rating_data, aes(x = Baro_Cor_offset1, y = Q.m3s)) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
+
+# Remove two discharge data that were calculated wrong
+rating_data <- USF21 %>% 
+  filter(!(Date.y == c("2025-06-13", "2025-07-01")), !is.na(Q))
 
 ###########################################
 #### Check for Log-Linear Relationship ####

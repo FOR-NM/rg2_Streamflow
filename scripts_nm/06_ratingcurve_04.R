@@ -197,7 +197,6 @@ ggplot(USF04, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) +
   labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
 ggplot(USF04, aes(x = DateTime, y = Predicted_Discharge_Linear_m3s)) +
   geom_point(color = "blue") +
   labs(title = "Predicted Discharge (Linear)", x = "DateTime", y = "Discharge (m3/s)") +

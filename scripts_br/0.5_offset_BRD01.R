@@ -381,7 +381,7 @@ rating_data_offset <- rating_data_offset %>%
     Month %in% c(9, 10, 11) ~ "Fall"
   ))
 # coloring by Season
-ggplot(rating_data_offset, aes(x = Baro_Cor_offset4, y = Q.m3s, color = Season)) +
+p <- ggplot(rating_data_offset, aes(x = Baro_Cor_offset4, y = Q.m3s, color = Season)) +
   geom_point(size = 3) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
   labs(
@@ -395,6 +395,13 @@ ggplot(rating_data_offset, aes(x = Baro_Cor_offset4, y = Q.m3s, color = Season))
       "Winter" = "#1f77b4","Spring" = "#2ca02c","Summer" = "#ff7f0e","Fall" = "#d62728")) +
   theme_minimal()
 
+# Display plot
+print(p)
+
+#Automatically save plot
+ggsave(filename = "br_figs/Season_BRD01.png", plot = p,
+       width = 8, height  = 6, dpi = 300)
+
 #####################################################
 #### Plot before and after good baro logger data ####
 #####################################################
@@ -405,17 +412,53 @@ rating_data_offset <- rating_data_offset %>%
     Period = if_else(Date.x < as.Date("2025-04-13"), "Before April 13", "After April 13")
   )
 # Plot divided by before/after April 13
-ggplot(rating_data_offset, aes(x = Baro_Cor_offset4, y = Q.m3s, color = Period)) +
+p <- ggplot(rating_data_offset, aes(x = Baro_Cor_offset4, y = Q.m3s, color = Period)) +
   geom_point(size = 3) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
   labs(
-    title = "Stage vs. Discharge (Before and After April 13) - BRD01",
+    title = "Stage vs. Discharge (Before and After April 13)",
     x = "Stage (LEVEL m)",
     y = "Discharge (Q m³/s)",
     color = "Period"
   ) +
   scale_color_manual(values = c("Before April 13" = "#1f77b4", "After April 13" = "#ff7f0e")) +
   theme_minimal()
+
+# Display plot
+print(p)
+
+#Automatically save plot
+ggsave(filename = "br_figs/April13_BRD01.png", plot = p,
+       width = 8, height  = 6, dpi = 300)
+
+################################################
+#### Plot flow meter vs salt slug discharge ####
+################################################
+# add a column for Q type based on flag
+rating_data_offset <- rating_data_offset %>%
+  mutate(
+    Q_type = if_else(is.na(flag), "Flow meter", "Salt slug")
+  )
+
+# Plot divided by measurement type
+p <- ggplot(rating_data_offset, aes(x = Baro_Cor_offset4, y = Q.m3s, color = Q_type)) +
+  geom_point(size = 3) +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
+  labs(
+    title = "Stage vs. Discharge (Salt slug vs Flow meter)",
+    x = "Stage (LEVEL m)",
+    y = "Discharge (Q m³/s)",
+    color = "Q_type"
+  ) +
+  scale_color_manual(values = c("Flow meter" = "palegreen3", "Salt slug" = "hotpink2")) +
+  theme_minimal()
+
+# Display plot
+print(p)
+
+#Automatically save plot
+ggsave(filename = "br_figs/SaltSlug_vs_FlowMeter_BRD01.png", plot = p,
+       width = 8, height  = 6, dpi = 300)
 
 ########################
 #### Plot close ups ####
