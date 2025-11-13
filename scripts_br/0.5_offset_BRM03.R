@@ -64,6 +64,13 @@ ggplot(data = BRM03_baro, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
   geom_vline(xintercept = as.POSIXct("2025-03-14 12:00:00"), linetype="dashed", color="red") +
   geom_line() + ggtitle("BRM03 compensated level data")
 
+# p <- ggplot(data = BRM03_baro, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
+#   geom_vline(xintercept = as.POSIXct("2025-03-14 12:00:00"), linetype="dashed", color="red") +
+#   geom_line() + ggtitle("BRA01 compensated level data")
+# #Automatically save plot
+# ggsave(filename = "br_figs/BRM03_baro.png", plot = p,
+#        width = 8, height  = 6, dpi = 300)
+
 ggplot(data = BRM03_baro, aes(x = DateTime, y = LEVEL.m)) +
   geom_line() + ggtitle("BRM03 compensated level data")
 

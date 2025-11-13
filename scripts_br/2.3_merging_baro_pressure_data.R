@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## Script to ... Fayetteville and baro logger pressure data
+## Fayetteville + baro logger pressure data
 ## --- 
 ##==============================================================================
 ##################

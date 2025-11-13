@@ -60,9 +60,12 @@ head(rating_data)
 BRAA1_baro <- BRAA1 %>% 
   filter(!is.na(Baro_Cor_Lvl.m))
 
-ggplot(data = BRAA1_baro, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
+p <- ggplot(data = BRAA1_baro, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
   geom_vline(xintercept = as.POSIXct("2025-03-14 12:00:00"), linetype="dashed", color="red") +
-  geom_line() + ggtitle("BRAA1 compensated level data")
+  geom_line() + ggtitle("BRA01 compensated level data")
+#Automatically save plot
+ggsave(filename = "br_figs/BRAA1_baro.png", plot = p,
+       width = 8, height  = 6, dpi = 300)
 
 ggplot(data = BRAA1_baro, aes(x = DateTime, y = LEVEL.m)) +
   geom_line() + ggtitle("BRAA1 compensated level data")
@@ -83,28 +86,34 @@ ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
   theme_minimal()
 
-# add a "Season" column
+#####################################################
+#### Plot before and after good baro logger data ####
+#####################################################
+# add a column for before/after May 31
 rating_data <- rating_data %>%
-  mutate(Month = month(Date.x),Season = case_when(
-    Month %in% c(12, 1, 2) ~ "Winter",
-    Month %in% c(3, 4, 5) ~ "Spring",
-    Month %in% c(6, 7, 8) ~ "Summer",
-    Month %in% c(9, 10, 11) ~ "Fall"
-  ))
-# coloring by Season
-ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s, color = Season)) +
+  mutate(
+    Date.x = as.Date(Date.x),  # ensure it's a proper Date
+    Period = if_else(Date.x < as.Date("2025-05-31"), "Before May 31", "After May 31")
+  )
+# Plot divided by before/after May 31
+p <- ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s, color = Period)) +
   geom_point(size = 3) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
   labs(
-    title = "Stage vs. Discharge by Season - BRAA1",
+    title = "Stage vs. Discharge (Before and After May 31)",
     x = "Stage (LEVEL m)",
     y = "Discharge (Q m³/s)",
-    color = "Season"
+    color = "Period"
   ) +
-  scale_color_manual(
-    values = c(
-      "Winter" = "#1f77b4","Spring" = "#2ca02c","Summer" = "#ff7f0e","Fall" = "#d62728")) +
+  scale_color_manual(values = c("Before May 31" = "#1f77b4", "After May 31" = "#ff7f0e")) +
   theme_minimal()
+
+# Display plot
+print(p)
+
+#Automatically save plot
+ggsave(filename = "br_figs/May31_BRAA1_raw.png", plot = p,
+       width = 8, height  = 6, dpi = 300)
 
 ############################
 #### Look at it closely ####
@@ -420,7 +429,7 @@ rating_data_offset <- rating_data_offset %>%
     Month %in% c(9, 10, 11) ~ "Fall"
   ))
 # coloring by Season
-p <- ggplot(rating_data_offset, aes(x = Baro_Cor_offset6, y = Q.m3s, color = Season)) +
+p <- ggplot(rating_data_offset, aes(x = Baro_Cor_offset8, y = Q.m3s, color = Season)) +
   geom_point(size = 3) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
   labs(
@@ -444,28 +453,30 @@ ggsave(filename = "br_figs/Season_BRAA1.png", plot = p,
 #####################################################
 #### Plot before and after good baro logger data ####
 #####################################################
-# add a column for before/after April 13
+# add a column for before/after May 31
 rating_data_offset <- rating_data_offset %>%
   mutate(
     Date.x = as.Date(Date.x),  # ensure it's a proper Date
-    Period = if_else(Date.x < as.Date("2025-04-13"), "Before April 13", "After April 13")
+    Period = if_else(Date.x < as.Date("2025-05-31"), "Before May 31", "After May 31")
   )
-# Plot divided by before/after April 13
-p <- ggplot(rating_data_offset, aes(x = Baro_Cor_offset6, y = Q.m3s, color = Period)) +
+# Plot divided by before/after May 31
+p <- ggplot(rating_data_offset, aes(x = Baro_Cor_offset8, y = Q.m3s, color = Period)) +
   geom_point(size = 3) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
   labs(
-    title = "Stage vs. Discharge (Before and After April 13)",
+    title = "Stage vs. Discharge (Before and After May 31)",
     x = "Stage (LEVEL m)",
     y = "Discharge (Q m³/s)",
     color = "Period"
   ) +
-  scale_color_manual(values = c("Before April 13" = "#1f77b4", "After April 13" = "#ff7f0e")) +
+  scale_color_manual(values = c("Before May 31" = "#1f77b4", "After May 31" = "#ff7f0e")) +
   theme_minimal()
+
 # Display plot
 print(p)
+
 #Automatically save plot
-ggsave(filename = "br_figs/April13_BRAA1.png", plot = p,
+ggsave(filename = "br_figs/May31_BRAA1.png", plot = p,
        width = 8, height  = 6, dpi = 300)
 
 ################################################
