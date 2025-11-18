@@ -119,27 +119,26 @@ print(p)
 ggsave(filename = "br_figs/May31_BRMQ1_raw.png", plot = p,
        width = 8, height  = 6, dpi = 300)
 
-
-#####################################################
-#### Plot before and after good baro logger data ####
-#####################################################
-# add a column for before/after May 31
+###################################################
+#### Plot before and after Telemetry data data ####
+###################################################
+# add a column for before/after March 14
 rating_data <- rating_data %>%
   mutate(
     Date.x = as.Date(Date.x),  # ensure it's a proper Date
-    Period = if_else(Date.x < as.Date("2025-05-31"), "Before May 31", "After May 31")
+    Period = if_else(Date.x < as.Date("2025-03-14"), "Before March 14", "After March 14")
   )
-# Plot divided by before/after May 31
+# Plot divided by before/after March 14
 p <- ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s, color = Period)) +
   geom_point(size = 3) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
   labs(
-    title = "Stage vs. Discharge (Before and After May 31)",
+    title = "Stage vs. Discharge (Before and After March 14)",
     x = "Stage (LEVEL m)",
     y = "Discharge (Q m³/s)",
     color = "Period"
   ) +
-  scale_color_manual(values = c("Before May 31" = "#1f77b4", "After May 31" = "#ff7f0e")) +
+  scale_color_manual(values = c("Before March 14" = "#1f77b4", "After March 14" = "#ff7f0e")) +
   theme_minimal()
 
 # Display plot
@@ -175,12 +174,6 @@ subdf <- BRMQ1[BRMQ1$DateTime < Date2 & BRMQ1$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-10-17 22:00:00"), linetype="dashed", color="red")+
   geom_vline(xintercept = as.POSIXct("2024-10-18 12:00:00"), linetype="dashed", color="red") 
-
-Date1 <- as.Date("2024-11-08", "%Y-%m-%d")
-Date2 <- as.Date("2024-11-15", "%Y-%m-%d")
-subdf <- BRMQ1[BRMQ1$DateTime < Date2 & BRMQ1$DateTime > Date1,]
-ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-11-12 10:00:00"), linetype="dashed", color="red")
 
 Date1 <- as.Date("2024-12-10", "%Y-%m-%d")
 Date2 <- as.Date("2024-12-15", "%Y-%m-%d")
@@ -233,6 +226,12 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
 
 Date1 <- as.Date("2025-07-10", "%Y-%m-%d")
 Date2 <- as.Date("2025-07-20", "%Y-%m-%d")
+subdf <- BRMQ1[BRMQ1$DateTime < Date2 & BRMQ1$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-07-17 09:00:00"), linetype="dashed", color="red") 
+
+Date1 <- as.Date("2025-03-13", "%Y-%m-%d")
+Date2 <- as.Date("2025-07-15", "%Y-%m-%d")
 subdf <- BRMQ1[BRMQ1$DateTime < Date2 & BRMQ1$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-07-17 09:00:00"), linetype="dashed", color="red") 
@@ -290,36 +289,37 @@ print(offset2)
 BRMQ1 <- BRMQ1 %>%
   mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
 
-# ### third move correction
-# move_time3 <- as.POSIXct("2024-10-17 21:00:00")
-# before_move <- BRMQ1 %>%
-#   filter(DateTime >= (move_time3 - hours(2)) & DateTime < move_time3) %>%
-#   summarize(mean_before = mean(Baro_Cor_offset2, na.rm = TRUE))
-# move_time3 <- as.POSIXct("2024-10-18 12:00:00")
-# after_move <- BRMQ1 %>%
-#   filter(DateTime >= move_time3 & DateTime < (move_time3 + hours(2))) %>%
-#   summarize(mean_after = mean(Baro_Cor_offset2, na.rm = TRUE))
-# # compute offset
-# offset3 <- after_move$mean_after - before_move$mean_before
-# print(offset3)
-# # apply the second correction
-# BRMQ1 <- BRMQ1 %>%
-#   mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
+### third move correction
+move_time3 <- as.POSIXct("2025-03-14 08:00:00")
+before_move <- BRMQ1 %>%
+  filter(DateTime >= (move_time3 - hours(2)) & DateTime < move_time3) %>%
+  summarize(mean_before = mean(Baro_Cor_offset2, na.rm = TRUE))
+move_time3 <- as.POSIXct("2025-03-14 12:15:00")
+after_move <- BRMQ1 %>%
+  filter(DateTime >= move_time3 & DateTime < (move_time3 + hours(2))) %>%
+  summarize(mean_after = mean(Baro_Cor_offset2, na.rm = TRUE))
+# compute offset
+offset3 <- after_move$mean_after - before_move$mean_before
+print(offset3)
+# apply the second correction
+BRMQ1 <- BRMQ1 %>%
+  mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
   
-# move_time4 <- as.POSIXct("")
-# before_move <- BRMQ1 %>%
-#   filter(DateTime >= (move_time4 - hours(2)) & DateTime < move_time4) %>%
-#   summarize(mean_before = mean(Baro_Cor_offset3, na.rm = TRUE))
-# after_move <- BRMQ1 %>%
-#   filter(DateTime >= move_time4 & DateTime < (move_time4 + hours(2))) %>%
-#   summarize(mean_after = mean(Baro_Cor_offset3, na.rm = TRUE))
-# # compute offset
-# offset4 <- after_move$mean_after - before_move$mean_before
-# print(offset4)
-# # apply the fourth correction
-# BRMQ1 <- BRMQ1 %>%
-#   mutate(Baro_Cor_offset4 = if_else(DateTime >= move_time4, Baro_Cor_offset3 - offset4, Baro_Cor_offset3))
-# 
+move_time4 <- as.POSIXct("2025-03-14 08:00:00")
+before_move <- BRMQ1 %>%
+  filter(DateTime >= (move_time4 - hours(2)) & DateTime < move_time4) %>%
+  summarize(mean_before = mean(Baro_Cor_offset3, na.rm = TRUE))
+move_time4 <- as.POSIXct("2025-06-26 12:00:00")
+after_move <- BRMQ1 %>%
+  filter(DateTime >= move_time4 & DateTime < (move_time4 + hours(2))) %>%
+  summarize(mean_after = mean(Baro_Cor_offset3, na.rm = TRUE))
+# compute offset
+offset4 <- after_move$mean_after - before_move$mean_before
+print(offset4)
+# apply the fourth correction
+BRMQ1 <- BRMQ1 %>%
+  mutate(Baro_Cor_offset4 = if_else(DateTime >= move_time4, Baro_Cor_offset3 - offset4, Baro_Cor_offset3))
+
 # move_time5 <- as.POSIXct("")
 # before_move <- BRMQ1 %>%
 #   filter(DateTime >= (move_time5 - hours(2)) & DateTime < move_time5) %>%
@@ -373,14 +373,14 @@ ggplot(BRMQ1, aes(x = DateTime, y = Baro_Cor_offset2)) +
   geom_line() +
   #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
   labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
-# ggplot(BRMQ1, aes(x = DateTime, y = Baro_Cor_offset3)) +
-#   geom_line() +
-#   #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
-#   labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
-# ggplot(BRMQ1, aes(x = DateTime, y = Baro_Cor_offset4)) +
-#   geom_line() +
-#   #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
-#   labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
+ggplot(BRMQ1, aes(x = DateTime, y = Baro_Cor_offset3)) +
+  geom_line() +
+  #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
+  labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
+ggplot(BRMQ1, aes(x = DateTime, y = Baro_Cor_offset4)) +
+  geom_line() +
+  #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
+  labs(title = "Corrected Baro_Cor Over Time", x = "Date", y = "Water Level (m)")
 # ggplot(BRMQ1, aes(x = DateTime, y = Baro_Cor_offset5)) +
 #   geom_line() +
 #   #geom_vline(xintercept = as.POSIXct("2024-07-30 15:10:00"), linetype="dashed", color="red") +
@@ -415,16 +415,16 @@ ggplot(rating_data_offset, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
-# ggplot(rating_data_offset, aes(x = Baro_Cor_offset3, y = Q.m3s)) +
-#   geom_point(color = "blue") +
-#   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
-#   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
-#   theme_minimal()
-# ggplot(rating_data_offset, aes(x = Baro_Cor_offset5, y = Q.m3s)) +
-#   geom_point(color = "blue") +
-#   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
-#   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
-#   theme_minimal()
+ggplot(rating_data_offset, aes(x = Baro_Cor_offset3, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+  theme_minimal()
+ggplot(rating_data_offset, aes(x = Baro_Cor_offset4, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+  theme_minimal()
 # ggplot(rating_data_offset, aes(x = Baro_Cor_offset6, y = Q.m3s)) +
 #   geom_point(color = "blue") +
 #   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points

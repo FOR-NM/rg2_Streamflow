@@ -46,13 +46,6 @@ BRA01$DateTime <- paste(BRA01$Date.x, BRA01$Time.x, sep = " ")
 # convert the DateTime column to POSIXct
 BRA01$DateTime <- as.POSIXct(BRA01$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
-# filter out rows with missing stage or discharge
-rating_data <- BRA01 %>% 
-  filter(!is.na(Baro_Cor_Lvl.m), !is.na(Q_L_per_s))
-
-# check the structure of the cleaned data
-head(rating_data)
-
 ########################################
 #### Plot pressure compensated data ####
 ########################################
