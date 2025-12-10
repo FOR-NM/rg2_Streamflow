@@ -77,6 +77,24 @@ ggplot(data = BRM03_baro, aes(x = DateTime, y = LEVEL.m)) +
 ggplot(data = BRM03_baro, aes(x = DateTime, y = pres_m)) +
   geom_line() + ggtitle("BRM03 level data in m")
 
+# Plot baro compensated with precipitation
+plot_ly(BRM03_baro, x = ~DateTime) %>%
+  # 1. Add the first line (prcp)
+  add_lines(y = ~prcp, name = "Precipitation", yaxis = "y1") %>%
+  # 2. Add the second line (Baro_Cor_Lvl.m) and assign it to the 'y2' axis
+  add_lines(y = ~Baro_Cor_Lvl.m, name = "Compensated level", yaxis = "y2") %>%
+  # 3. Define the layout, including the secondary Y-axis
+  layout(
+    title = "Prcp and Compensated level Time Series",
+    xaxis = list(title = "Time"),
+    yaxis = list(side = 'left', title = 'Precipitation'), # Primary
+    yaxis2 = list(
+      side = 'right',
+      overlaying = "y", # Overlap on the primary axis
+      title = 'Compensated level' # Secondary
+    )
+  )
+
 ##################################
 #### Plot Stage vs. Discharge ####
 ##################################

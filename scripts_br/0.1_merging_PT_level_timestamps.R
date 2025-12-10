@@ -46,7 +46,7 @@ BRMQ1 <- pt_list[["2024-12-13_BRMQ1_2190536_PTdownload.csv"]]
 #### Combine data for each site ####
 ####################################
 # site names
-site_names <- c("BRM01", "BRMQ1", "BRAA1", "BRM02", "BRM03", "BRD01", "BRM05", "BRF01", "BRM07", "BRA01")
+site_names <- c("BRM01","BRM02","BRM03","BRM05","BRM06","BRM07","BRA01","BRAA1","BRD01","BRF01","BRMQ1","BRMQ4")
 
 # group files in `pt_list` by matching `site_names` in file names
 pt_list_by_site <- lapply(site_names, function(site) {
@@ -105,3 +105,4 @@ lapply(names(combined_by_site), function(site) {
     path = as_id(drive_folder_id)
   )
 })
+ 

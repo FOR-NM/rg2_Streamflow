@@ -77,6 +77,23 @@ ggplot(data = BRM02_baro, aes(x = DateTime, y = LEVEL.m)) +
 ggplot(data = BRM02_baro, aes(x = DateTime, y = pres_m)) +
   geom_line() + ggtitle("BRM02 level data in m")
 
+# Plot baro compensated with precipitation
+plot_ly(BRM02_baro, x = ~DateTime) %>%
+  # 1. Add the first line (prcp)
+  add_lines(y = ~prcp, name = "Precipitation", yaxis = "y1") %>%
+  # 2. Add the second line (Baro_Cor_Lvl.m) and assign it to the 'y2' axis
+  add_lines(y = ~Baro_Cor_Lvl.m, name = "Compensated level", yaxis = "y2") %>%
+  # 3. Define the layout, including the secondary Y-axis
+  layout(
+    title = "Prcp and Compensated level Time Series",
+    xaxis = list(title = "Time"),
+    yaxis = list(side = 'left', title = 'Precipitation'), # Primary
+    yaxis2 = list(
+      side = 'right',
+      overlaying = "y", # Overlap on the primary axis
+      title = 'Compensated level' # Secondary
+    )
+  )
 ##################################
 #### Plot Stage vs. Discharge ####
 ##################################
@@ -149,16 +166,17 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-11-08 12:00:00"), linetype="dashed", color="red") 
 
 Date1 <- as.Date("2024-11-01", "%Y-%m-%d")
-Date2 <- as.Date("2024-11-15", "%Y-%m-%d")
+Date2 <- as.Date("2024-11-21", "%Y-%m-%d")
 subdf <- BRM02[BRM02$DateTime < Date2 & BRM02$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-11-12 13:00:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2024-11-12 13:00:00"), linetype="dashed", color="red") +
+  geom_vline(xintercept = as.POSIXct("2024-11-19 05:00:00"), linetype="dashed", color="red") 
 
 Date1 <- as.Date("2024-12-01", "%Y-%m-%d")
 Date2 <- as.Date("2024-12-30", "%Y-%m-%d")
 subdf <- BRM02[BRM02$DateTime < Date2 & BRM02$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2024-12-12 10:00:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2024-12-12 10:00:00"), linetype="dashed", color="red")
 
 Date1 <- as.Date("2025-01-01", "%Y-%m-%d")
 Date2 <- as.Date("2025-01-29", "%Y-%m-%d")
@@ -167,10 +185,11 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-01-23 12:00:00"), linetype="dashed", color="red")
 
 Date1 <- as.Date("2025-02-20", "%Y-%m-%d")
-Date2 <- as.Date("2025-03-02", "%Y-%m-%d")
+Date2 <- as.Date("2025-03-10", "%Y-%m-%d")
 subdf <- BRM02[BRM02$DateTime < Date2 & BRM02$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl.m)) + geom_line() +
-  geom_vline(xintercept = as.POSIXct("2025-02-28 17:00:00"), linetype="dashed", color="red") 
+  geom_vline(xintercept = as.POSIXct("2025-02-28 17:00:00"), linetype="dashed", color="red") +
+  geom_vline(xintercept = as.POSIXct("2025-03-04 13:00:00"), linetype="dashed", color="red")
 
 Date1 <- as.Date("2025-03-20", "%Y-%m-%d")
 Date2 <- as.Date("2025-03-30", "%Y-%m-%d")
@@ -259,7 +278,7 @@ after_move <- BRM02 %>%
   filter(DateTime >= move_time2 & DateTime < (move_time2 + hours(2))) %>%
   summarize(mean_after = mean(Baro_Cor_offset1, na.rm = TRUE))
 # compute offset
-offset2 <- after_move$mean_after - before_move$mean_before
+offset2 <- after_move$mean_after - before_move$mean_before + (-0.1)
 print(offset2)
 # apply the second correction
 BRM02 <- BRM02 %>%
@@ -280,7 +299,7 @@ print(offset3)
 BRM02 <- BRM02 %>%
   mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
 
-move_time4 <- as.POSIXct("2025-02-28 15:00:00")
+move_time4 <- as.POSIXct("2024-11-19 04:00:00")
 before_move <- BRM02 %>%
   filter(DateTime >= (move_time4 - hours(2)) & DateTime < move_time4) %>%
   summarize(mean_before = mean(Baro_Cor_offset3, na.rm = TRUE))
@@ -294,7 +313,7 @@ print(offset4)
 BRM02 <- BRM02 %>%
   mutate(Baro_Cor_offset4 = if_else(DateTime >= move_time4, Baro_Cor_offset3 - offset4, Baro_Cor_offset3))
 
-# move_time5 <- as.POSIXct("2025-05-15 12:00:00")
+# move_time5 <- as.POSIXct("2025-02-28 15:00:00")
 # before_move <- BRM02 %>%
 #   filter(DateTime >= (move_time5 - hours(2)) & DateTime < move_time5) %>%
 #   summarize(mean_before = mean(Baro_Cor_offset4, na.rm = TRUE))
@@ -307,7 +326,7 @@ BRM02 <- BRM02 %>%
 # # apply the fifth correction
 # BRM02 <- BRM02 %>%
 #   mutate(Baro_Cor_offset5 = if_else(DateTime >= move_time5, Baro_Cor_offset4 - offset5, Baro_Cor_offset4))
-# 
+
 # move_time6 <- as.POSIXct("2025-06-17 08:00:00")
 # before_move <- BRM02 %>%
 #   filter(DateTime >= (move_time6 - hours(2)) & DateTime < move_time6) %>%
@@ -386,6 +405,11 @@ ggplot(rating_data_offset, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
+ggplot(rating_data_offset, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
+  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+  theme_minimal()
 ggplot(rating_data_offset, aes(x = Baro_Cor_offset3, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
@@ -397,11 +421,6 @@ ggplot(rating_data_offset, aes(x = Baro_Cor_offset4, y = Q.m3s)) +
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
 # ggplot(rating_data_offset, aes(x = Baro_Cor_offset5, y = Q.m3s)) +
-#   geom_point(color = "blue") +
-#   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
-#   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
-#   theme_minimal()
-# ggplot(rating_data_offset, aes(x = Baro_Cor_offset6, y = Q.m3s)) +
 #   geom_point(color = "blue") +
 #   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
 #   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
@@ -423,7 +442,7 @@ rating_data_offset <- rating_data_offset %>%
     Month %in% c(6, 7, 8) ~ "Summer",
     Month %in% c(9, 10, 11) ~ "Fall"
   ))
-# coloring by Season
+ # coloring by Season
 p <- ggplot(rating_data_offset, aes(x = Baro_Cor_offset4, y = Q.m3s, color = Season)) +
   geom_point(size = 3) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
@@ -484,7 +503,7 @@ rating_data_offset <- rating_data_offset %>%
   )
 
 # Plot divided by measurement type
-p <- ggplot(rating_data_offset, aes(x = Baro_Cor_offset4, y = Q.m3s, color = Q_type)) +
+p <- ggplot(rating_data_offset, aes(x = Baro_Cor_offset5, y = Q.m3s, color = Q_type)) +
   geom_point(size = 3) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3, show.legend = FALSE) +
   labs(

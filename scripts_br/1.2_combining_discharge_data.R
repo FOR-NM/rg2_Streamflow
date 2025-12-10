@@ -59,7 +59,7 @@ VQ <- VQ %>%
 
 #### remove badly flagged curves ####
 SSQ <- SSQ %>%
-  filter(flag != "BD")
+  filter(flag != "Bad")
 
 #################################
 #### Format DateTime columns ####

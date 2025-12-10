@@ -17,8 +17,9 @@ library(dataRetrieval) # download USGS discharge data
 # list and delete all files in the folder
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
-
-files <- list.files(path = "merged", full.names = TRUE)
+files <- list.files(path = "data", full.names = TRUE)
+file.remove(files)
+files <- list.files(path = "pt_figs", full.names = TRUE)
 file.remove(files)
 
 ####################
@@ -77,6 +78,7 @@ for (i in seq_along(pt_list)) {
 USF21 <- pt_list[["discharge_USF21.csv"]]
 USF20 <- pt_list[["discharge_USF20.csv"]]
 USF03 <- pt_list[["discharge_USF03.csv"]]
+USF05 <- pt_list[["discharge_USF05.csv"]]
 
 ####################################################
 #### Plot discharge data together for all sites #### 
@@ -117,7 +119,7 @@ ggplot(combined_df_filtered, aes(x = DateTime, y = Smooth_Discharge_Log_m3s, col
 siteNo <- "08315480" #USF12 site code
 pCode <- "00060" # discharge code
 start.date <- "2024-05-07"
-end.date <- "2025-06-01"
+end.date <- "2025-10-18"
 
 USGS <- readNWISuv(siteNumbers = siteNo,
                        parameterCd = pCode,
@@ -140,22 +142,20 @@ ts <- ggplot(data = USGS,
   geom_line()
 ts
 
-##############################
-#### Plot USGS with USF03 ####
-##############################
+############################
+#### Plot USGS with USF ####
+############################
 # merge discharge with scan data
-merged_df <- merge(USGS, USF03, by = c("DateTime"), all.x = TRUE)
+merged_df <- merge(USGS, USF05, by = c("DateTime"), all.x = TRUE)
 
 # plot discharge for all sites
 ggplot(data = merged_df, aes(x = DateTime)) +
   # map color inside aes() to create a legend
   geom_line(aes(y = Flow_Inst.m, color = "USF12")) +
-  geom_line(aes(y = Smooth_Discharge_Log_m3s, color = "USF03")) +
+  geom_line(aes(y = Smooth_Discharge_Log_m3s, color = "USF05")) +
   labs(x = "DateTime", y = "Discharge (m³/s)", color = "Scan sites") +  # add legend titles
-  labs(title = "Discharge in m3/s for each site") +
+  labs(title = "USF05 with USGS gauge") +
   theme_minimal()
-
-
 
 #################################
 #### Plotting daily averages ####

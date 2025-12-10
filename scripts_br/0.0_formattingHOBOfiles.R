@@ -15,7 +15,6 @@ library(dplyr)
 ## Clear folders that we will use ##
 ###################################
 # list and delete all files in the folder
-
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
 

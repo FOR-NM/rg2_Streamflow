@@ -94,6 +94,23 @@ ggplot(rating_data, aes(x = Baro_Cor_Lvl.m, y = Q.m3s)) +
   labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
   theme_minimal()
 
+# Plot baro compensated with precipitation
+plot_ly(BRM07_baro, x = ~DateTime) %>%
+  # 1. Add the first line (prcp)
+  add_lines(y = ~prcp, name = "Precipitation", yaxis = "y1") %>%
+  # 2. Add the second line (Baro_Cor_Lvl.m) and assign it to the 'y2' axis
+  add_lines(y = ~Baro_Cor_Lvl.m, name = "Compensated level", yaxis = "y2") %>%
+  # 3. Define the layout, including the secondary Y-axis
+  layout(
+    title = "Prcp and Compensated level Time Series",
+    xaxis = list(title = "Time"),
+    yaxis = list(side = 'left', title = 'Precipitation'), # Primary
+    yaxis2 = list(
+      side = 'right',
+      overlaying = "y", # Overlap on the primary axis
+      title = 'Compensated level' # Secondary
+    )
+  )
 #####################################################
 #### Plot before and after good baro logger data ####
 #####################################################
@@ -587,3 +604,4 @@ drive_put(
   media = "data/offset_BRM07.csv",
   path = as_id(drive_folder_id)
 )
+

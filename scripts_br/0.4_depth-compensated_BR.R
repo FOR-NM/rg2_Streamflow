@@ -127,6 +127,7 @@ BRMQ1 <- pt_list[["BRMQ1.csv"]]
 BRM01 <- pt_list[["BRM01.csv"]]
 BRAA1 <- pt_list[["BRAA1.csv"]]
 BRM05 <- pt_list[["BRM05.csv"]]
+BRM06 <- pt_list[["BRM06.csv"]]
 
 #######################################
 #### Combine depth info to PT data ####
@@ -160,12 +161,14 @@ print(non_na_counts)
 
 BRM01 <- depth_merged[["BRM01.csv"]]
 BRMQ1 <- depth_merged[["BRMQ1.csv"]]
+BRMQ4 <- depth_merged[["BRMQ4.csv"]]
 BRAA1 <- depth_merged[["BRAA1.csv"]]
 BRM02 <- depth_merged[["BRM02.csv"]]
 BRM03 <- depth_merged[["BRM03.csv"]]
 
 BRD01 <- depth_merged[["BRD01.csv"]]
 BRM05 <- depth_merged[["BRM05.csv"]]
+BRM06 <- depth_merged[["BRM06.csv"]]
 BRF01 <- depth_merged[["BRF01.csv"]]
 BRM07 <- depth_merged[["BRM07.csv"]]
 BRA01 <- depth_merged[["BRA01.csv"]]

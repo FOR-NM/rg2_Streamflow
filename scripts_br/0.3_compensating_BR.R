@@ -100,7 +100,7 @@ for (i in seq_along(pt_list)) {
   print(p)
   
   # save the plot as a PNG file
-  #  ggsave(paste0("pt_figs/", gsub(".csv", "", pt_csvs$name[i]), "_raw.png"), plot = p)
+  ggsave(paste0("pt_figs/", gsub(".csv", "", pt_csvs$name[i]), "_raw.png"), plot = p)
 }
 
 #######################################
@@ -218,6 +218,7 @@ for (i in names(merged_list)) {
 }
 
 BRMQ1 <- compensated_list[["BRMQ1.csv"]]
+BRMQ4 <- compensated_list[["BRMQ4.csv"]]
 BRM01 <- compensated_list[["BRM01.csv"]]
 BRAA1 <- compensated_list[["BRAA1.csv"]]
 

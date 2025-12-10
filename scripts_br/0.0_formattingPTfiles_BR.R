@@ -102,7 +102,7 @@ for (i in seq_along(pt_list)) {
   
   # define the local folder path and the target folder ID in Google Drive
   file <- paste0("googledrive/", pt_files$name[i])
-  # this is the raw in use folder
+  # this is the in use folder
   drive_folder_id <- "1q_HNENGb8tyHmWTA-TP5sOM8APgxKRxI"
   # upload file to the specified Google Drive folder
   drive_put(
