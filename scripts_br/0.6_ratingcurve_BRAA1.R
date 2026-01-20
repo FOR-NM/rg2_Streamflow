@@ -210,33 +210,57 @@ ggplot(BRAA1, aes(x = Baro_Cor_offset3)) +
   scale_color_manual(values = c("red", "green")) +
   theme_minimal()
 
+BRAA1clean <- BRAA1 %>%
+  filter(
+    abs(Predicted_Discharge_Log.m3s - mean(Predicted_Discharge_Log.m3s, na.rm = TRUE)) <=
+      3 * sd(Predicted_Discharge_Log.m3s, na.rm = TRUE)
+  )
+
 ######################################
 #### Plot and compare predictions ####
 ######################################
 BRAA1$DateTime <- as.POSIXct(BRAA1$DateTime)
 
-ggplot(BRAA1, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
+p1 <- ggplot(BRAA1, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
   geom_line(color = "blue") +
   labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
-  scale_x_datetime(date_breaks = "1 week") +
+  scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_y_continuous(trans = "log")
-ggplot(BRAA1, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
+p2 <- ggplot(BRAA1clean, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
   geom_line(color = "blue") +
   labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
-  scale_x_datetime(date_breaks = "1 week") +
+  scale_x_datetime(date_breaks = "2 week") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p3 <- ggplot(BRAA1, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
+  geom_line(color = "blue") +
+  labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
+  scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggplot(BRAA1, aes(x = DateTime, y = Predicted_Discharge_Linear.m3s)) +
-  geom_line(color = "blue") +
-  labs(title = "Predicted Discharge (Linear)", x = "DateTime", y = "Discharge (m3/s)") +
-  scale_x_datetime(date_breaks = "1 week") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggsave("figures/BRAA1_pred_log_scaled.png", p1,
+       width = 8, height = 4, dpi = 300)
+
+ggsave("figures/BRAA1_clean.png", p2,
+       width = 8, height = 4, dpi = 300)
+
+ggsave("figures/BRAA1_pred_log.png", p3,
+       width = 8, height = 4, dpi = 300)
 
 ###################
 #### Save file ####
 ###################
 write.csv(BRAA1, "data/discharge_BRAA1.csv")
+
+drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"
+
+# upload file to the specified Google Drive folder
+drive_put(
+  media = "data/discharge_BRAA1.csv",
+  path = as_id(drive_folder_id)
+)
+
+write.csv(BRAA1clean, "data/discharge_BRAA1.csv")
 
 drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"
 

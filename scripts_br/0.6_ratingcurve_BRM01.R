@@ -224,33 +224,43 @@ ggplot(BRM01, aes(x = Baro_Cor_offset3)) +
   scale_color_manual(values = c("red", "green", "purple")) +
   theme_minimal()
 
+BRM01clean <- BRM01 %>%
+  filter(Predicted_Discharge_Log.m3s <= 80)
+
 ######################################
 #### Plot and compare predictions ####
 ######################################
 BRM01$DateTime <- as.POSIXct(BRM01$DateTime)
 
-BRM01 <- BRM01 %>%
-  filter(Date > "2024-11-04")
-
-ggplot(BRM01, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
+p1 <- ggplot(BRM01, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
   geom_line(color = "blue") +
   labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
-  scale_x_datetime(date_breaks = "1 week") +
+  scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_y_continuous(trans = "log")
-
-ggplot(BRM01, aes(x = DateTime, y = Predicted_Discharge_Linear)) +
+p2 <- ggplot(BRM01clean, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
   geom_point(color = "blue") +
-  labs(title = "Predicted Discharge (Linear)", x = "DateTime", y = "Discharge (m3/s)") +
-  scale_x_datetime(date_breaks = "1 week") +
+  labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
+  scale_x_datetime(date_breaks = "2 week") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p3 <- ggplot(BRM01, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
+  geom_line(color = "blue") +
+  labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
+  scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggplot(BRM01, aes(x = DateTime, y = Pred_Discharge_Exp)) +
-  geom_point(color = "purple") +
-  labs(title = "Predicted Discharge (Exponential)", x = "DateTime", y = "Discharge (m3/s)") +
-  scale_x_datetime(date_breaks = "2 week") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-  scale_y_continuous(trans = "log")
+print(p1)
+print(p2)
+print(p3)
+
+ggsave("figures/BRM01_pred_log_scaled.png", p1,
+       width = 8, height = 4, dpi = 300)
+
+ggsave("figures/BRM01_clean.png", p2,
+       width = 8, height = 4, dpi = 300)
+
+ggsave("figures/BRM01_pred_log.png", p3,
+       width = 8, height = 4, dpi = 300)
 
 ###################
 #### Save file ####
@@ -264,3 +274,11 @@ drive_put(
   path = as_id(drive_folder_id)
 )
 
+write.csv(BRM02clean, "data/discharge_BRM01.csv")
+
+drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"
+
+drive_put(
+  media = "data/discharge_BRM01.csv",
+  path = as_id(drive_folder_id)
+)
