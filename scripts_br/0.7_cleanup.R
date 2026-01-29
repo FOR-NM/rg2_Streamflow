@@ -27,7 +27,7 @@ file.remove(files)
 #### Import data ####
 #####################
 # this is the predicted folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1fPDNinUQ3pCFFQXJ1dtLGbqEawyTmPUx")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf")
 
 # list all CSV files in the folder
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
@@ -51,12 +51,9 @@ for (i in seq_along(pt_csvs$id)) {
   pt_list[[pt_csvs$name[i]]] <- read.csv(local_path)
 }
 
-# check the contents of the list
-str(pt_list)
-
 # look at it
-USF21 <- pt_list[["discharge_USF21.csv"]]
-USF20 <- pt_list[["discharge_USF20.csv"]]
+BRMQ4 <- pt_list[["discharge_BRMQ4.csv"]]
+BRM02 <- pt_list[["discharge_BRM02.csv"]]
 
 ############################
 #### Format date column #### 
@@ -65,32 +62,29 @@ USF20 <- pt_list[["discharge_USF20.csv"]]
 for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
-  # combine Date and Time columns into a new DateTime column
-  df$DateTime <- paste(df$Date, df$Time, sep = " ")
   
   # convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
+  df$DateTime <- as.POSIXct(df$time, format = "%Y-%m-%d %H:%M:%S")
   # update the data frame in the list
   pt_list[[i]] <- df
   
-  # make date into date fomat
-  df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
   # update the data frame in the list
   pt_list[[i]] <- df
 }
 
 # look at it
-USF21 <- pt_list[["discharge_USF21.csv"]]
-USF20 <- pt_list[["discharge_USF20.csv"]]
+BRMQ4 <- pt_list[["discharge_BRMQ4.csv"]]
+BRM02 <- pt_list[["discharge_BRM02.csv"]]
 
 ##################
 #### Clean up #### 
 ##################
 # columns that I don't want
-drops <- c("X.1", "X.2", "Date.x", "ms", "LEVEL", "X", "Date.air", "ms.x", "ms.y", "Level.air.kPa1", "TEMPERATURE", "TEMPERATURE.x", 
-           "TEMPERATURE.y", "Predicted_air1", "Predicted_air1_local", "Residual_local", "Date.air_new", "Date.y", 
-           "background", "salt", "medianSPC.x", "Q", "final_SPC", "final_index", "SPC_difference", "Time24h", "temp_at_start_of_salt_slug_c", 
-           "reach", "pt", "pt_depth_measurement_point_description", "relevant_notes")
+drops <- c("X.1", "X.2","X","X.","X.x","X.y","Date.x", "ms", "LEVEL.m","Date.air","Level.air.kPa1","Time.x","Time.y",
+           "Date.Time..GMT.05.00", "DateTimeNotRounded","Coupler.Detached..LGR.S.N..21312563.","Coupler.Attached..LGR.S.N..21312563.", 
+           "Host.Connected..LGR.S.N..21312563.","End.Of.File..LGR.S.N..21312563.","Comments","background","medianSPC.x","salt.x",
+           "Predicted_Discharge_Linear", "Residual_Linear", "Q_L_per_s", "tsun", "snow", "Predicted_Local_Pressure", "Residual_local",
+           "Predicted_Discharge_Linear.m3s")
 
 # loop through each data frame in the list
 for (i in seq_along(pt_list)) {
@@ -102,44 +96,72 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
 }
 
+BRMQ4$Residual_local
 # look at it
-USF03 <- pt_list[["discharge_USF03.csv"]]
-USF20 <- pt_list[["discharge_USF20.csv"]]
-USF21 <- pt_list[["discharge_USF21.csv"]]
-USF19 <- pt_list[["discharge_USF19.csv"]]
+BRMQ4 <- pt_list[["discharge_BRMQ4.csv"]]
+BRMQ1 <- pt_list[["discharge_BRMQ1.csv"]]
+BRM01 <- pt_list[["discharge_BRM01.csv"]]
+BRM02 <- pt_list[["discharge_BRM02.csv"]]
+BRM07 <- pt_list[["discharge_BRM07.csv"]]
+BRAA1 <- pt_list[["discharge_BRAA1.csv"]]
 
-###################################################
-#### Separate data in lower vs upper vs middle ####
-###################################################
-# # list of site names
-# uppersites <- c("USF21", "USF13", "USF14", "USF16", "USF19")
-# middlesites <- c("USF09", "USF10", "USF11")
-# lowersites <- c("USF03", "USF04", "USF05", "USF07", "USF20")
-# 
-# # create an empty lists to store the files
-# upper_list <- list()
-# middle_list <- list()
-# lower_list <- list()
-# 
-# # separate sites in lists
-# upper_list <- append(upper_list, c(pt_list["discharge_USF21.csv"], pt_list["discharge_USF13.csv"], pt_list["discharge_USF14.csv"], pt_list["discharge_USF16.csv"], pt_list["discharge_USF19.csv"]))
-# middle_list <- append(middle_list, c(pt_list["discharge_USF09.csv"], pt_list["discharge_USF10.csv"], pt_list["discharge_USF11.csv"]))
-# lower_list <- append(lower_list, c(pt_list["discharge_USF03.csv"], pt_list["discharge_USF04.csv"], pt_list["discharge_USF05.csv"], pt_list["discharge_USF20.csv"]))
+# rename discharge column
+BRMQ1 <- BRMQ1 %>%
+  rename(Discharge.m3s = Predicted_Discharge_Log)
+BRMQ4 <- BRMQ4 %>%
+  rename(Discharge.m3s = Predicted_Discharge_Log)
+BRM01 <- BRM01 %>%
+  rename(Discharge.m3s = Predicted_Discharge_Log.m3s)
+BRM02 <- BRM02 %>%
+  rename(Discharge.m3s = Predicted_Discharge_Log.m3s)
+BRM07 <- BRM07 %>%
+  rename(Discharge.m3s = Predicted_Discharge_Log)
+BRAA1 <- BRAA1 %>%
+  rename(Discharge.m3s = Predicted_Discharge_Log.m3s)
+
+# return to list
+pt_list <- list()
+pt_list$BRMQ1 <- BRMQ1
+pt_list$BRMQ4 <- BRMQ4
+pt_list$BRM01 <- BRM01
+pt_list$BRM02 <- BRM02
+pt_list$BRM07 <- BRM07
+pt_list$BRAA1 <- BRAA1
+
+
+ggplot(data=BRAA1, aes(x=DateTime, y=Discharge.m3s)) +
+  geom_line() + ggtitle("BRAA1")
+ggplot(data=BRM01, aes(x=DateTime, y=Discharge.m3s)) +
+  geom_line() + ggtitle("BRM01")
+ggplot(data=BRM02, aes(x=DateTime, y=Discharge.m3s)) +
+  geom_line() + ggtitle("BRM02")
+ggplot(data=BRM07, aes(x=DateTime, y=Discharge.m3s)) +
+  geom_line() + ggtitle("BRM07")
+ggplot(data=BRMQ1, aes(x=DateTime, y=Discharge.m3s)) +
+  geom_line() + ggtitle("BRMQ1")
+ggplot(data=BRMQ4, aes(x=DateTime, y=Discharge.m3s)) +
+  geom_line() + ggtitle("BRMQ4")
 
 #####################
 #### Plot curves ####
 #####################
 # loop through each data frame in the list
 for (i in seq_along(pt_list)) {
-  # access the current data frame
+  
+  df_name <- names(pt_list)[i]   # name of the df
   df <- pt_list[[i]]
-  # Plot
-  p <- ggplot(data = df, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) + 
-    geom_line() + ggtitle(paste(pt_csvs$name[i])) 
-  # save the plot as a PNG file
-  ggsave(paste0("pt_figs/", pt_csvs$name[i], ".png"), plot = p)
-  # display the plot in the plot panel
-  print(p)
+  
+  p <- ggplot(data = df, aes(x = DateTime, y = Discharge.m3s)) + 
+    geom_line() + ggtitle(df_name)
+  
+  # save plot
+  ggsave(
+    filename = paste0(df_name, "_Discharge.png"),
+    plot = p,
+    width = 8,
+    height = 4,
+    dpi = 300
+  )
 }
 
 ###########################################
@@ -163,8 +185,8 @@ for (i in seq_along(pt_list)) {
   df <- pt_list[[i]]
   # convert to xts object
   xts_list[[i]] <- tryCatch({
-    xts(df$Predicted_Discharge_Log_m3s, order.by = df$DateTime)
-    })
+    xts(df$Discharge.m3s, order.by = df$DateTime)
+  })
 }
 # keep original file names
 names(xts_list) <- names(pt_list)
@@ -218,7 +240,7 @@ for (i in seq_along(smooth_df)) {
   df <- smooth_df[[i]]
   # plot
   p <- ggplot(data = df, aes(x = DateTime, y = Smooth_Discharge_Log_m3s)) + 
-    geom_line() + ggtitle(paste(pt_csvs$name[i])) 
+    geom_line()
   # save the plot as a PNG file
   # ggsave(paste0("pt_figs/", pt_csvs$name[i], "smooth.png"), plot = p)
   # display the plot in the plot panel
@@ -234,12 +256,12 @@ for (i in seq_along(smooth_df)) {
   df <- smooth_df[[i]]
   
   # save new data frame
-  write.csv(df, paste0("data/", names(smooth_df)[i]), row.names=FALSE, quote=FALSE)
+  write.csv(df, paste0("data/", names(smooth_df)[i],".csv"), row.names=FALSE, quote=FALSE)
   
   # define the local folder path and the target folder ID in Google Drive
-  file <- paste0("data/", names(smooth_df)[i])
+  file <- paste0("data/", names(smooth_df)[i], ".csv")
   # this is the "smooth" folder
-  drive_folder_id <- "1y2bMWCS48cROq_BO5HkaNWmFIxdJUON0"
+  drive_folder_id <- "14mEgtrF_eMrzB2xjL7pCwEKIokQzbwP2"
   
   # upload file to the specified Google Drive folder
   drive_put(

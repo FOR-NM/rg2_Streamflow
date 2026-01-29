@@ -178,7 +178,7 @@ legend("topleft", legend = c("Log-Transformed", "Linear", "Polynomial"),
 
 # discharge from L/s to m3/s for entire dataset
 BRAA1 <- BRAA1 %>%
-  mutate(Q.m3s = Q..L.s./1000)
+  mutate(Q.m3s = Q_L_per_s/1000)
 
 # compare Predicted vs. Observed Discharge
 ggplot(BRAA1, aes(x = Q.m3s)) +
@@ -211,10 +211,7 @@ ggplot(BRAA1, aes(x = Baro_Cor_offset3)) +
   theme_minimal()
 
 BRAA1clean <- BRAA1 %>%
-  filter(
-    abs(Predicted_Discharge_Log.m3s - mean(Predicted_Discharge_Log.m3s, na.rm = TRUE)) <=
-      3 * sd(Predicted_Discharge_Log.m3s, na.rm = TRUE)
-  )
+  filter(Predicted_Discharge_Log.m3s <= 10)
 
 ######################################
 #### Plot and compare predictions ####
@@ -238,6 +235,10 @@ p3 <- ggplot(BRAA1, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
   scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+p1
+p2
+p3
+
 ggsave("figures/BRAA1_pred_log_scaled.png", p1,
        width = 8, height = 4, dpi = 300)
 
@@ -250,6 +251,8 @@ ggsave("figures/BRAA1_pred_log.png", p3,
 ###################
 #### Save file ####
 ###################
+# convert the DateTime column to POSIXct
+BRAA1$DateTime <- as.POSIXct(BRAA1$DateTime, format = "%Y-%m-%d %H:%M:%S")
 write.csv(BRAA1, "data/discharge_BRAA1.csv")
 
 drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"

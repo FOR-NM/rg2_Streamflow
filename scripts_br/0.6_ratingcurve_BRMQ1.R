@@ -214,7 +214,7 @@ ggplot(BRMQ1, aes(x = Baro_Cor_offset_edited)) +
   theme_minimal()
 
 BRMQ1clean <- BRMQ1 %>%
-  filter(Predicted_Discharge_Log <= 400)
+  filter(Predicted_Discharge_Log <= 800)
 
 ######################################
 #### Plot and compare predictions ####
@@ -228,7 +228,7 @@ p1 <- ggplot(BRMQ1, aes(x = DateTime, y = Predicted_Discharge_Log)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_y_continuous(trans = "log")
 p2 <- ggplot(BRMQ1clean, aes(x = DateTime, y = Predicted_Discharge_Log)) +
-  geom_point(color = "blue") +
+  geom_line(color = "blue") +
   labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -265,12 +265,12 @@ drive_put(
 )
 
 # Save cleaned file to drive
-write.csv(BRMQ1clean, "data/discharge_BRMQ4.csv")
+write.csv(BRMQ1clean, "data/discharge_BRMQ1.csv")
 
 drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"
 
 # upload file to the specified Google Drive folder
 drive_put(
-  media = "data/discharge_BRMQ4.csv",
+  media = "data/discharge_BRMQ1.csv",
   path = as_id(drive_folder_id)
 )

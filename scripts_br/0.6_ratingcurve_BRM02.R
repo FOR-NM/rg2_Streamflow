@@ -178,7 +178,7 @@ legend("topleft", legend = c("Log-Transformed", "Linear", "Polynomial"),
 
 # discharge from L/s to m3/s for entire dataset
 BRM02 <- BRM02 %>%
-  mutate(Q.m3s = Q..L.s./1000)
+  mutate(Q.m3s = Q_L_per_s/1000)
 
 # compare Predicted vs. Observed Discharge
 ggplot(BRM02, aes(x = Q.m3s)) +
@@ -211,7 +211,7 @@ ggplot(BRM02, aes(x = Baro_Cor_offset4)) +
   theme_minimal()
 
 BRM02clean <- BRM02 %>%
-  filter(Predicted_Discharge_Log.m3s <= 80)
+  filter(Predicted_Discharge_Log.m3s <= 150)
 
 ######################################
 #### Plot and compare predictions ####
@@ -225,7 +225,7 @@ p1 <- ggplot(BRM02, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_y_continuous(trans = "log")
 p2 <- ggplot(BRM02clean, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
-  geom_point(color = "blue") +
+  geom_line(color = "blue") +
   labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -262,12 +262,12 @@ drive_put(
 )
 
 # Save cleaned file to drive
-write.csv(BRM02clean, "data/discharge_BRMQ4.csv")
+write.csv(BRM02clean, "data/discharge_BRM02.csv")
 
 drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"
 
 # upload file to the specified Google Drive folder
 drive_put(
-  media = "data/discharge_BRMQ4.csv",
+  media = "data/discharge_BRM02.csv",
   path = as_id(drive_folder_id)
 )

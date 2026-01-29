@@ -364,7 +364,7 @@ BRA01 <- BRA01 %>%
 # BRA01 <- BRA01 %>%
 #   mutate(Baro_Cor_offset6 = if_else(DateTime >= move_time6, Baro_Cor_offset5 - offset6, Baro_Cor_offset5))
 #
-# move_time7 <- as.POSIXct("2024-11-05 08:00:00")
+# move_time7 <- as.POSIXct("")
 # before_move <- BRA01 %>%
 #   filter(DateTime >= (move_time7 - hours(2)) & DateTime < move_time7) %>%
 #   summarize(mean_before = mean(Baro_Cor_offset6, na.rm = TRUE))

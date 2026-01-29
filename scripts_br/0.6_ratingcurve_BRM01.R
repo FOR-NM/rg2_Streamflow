@@ -119,20 +119,6 @@ linear_model <- lm(Q.m3s ~ Baro_Cor_offset3, data = rating_data)
 summary(linear_model)
 
 ##########################
-#### Exponential model ###
-##########################
-# log(Q) ~ stage  →  Q = a * exp(b * stage)
-exp_model <- lm(log(Q.m3s) ~ Baro_Cor_offset3, data = rating_data)
-summary(exp_model)
-
-a_exp <- exp(coef(exp_model)[1])   # intercept (exp)
-b_exp <- coef(exp_model)[2]        # slope
-
-# add predictions to rating_data
-rating_data <- rating_data %>%
-  mutate(Pred_Exp = a_exp * exp(b_exp * Baro_Cor_offset3))
-
-##########################
 #### Visualize models ####
 ##########################
 # observed data
@@ -149,13 +135,9 @@ lines(rating_data$Baro_Cor_offset3, pred_log, col = "red", lwd = 2)
 pred_linear <- predict(linear_model, newdata = rating_data)
 lines(rating_data$Baro_Cor_offset3, pred_linear, col = "green", lwd = 2)
 
-# exponential model predictions (NEW)
-pred_exp <- a_exp * exp(b_exp * rating_data$Baro_Cor_offset3)
-lines(rating_data$Baro_Cor_offset3, pred_exp, col = "purple", lwd = 2)
-
 # legend
 legend("topleft", legend = c("Observed", "Log-Transformed", "Linear", "Exponential"),
-       col = c("blue", "red", "green", "purple"),
+       col = c("blue", "red", "green"),
        pch = c(19, NA, NA, NA),
        lty = c(NA, 1, 1, 1),
        lwd = c(NA, 2, 2, 2))
@@ -178,12 +160,6 @@ b_linear <- coef(linear_model)[2]
 BRM01 <- BRM01 %>%
   mutate(Predicted_Discharge_Linear = a_linear + b_linear * Baro_Cor_offset3)
 
-###################################
-#### Predicted exponential (NEW) ##
-###################################
-BRM01 <- BRM01 %>%
-  mutate(Pred_Discharge_Exp = a_exp * exp(b_exp * Baro_Cor_offset3))
-
 #############################
 #### Compare predictions ####
 #############################
@@ -193,13 +169,12 @@ BRM01 <- BRM01 %>%
 ggplot(BRM01, aes(x = Q.m3s)) +
   geom_point(aes(y = Predicted_Discharge_Log.m3s, color = "Log Model")) +
   geom_point(aes(y = Predicted_Discharge_Linear, color = "Linear Model")) +
-  geom_point(aes(y = Pred_Discharge_Exp, color = "Exponential Model")) +
   labs(
     title = "Comparison of Observed vs Predicted Discharge",
     x = "Observed Discharge (m³/s)",
     y = "Predicted Discharge (m³/s)"
   ) +
-  scale_color_manual(values = c("red", "green", "purple")) +
+  scale_color_manual(values = c("red", "green")) +
   theme_minimal()
 
 ###################
@@ -208,24 +183,22 @@ ggplot(BRM01, aes(x = Q.m3s)) +
 BRM01 <- BRM01 %>%
   mutate(
     Residual_Log = Q.m3s - Predicted_Discharge_Log.m3s,
-    Residual_Linear = Q.m3s - Predicted_Discharge_Linear,
-    Residual_Exp = Q.m3s - Pred_Discharge_Exp    # NEW
+    Residual_Linear = Q.m3s - Predicted_Discharge_Linear
   )
 
 ggplot(BRM01, aes(x = Baro_Cor_offset3)) +
   geom_point(aes(y = Residual_Log, color = "Log Model")) +
   geom_point(aes(y = Residual_Linear, color = "Linear Model")) +
-  geom_point(aes(y = Residual_Exp, color = "Exponential Model")) +
   labs(
     title = "Residuals for Different Models",
     x = "Barometric Corrected Level (m)",
     y = "Residuals (Observed - Predicted)"
   ) +
-  scale_color_manual(values = c("red", "green", "purple")) +
+  scale_color_manual(values = c("red", "green")) +
   theme_minimal()
 
 BRM01clean <- BRM01 %>%
-  filter(Predicted_Discharge_Log.m3s <= 80)
+  filter(Predicted_Discharge_Log.m3s <= 800)
 
 ######################################
 #### Plot and compare predictions ####
@@ -239,7 +212,7 @@ p1 <- ggplot(BRM01, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_y_continuous(trans = "log")
 p2 <- ggplot(BRM01clean, aes(x = DateTime, y = Predicted_Discharge_Log.m3s)) +
-  geom_point(color = "blue") +
+  geom_line(color = "blue") +
   labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -274,7 +247,7 @@ drive_put(
   path = as_id(drive_folder_id)
 )
 
-write.csv(BRM02clean, "data/discharge_BRM01.csv")
+write.csv(BRM01clean, "data/discharge_BRM01.csv")
 
 drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"
 

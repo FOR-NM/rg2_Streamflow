@@ -233,7 +233,7 @@ p1 <- ggplot(BRMQ4, aes(x = DateTime, y = Predicted_Discharge_Log)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_y_continuous(trans = "log")
 p2 <- ggplot(BRMQ4clean, aes(x = DateTime, y = Predicted_Discharge_Log)) +
-  geom_point(color = "blue") +
+  geom_line(color = "blue") +
   labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
