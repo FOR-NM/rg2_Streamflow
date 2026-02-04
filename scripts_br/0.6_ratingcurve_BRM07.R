@@ -25,7 +25,6 @@ file.remove(files)
 #################################
 #### Import & Visualize Data ####
 #################################
-#### load data from Google drive ####
 # this is the "depth" folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1E3pAdlfgxluBGmYT4r95obkaAduKIXhQ")
 
@@ -265,13 +264,13 @@ drive_put(
 )
 
 # Save cleaned file to drive
-write.csv(BRM07clean, "data/discharge_BRM07.csv")
+write.csv(BRM07clean, "data/discharge_BRM07_clean.csv")
 
 drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"
 
 # upload file to the specified Google Drive folder
 drive_put(
-  media = "data/discharge_BRM07.csv",
+  media = "data/discharge_BRM07_clean.csv",
   path = as_id(drive_folder_id)
 )
 

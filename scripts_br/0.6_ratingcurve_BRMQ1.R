@@ -122,7 +122,6 @@ b <- coef(log_model)[2]       # Slope
 #### Linear model? ####
 #######################
 linear_model <- lm(Q.m3s ~ Baro_Cor_offset_edited, data = rating_data)
-
 summary(linear_model)
 
 ###########################
@@ -265,12 +264,12 @@ drive_put(
 )
 
 # Save cleaned file to drive
-write.csv(BRMQ1clean, "data/discharge_BRMQ1.csv")
+write.csv(BRMQ1clean, "data/discharge_BRMQ1_clean.csv")
 
 drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"
 
 # upload file to the specified Google Drive folder
 drive_put(
-  media = "data/discharge_BRMQ1.csv",
+  media = "data/discharge_BRMQ1_clean.csv",
   path = as_id(drive_folder_id)
 )

@@ -161,7 +161,6 @@ BRM02 <- BRM02 %>%
 a_linear <- coef(linear_model)[1]  # Intercept
 b_linear <- coef(linear_model)[2]  # Slope
 
-
 # predict discharge for the entire dataset
 BRM02 <- BRM02 %>%
   mutate(Predicted_Discharge_Linear.m3s = a_linear + b_linear * Baro_Cor_offset4)
@@ -262,12 +261,13 @@ drive_put(
 )
 
 # Save cleaned file to drive
-write.csv(BRM02clean, "data/discharge_BRM02.csv")
+write.csv(BRM02clean, "data/discharge_BRM02_clean.csv")
 
 drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"
 
 # upload file to the specified Google Drive folder
 drive_put(
-  media = "data/discharge_BRM02.csv",
+  media = "data/discharge_BRM02_clean.csv",
   path = as_id(drive_folder_id)
 )
+

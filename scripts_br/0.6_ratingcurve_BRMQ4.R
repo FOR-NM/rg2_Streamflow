@@ -271,13 +271,13 @@ drive_put(
 )
 
 # Save cleaned file to drive
-write.csv(BRMQ4clean, "data/discharge_BRMQ4.csv")
+write.csv(BRMQ4clean, "data/discharge_BRMQ4_clean.csv")
 
 drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"
 
 # upload file to the specified Google Drive folder
 drive_put(
-  media = "data/discharge_BRMQ4.csv",
+  media = "data/discharge_BRMQ4_clean.csv",
   path = as_id(drive_folder_id)
 )
 

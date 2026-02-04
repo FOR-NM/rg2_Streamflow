@@ -118,6 +118,7 @@ air <- googledrive::as_id("https://drive.google.com/drive/folders/1BB6nEoVQOrCd_
 pres <- googledrive::drive_ls(path = air)
 # choose the specific file by name
 press <- pres %>% filter(name == "air_br.csv")
+
 # download it
 drive_download(as_id(press$id), path = "data/pressure_fv.csv", overwrite = TRUE)
 # fetch the file
@@ -150,6 +151,8 @@ pressure <- pressure %>%
 # remove some rows
 pressure <- pressure[,-1]
 
+BRMQ1 <- pt_list[["BRMQ1.csv"]]
+
 ######################################
 #### Merging PT with Air pressure ####
 ######################################
@@ -178,7 +181,7 @@ for (i in seq_along(merged_list)) {
 
 BRMQ1 <- merged_list[["BRMQ1.csv"]]
 BRM01 <- merged_list[["BRM01.csv"]]
-BRAA1 <- merged_list[["BRM01.csv"]]
+BRAA1 <- merged_list[["BRAA1.csv"]]
 BRA01 <- merged_list[["BRA01.csv"]]
 
 ########################################
