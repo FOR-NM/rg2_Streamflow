@@ -247,11 +247,12 @@ drive_put(
   path = as_id(drive_folder_id)
 )
 
-write.csv(BRM01clean, "data/discharge_BRM01.csv")
+write.csv(BRM01clean, "data/discharge_BRM01_clean.csv")
 
 drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"
 
 drive_put(
-  media = "data/discharge_BRM01.csv",
+  media = "data/discharge_BRM01_clean.csv",
   path = as_id(drive_folder_id)
 )
+

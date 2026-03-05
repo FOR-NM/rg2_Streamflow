@@ -418,7 +418,6 @@ print(offset8)
 BRMQ1 <- BRMQ1 %>%
   mutate(Baro_Cor_offset8 = if_else(DateTime >= move_time8, Baro_Cor_offset7 - offset8, Baro_Cor_offset7))
 
-
 ###############################
 ####  Plot with Correction ####
 ###############################

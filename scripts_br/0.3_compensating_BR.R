@@ -13,15 +13,13 @@ library(lubridate)
 library(dplyr)
 
 ####################################
-## Clear folders that we will use ##
+## Clear folders that we will use ##  
 ####################################
 # list and delete all files in the folder
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
-
 files <- list.files(path = "data", full.names = TRUE)
 file.remove(files)
-
 files <- list.files(path = "pt_figs", full.names = TRUE)
 file.remove(files)
 
@@ -82,12 +80,23 @@ for (i in seq_along(pt_list)) {
 #   pt_list[[i]] <- df
 # }
 
-# BRMQ1 <- pt_list[["BRMQ1.csv"]]
-# BRM01 <- pt_list[["BRM01.csv"]]
+BRMQ1 <- pt_list[["BRMQ1.csv"]]
+BRM01 <- pt_list[["BRM01.csv"]]
 
-#####################
-#### Plot curves ####
-#####################
+# loop through each data frame in the list
+for (i in seq_along(pt_list)) {
+  # access the current data frame
+  df <- pt_list[[i]]
+  # keep only 1 hour intervals
+  df <- df %>%
+    filter(format(df$DateTime, "%M") %in% c("00"))
+  # update the data frame in the list
+  pt_list[[i]] <- df
+}
+
+########################
+#### Plot raw Level ####
+########################
 # visualize
 # loop through each data frame in the list
 for (i in seq_along(pt_list)) {
@@ -224,6 +233,24 @@ BRMQ1 <- compensated_list[["BRMQ1.csv"]]
 BRMQ4 <- compensated_list[["BRMQ4.csv"]]
 BRM01 <- compensated_list[["BRM01.csv"]]
 BRAA1 <- compensated_list[["BRAA1.csv"]]
+
+################################
+#### Plot compensated level ####
+################################
+# visualize
+# loop through each data frame in the list
+for (i in seq_along(compensated_list)) {
+  # access the current data frame
+  df <- compensated_list[[i]]
+  # plot
+  p <- ggplot(data = df, aes(x = DateTime, y = Baro_Cor_Lvl.m)) + 
+    geom_line() + ggtitle(paste(pt_csvs$name[i])) 
+  # display the plot in the plot panel
+  print(p)
+  
+  # save the plot as a PNG file
+  ggsave(paste0("pt_figs/", gsub(".csv", "", pt_csvs$name[i]), "_compensated.png"), plot = p)
+}
 
 #########################################
 #### Save compensated files to Drive ####

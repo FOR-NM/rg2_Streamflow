@@ -50,10 +50,6 @@ BRMQ4$DateTime <- as.POSIXct(BRMQ4$DateTime, format = "%Y-%m-%d %H:%M:%S")
 rating_data <- BRMQ4 %>% 
   filter(!is.na(Baro_Cor_Lvl.m), !is.na(Q_L_per_s))
 
-# filter out bad discharge curves
-rating_data <- rating_data %>%
-  filter(is.na(flag ))
-
 # check the structure of the cleaned data
 head(rating_data)
 

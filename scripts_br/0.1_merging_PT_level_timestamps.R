@@ -15,9 +15,9 @@ library(dplyr)
 files <- list.files(path = "googledrive", full.names = TRUE)
 file.remove(files)
 
-##########################
-#### Import scan data ####
-##########################
+#####################
+#### Import data ####
+#####################
 #### list and download all files in the folder ####
 # this is the "02_inuse" folder
 pt <- googledrive::as_id("https://drive.google.com/drive/folders/1q_HNENGb8tyHmWTA-TP5sOM8APgxKRxI")
@@ -40,7 +40,8 @@ pt_list <- lapply(seq_along(pt_files$name), function(i) {
 # assign names to the list elements based on the file names
 names(pt_list) <- pt_files$name
 
-BRMQ1 <- pt_list[["2024-12-13_BRMQ1_2190536_PTdownload.csv"]]
+BRMQ1_1 <- pt_list[["2024-12-13_BRMQ1_2190536_PTdownload.csv"]]
+BRMQ1_2 <- pt_list[["2024-11-17_BRMQ1_PT20240830-20241011.csv"]]
 
 ####################################
 #### Combine data for each site ####
@@ -88,6 +89,15 @@ for (i in seq_along(combined_by_site)) {
 BRMQ1 <- combined_by_site[["BRMQ1"]]
 BRM01 <- combined_by_site[["BRM01"]]
 
+## round DateTime for BRMQ1 ##
+BRMQ1$DateTime <- round_date(BRMQ1$DateTime, unit="15 mins")
+# convert the Time column to POSIXct
+BRMQ1$Temp_time <- as.POSIXct(BRMQ1$Time, format = "%H:%M:%S")
+# round Time
+BRMQ1$Temp_time <- round_date(BRMQ1$Temp_time, unit="15 mins")
+# extract only the time part (HH:MM:SS) from the rounded Time
+BRMQ1$Time <- format(BRMQ1$Temp_time, format = "%H:%M:%S")
+
 ##############################
 #### Save combined files  ####
 ##############################
@@ -105,4 +115,13 @@ lapply(names(combined_by_site), function(site) {
     path = as_id(drive_folder_id)
   )
 })
- 
+
+# Save BRMQ1
+write.csv(BRMQ1, "data/BRMQ1.csv")
+# 
+drive_folder_id <- "1SbXzLapTIa_dt02JVba4PcsbQaJeFZtD"
+# upload files
+drive_put(
+  media = "data/BRMQ1.csv",
+  path = as_id(drive_folder_id)
+)

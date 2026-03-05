@@ -42,6 +42,7 @@ pt_list <- lapply(seq_along(pt_files$name), function(i) {
 names(pt_list) <- pt_files$name
 
 BRMQ1 <- pt_list[["2024-11-17_BRMQ1_PT20240830-20241011.csv"]]
+BRMQ1 <- pt_list[["2024-10-17_BRMQ1_PT20240830-20241011.csv"]]
 
 ##############################
 #### Format Date and Time #### 
@@ -89,7 +90,6 @@ for (i in seq_along(pt_list)) {
 
 BRMQ1 <- pt_list[["2024-11-17_BRMQ1_PT20240830-20241011.csv"]]
 
-
 #########################################
 #### Save edited files back to Drive ####
 #########################################
@@ -111,38 +111,53 @@ for (i in seq_along(pt_list)) {
     path = as_id(drive_folder_id)
   )
 }
+
 ############################################
 #### HAVE TO EDIT SOME FILES SEPARATELY ####
 ############################################
 # read the CSV file
 BRAA1 <- pt_list[["2024-12-13_BRAA1_2188416_PTdownload.csv"]]
 BRMQ1 <- pt_list[["2024-12-13_BRMQ1_2190536_PTdownload.csv"]]
+BRMQ1_1 <- pt_list[["2025-08-27_BRMQ1_2211761.csv"]]
+BRMQ1_2 <- pt_list[["2025-10-17_BRMQ1_2211761.csv"]]
 
 # round DateTime
 BRAA1$DateTime <- round_date(BRAA1$DateTime, unit="15 mins")
 BRMQ1$DateTime <- round_date(BRMQ1$DateTime, unit="15 mins")
+BRMQ1_1$DateTime <- round_date(BRMQ1_1$DateTime, unit="15 mins")
+BRMQ1_2$DateTime <- round_date(BRMQ1_2$DateTime, unit="15 mins")
 
 # convert the Time column to POSIXct
 BRAA1$Temp_time <- as.POSIXct(BRAA1$Time, format = "%H:%M:%S")
 BRMQ1$Temp_time <- as.POSIXct(BRMQ1$Time, format = "%H:%M:%S")
+BRMQ1_1$Temp_time <- as.POSIXct(BRMQ1_1$Time, format = "%H:%M:%S")
+BRMQ1_2$Temp_time <- as.POSIXct(BRMQ1_2$Time, format = "%H:%M:%S")
 
 # round Time
 BRAA1$Temp_time <- round_date(BRAA1$Temp_time, unit="15 mins")
 BRMQ1$Temp_time <- round_date(BRMQ1$Temp_time, unit="15 mins")
+BRMQ1_1$Temp_time <- round_date(BRMQ1_1$Temp_time, unit="15 mins")
+BRMQ1_2$Temp_time <- round_date(BRMQ1_2$Temp_time, unit="15 mins")
 
 # extract only the time part (HH:MM:SS) from the rounded Time
 BRAA1$Time <- format(BRAA1$Temp_time, format = "%H:%M:%S")
 BRMQ1$Time <- format(BRMQ1$Temp_time, format = "%H:%M:%S")
+BRMQ1_1$Time <- format(BRMQ1_1$Temp_time, format = "%H:%M:%S")
+BRMQ1_2$Time <- format(BRMQ1_2$Temp_time, format = "%H:%M:%S")
 
 # remove extra column
 BRAA1 <- BRAA1[,-7]
 BRMQ1 <- BRMQ1[,-7]
+BRMQ1_1 <- BRMQ1_1[,-7]
+BRMQ1_2 <- BRMQ1_2[,-7]
 
 ###############################
 #### Save files separately ####
 ###############################
 write.csv(BRAA1, "data/2024-12-13_BRAA1_2188416_PTdownload.csv")
 write.csv(BRMQ1, "data/2024-12-13_BRMQ1_2190536_PTdownload.csv")
+write.csv(BRMQ1_1, "data/2025-08-27_BRMQ1_2211761.csv")
+write.csv(BRMQ1_2, "data/2025-10-17_BRMQ1_2211761.csv")
 
 # this is the in use folder
 drive_folder_id <- "1q_HNENGb8tyHmWTA-TP5sOM8APgxKRxI"
@@ -152,9 +167,16 @@ drive_put(
   media = "data/2024-12-13_BRAA1_2188416_PTdownload.csv",
   path = as_id(drive_folder_id)
 )
-
 drive_put(
   media = "data/2024-12-13_BRMQ1_2190536_PTdownload.csv",
+  path = as_id(drive_folder_id)
+)
+drive_put(
+  media = "data/2025-08-27_BRMQ1_2211761.csv",
+  path = as_id(drive_folder_id)
+)
+drive_put(
+  media = "data/2025-10-17_BRMQ1_2211761.csv",
   path = as_id(drive_folder_id)
 )
 

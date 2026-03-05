@@ -39,14 +39,14 @@ baro_logger <- googledrive::as_id("https://drive.google.com/drive/folders/1JZ60F
 # list all CSV files in the folder
 baro <- googledrive::drive_ls(path = baro_logger)
 # choose the specific file by name
-baro <- baro %>% filter(name == "2025-09-19_BARO_RAW.csv")
+baro <- baro %>% filter(name == "2026-02-04_BARO_RAW.csv")
 # download the most recent CSV file
-drive_download(as_id(baro$id), path = "googledrive/2025-09-19_BARO_RAW.csv", overwrite = TRUE)
+drive_download(as_id(baro$id), path = "googledrive/2026-02-04_BARO_RAW.csv", overwrite = TRUE)
 # fetch the file
-baro_log <- read.csv("googledrive/2025-09-19_BARO_RAW.csv", skip = 1)
+baro_log <- read.csv("googledrive/2026-02-04_BARO_RAW.csv", skip = 1)
 
 # convert the DateTime column to POSIXct
-baro_log$DateTime <- as.POSIXct(baro_log$Date.Time..GMT.05.00, format = "%m/%d/%y %I:%M:%S %p")
+baro_log$DateTime <- as.POSIXct(baro_log$Date.Time..GMT.05.00, format = "%m/%d/%Y %H:%M")
 
 ########################
 #### Clean up files ####
@@ -131,7 +131,7 @@ print(pressure_plot)
 #################################
 # Define the time window after the missing section to train the model
 train_start <- as.POSIXct("2025-05-31") # Date local barologger was installed
-train_end <- as.POSIXct("2025-09-19") 
+train_end <- as.POSIXct("2025-10-01") 
 
 # Filter data where both sensors were running
 training_data <- pres %>%

@@ -295,3 +295,4 @@ ggplot(data = USF20, aes(x = DateTime, y = Smoothed_Discharge_Log_m3s)) +
 
 # View the head of your updated data frame to see the new smoothed column
 head(USF20)
+

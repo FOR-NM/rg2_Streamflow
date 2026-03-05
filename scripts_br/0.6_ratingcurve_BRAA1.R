@@ -263,12 +263,13 @@ drive_put(
   path = as_id(drive_folder_id)
 )
 
-write.csv(BRAA1clean, "data/discharge_BRAA1.csv")
+write.csv(BRAA1clean, "data/discharge_BRAA1_clean.csv")
 
 drive_folder_id <- "1PNCX_xYwu57gYMFNLtHiAFbBi7m-L1Uf"
 
 # upload file to the specified Google Drive folder
 drive_put(
-  media = "data/discharge_BRAA1.csv",
+  media = "data/discharge_BRAA1_clean.csv",
   path = as_id(drive_folder_id)
 )
+
