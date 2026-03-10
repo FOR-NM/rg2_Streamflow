@@ -157,13 +157,28 @@ subdf <- DVWT3[DVWT3$DateTime < Date2 & DVWT3$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-06-04 14:00:00"), linetype="dashed", color="red")
 
-# start of data
-Date1 <- as.Date("2024-08-01", "%Y-%m-%d")
-Date2 <- as.Date("2024-08-02", "%Y-%m-%d")
+#
+Date1 <- as.Date("2025-09-09", "%Y-%m-%d")
+Date2 <- as.Date("2025-09-22", "%Y-%m-%d")
 subdf <- DVWT3[DVWT3$DateTime < Date2 & DVWT3$DateTime > Date1,]
 # Level logger moved down 7.5 cm. Logger back in water at 10:20
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-11-14 09:45:00"), linetype="dashed", color="red")
+
+#
+Date1 <- as.Date("2025-11-04", "%Y-%m-%d")
+Date2 <- as.Date("2025-11-05", "%Y-%m-%d")
+subdf <- DVWT3[DVWT3$DateTime < Date2 & DVWT3$DateTime > Date1,]
+# Level logger moved down 7.5 cm. Logger back in water at 10:20
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-11-04 12:30:00"), linetype="dashed", color="red")
+
+Date1 <- as.Date("2025-11-04", "%Y-%m-%d")
+Date2 <- as.Date("2025-12-31", "%Y-%m-%d")
+subdf <- DVWT3[DVWT3$DateTime < Date2 & DVWT3$DateTime > Date1,]
+# Level logger moved down 7.5 cm. Logger back in water at 10:20
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-11-04 12:30:00"), linetype="dashed", color="red")
 
 ######################################################################
 #### Remove times where PT was out of the water and error section ####
@@ -171,8 +186,8 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
 # now NA the time when the PT was out of water 
 time1 <- as.POSIXct("2024-11-14 09:45:00")
 time2 <- as.POSIXct("2024-11-14 10:00:00")
-# time3 <- as.POSIXct("2025-04-25 11:30:00")
-# time4 <- as.POSIXct("2025-06-04 11:45:00")
+time3 <- as.POSIXct("2025-09-16 11:15:00")
+time4 <- as.POSIXct("2025-11-04 12:30:00")
 # time5 <- as.POSIXct("2025-06-04 11:30:00")
 # time6 <- as.POSIXct("2025-06-04 11:15:00")
  
@@ -180,10 +195,10 @@ DVWT3 <- DVWT3 %>%
   mutate(Baro_Cor_Lvl = ifelse(DateTime == time1, NA, Baro_Cor_Lvl))
 DVWT3 <- DVWT3 %>%
   mutate(Baro_Cor_Lvl = ifelse(DateTime == time2, NA, Baro_Cor_Lvl))
-# DVWT3 <- DVWT3 %>%
-#   mutate(Baro_Cor_Lvl = ifelse(DateTime == time3, NA, Baro_Cor_Lvl))
-# DVWT3 <- DVWT3 %>%
-#   mutate(Baro_Cor_Lvl = ifelse(DateTime == time4, NA, Baro_Cor_Lvl))
+DVWT3 <- DVWT3 %>%
+  mutate(Baro_Cor_Lvl = ifelse(DateTime == time3, NA, Baro_Cor_Lvl))
+DVWT3 <- DVWT3 %>%
+  mutate(Baro_Cor_Lvl = ifelse(DateTime == time4, NA, Baro_Cor_Lvl))
 # DVWT3 <- DVWT3 %>%
 #   mutate(Baro_Cor_Lvl = ifelse(DateTime == time5, NA, Baro_Cor_Lvl))
 # DVWT3 <- DVWT3 %>%
@@ -232,24 +247,24 @@ DVWT3 <- DVWT3 %>%
                                     Baro_Cor_offset1 - offset2,
                                     Baro_Cor_offset1))
 
-# # third move correction 
-# move_time3 <- as.POSIXct("2025-06-03 09:45:00")
-# 
-# before_move3 <- DVWT3 %>%
-#   filter(DateTime >= (move_time3 - hours(2)) & DateTime < move_time3) %>%
-#   summarize(mean_before3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset2
-# 
-# after_move3 <- DVWT3 %>%
-#   filter(DateTime >= move_time3 & DateTime < (move_time3 + hours(2))) %>%
-#   summarize(mean_after3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset2
-# 
-# offset3 <- after_move3$mean_after3 - before_move3$mean_before3
-# print(paste("Offset 3:", offset3))
-# 
-# # apply the second correction
-# DVWT3 <- DVWT3 %>%
-#   mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
-# 
+# third move correction
+move_time3 <- as.POSIXct("2025-09-16 11:15:00")
+
+before_move3 <- DVWT3 %>%
+  filter(DateTime >= (move_time3 - hours(2)) & DateTime < move_time3) %>%
+  summarize(mean_before3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset2
+
+after_move3 <- DVWT3 %>%
+  filter(DateTime >= move_time3 & DateTime < (move_time3 + hours(2))) %>%
+  summarize(mean_after3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset2
+
+offset3 <- after_move3$mean_after3 - before_move3$mean_before3
+print(paste("Offset 3:", offset3))
+
+# apply the second correction
+DVWT3 <- DVWT3 %>%
+  mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
+
 # # fourth move correction 
 # move_time4 <- as.POSIXct("2025-05-21 12:45:00")
 # 
@@ -278,15 +293,12 @@ ggplot(DVWT3, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 ggplot(DVWT3, aes(x = DateTime, y = Baro_Cor_offset1)) +
   geom_line() +
   labs(title = "Corrected Baro_Cor Over Time (First Correction)", x = "Date", y = "Water Level (m)")
-
 ggplot(DVWT3, aes(x = DateTime, y = Baro_Cor_offset2)) +
   geom_line() +
   labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
-
-# ggplot(DVWT3, aes(x = DateTime, y = Baro_Cor_offset3)) +
-#   geom_line() +
-#   labs(title = "Corrected Baro_Cor Over Time (Third Correction)", x = "Date", y = "Water Level (m)")
-# 
+ggplot(DVWT3, aes(x = DateTime, y = Baro_Cor_offset3)) +
+  geom_line() +
+  labs(title = "Corrected Baro_Cor Over Time (Third Correction)", x = "Date", y = "Water Level (m)")
 # ggplot(DVWT3, aes(x = DateTime, y = Baro_Cor_offset4)) +
 #   geom_line() +
 #   labs(title = "Corrected Baro_Cor Over Time (Fourth Correction)", x = "Date", y = "Water Level (m)")
@@ -320,6 +332,12 @@ ggplot(new_rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
   labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
   theme_minimal()
 
+ggplot(new_rating_data, aes(x = Baro_Cor_offset3, y = Q.m3s)) +
+  geom_point(color = "blue") +
+  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
+  labs(title = "Stage vs. Discharge (Second Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+  theme_minimal()
+
 ####################################
 #### Plot level with correction ####
 ####################################
@@ -328,7 +346,6 @@ ggplot(new_level_data, aes(x = Baro_Cor_offset2, y = Actual_Water_Depth_m)) +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
   labs(title = "Baro-corrected level vs. Actual water depth at sensor (Second Correction)", x = "Baro-corrected level (m)", y = "Water depth  (m)") +
   theme_minimal()
-
 
 ########################
 #### Plot close ups ####
@@ -353,6 +370,16 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
 ggplot(data=subdf, aes(DateTime,Baro_Cor_offset2)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-09-26 12:00:00"), linetype="dashed", color="red")
 
+#
+Date1 <- as.Date("2025-09-14", "%Y-%m-%d")
+Date2 <- as.Date("2025-09-17", "%Y-%m-%d")
+subdf <- DVWT3[DVWT3$DateTime < Date2 & DVWT3$DateTime > Date1,]
+
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-09-16 11:15:00"), linetype="dashed", color="red")
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset3)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-09-16 11:15:00"), linetype="dashed", color="red")
+
 ###################
 #### Save file ####
 ###################
@@ -366,3 +393,4 @@ drive_put(
   media = "data/offset_DVWT3.csv",
   path = as_id(drive_folder_id)
 )
+

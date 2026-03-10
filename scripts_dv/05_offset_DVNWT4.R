@@ -51,7 +51,7 @@ DVNWT4$Q..L.s. <- as.numeric(DVNWT4$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
 
 # level data
-level_data <- DVMS5 %>% 
+level_data <- DVNWT4 %>% 
   filter(!is.na(Baro_Cor_Lvl), !is.na(Actual_Water_Depth_m))
 
 # make compensated backup 

@@ -294,7 +294,6 @@ print(paste("Offset 5:", offset5))
 DVSB2 <- DVSB2 %>%
   mutate(Baro_Cor_offset5 = if_else(DateTime >= move_time5, Baro_Cor_offset4 - offset5, Baro_Cor_offset4))
 
-
 ##############################
 #### Plot with Correction ####
 ##############################
@@ -315,7 +314,7 @@ ggplot(DVSB2, aes(x = DateTime, y = Baro_Cor_offset4)) +
   labs(title = "Corrected Baro_Cor Over Time (Fourth Correction)", x = "Date", y = "Water Level (m)")
 ggplot(DVSB2, aes(x = DateTime, y = Baro_Cor_offset5)) +
   geom_line() +
-  labs(title = "Corrected Baro_Cor Over Time (Third Correction)", x = "Date", y = "Water Level (m)")
+  labs(title = "Corrected Baro_Cor Over Time (Fifth Correction)", x = "Date", y = "Water Level (m)")
 
 # discharge from L/s to m3/s in whole data set
 DVSB2$Q..L.s. <- as.numeric(DVSB2$Q..L.s.)

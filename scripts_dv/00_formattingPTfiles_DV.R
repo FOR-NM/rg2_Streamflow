@@ -6,7 +6,6 @@
 ## Packages ##
 ##############
 library(googledrive)
-library(tidyverse)
 
 ########################################
 #### Clear folders that we will use ####
@@ -20,10 +19,10 @@ file.remove(files)
 #####################
 # set up Google Drive folder
 # this is the "raw level logger" folder
-#pt <- googledrive::as_id("https://drive.google.com/drive/folders/1r0xE5ybzFTP3nKyecwSNj2S1oC2Ci6PZ")
+# pt <- googledrive::as_id("https://drive.google.com/drive/folders/1r0xE5ybzFTP3nKyecwSNj2S1oC2Ci6PZ")
 
 # this is the "raw baro logger" folder
-#pt <- googledrive::as_id("https://drive.google.com/drive/folders/1XRKIeb4eKFngCjs2owqfjO0xzOOkZHQ6")
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1XRKIeb4eKFngCjs2owqfjO0xzOOkZHQ6")
 
 # list and filter CSV files with "pt" in their names
 pt_files <- googledrive::drive_ls(path = pt, type = "csv")
@@ -100,7 +99,7 @@ for (i in seq_along(pt_list)) {
   file <- paste0("googledrive/", pt_files$name[i])
   # this is the "in use level logger" folder for BARO FILES: 1_KUXHWDuAbO3Z6EV_RKBZL9IyWeeaj-X
   # this is the "in use level logger" folder for LEVEL FILES: 1B1xRjXUzU1Q3baLGwN5NvCk5axHG-ylq
-  drive_folder_id <- "1B1xRjXUzU1Q3baLGwN5NvCk5axHG-ylq"
+  drive_folder_id <- "1_KUXHWDuAbO3Z6EV_RKBZL9IyWeeaj-X"
   
   # upload file to the specified Google Drive folder
   drive_put(

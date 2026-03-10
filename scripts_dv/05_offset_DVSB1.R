@@ -46,15 +46,14 @@ DVSB1$DateTime <- paste(DVSB1$Date.air, DVSB1$TimeOnly, sep = " ")
 # convert the DateTime column to POSIXct
 DVSB1$DateTime <- as.POSIXct(DVSB1$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
-# filter out rows with missing stage or discharge and bad dicharge curves
+# filter out rows with missing stage or discharge and bad discharge curves
 rating_data <- DVSB1 %>% 
   filter(!is.na(Baro_Cor_Lvl), !is.na(Q))
 rating_data <- DVSB1 %>% 
-  filter(slug_flag != c("Bad", "Př"))
+  filter(slug_flag.x != c("Bad", "PW"))
 # level data
 level_data <- DVSB1 %>% 
   filter(!is.na(Baro_Cor_Lvl), !is.na(Actual_Water_Depth_m))
-
 
 DVSB1$Q..L.s. <- as.numeric(DVSB1$Q)
 rating_data$Q..L.s. <- as.numeric(rating_data$Q)
@@ -165,6 +164,13 @@ subdf <- DVSB1[DVSB1$DateTime < Date2 & DVSB1$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2024-11-30 08:30:00"), linetype="dashed", color="red")
 
+# gap
+Date1 <- as.Date("2025-07-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-07-14", "%Y-%m-%d")
+subdf <- DVSB1[DVSB1$DateTime < Date2 & DVSB1$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-07-11 15:30:00"), linetype="dashed", color="red")
+
 ######################################################################
 #### Remove times where PT was out of the water and error section ####
 ######################################################################
@@ -219,6 +225,17 @@ print(paste("Offset 2:", offset2))
 DVSB1 <- DVSB1 %>%
   mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
 
+# third move correction 
+move_time3 <- as.POSIXct("2025-07-11 15:30:00")
+offset3 <- 0.06  # m offset from field notes
+
+# apply the third correction
+DVSB1 <- DVSB1 %>%
+  mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3,
+                                    Baro_Cor_offset2 - offset3,
+                                    Baro_Cor_offset2))
+
+
 ##############################
 #### Plot with Correction ####
 ##############################
@@ -234,6 +251,10 @@ ggplot(DVSB1, aes(x = DateTime, y = Baro_Cor_offset2)) +
   geom_line() +
   labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
 
+ggplot(DVSB1, aes(x = DateTime, y = Baro_Cor_offset3)) +
+  geom_line() +
+  labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
+
 # discharge from L/s to m3/s in whole data set
 DVSB1$Q..L.s. <- as.numeric(DVSB1$Q..L.s.)
 DVSB1 <- DVSB1 %>%
@@ -243,7 +264,7 @@ DVSB1 <- DVSB1 %>%
 new_rating_data <- DVSB1 %>% 
   filter(!is.na(Baro_Cor_offset1), !is.na(Q.m3s))
 new_rating_data <- DVSB1 %>% 
-  filter(slug_flag != "Bad")
+  filter(slug_flag.x != "Bad")
 new_level_data <- DVSB1 %>% 
   filter(!is.na(Baro_Cor_offset1), !is.na(Actual_Water_Depth_m))
 

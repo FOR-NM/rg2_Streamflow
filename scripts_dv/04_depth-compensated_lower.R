@@ -67,33 +67,51 @@ salt$DateTime <- as.POSIXct(salt$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
 #######################################
 #### Load Q data from Google drive ####
 #######################################
-discharge <- googledrive::as_id("https://drive.google.com/drive/folders/1zAYT2ZXfCbIuoxzR7-CpZPw19Wk91pIH")
-
+pt <- googledrive::as_id("https://drive.google.com/drive/folders/1zAYT2ZXfCbIuoxzR7-CpZPw19Wk91pIH")
 # list all CSV files in the folder
-discharge_csv <- googledrive::drive_ls(path = discharge, type = "csv")
+discharge_files <- googledrive::drive_ls(path = pt)
 3
 
-# call the specific file you want (most recent one)
-googledrive::drive_download(file = discharge_csv$id[discharge_csv$name=="Q_DV.csv"], 
-                            path = "googledrive/Q_DV.csv",
-                            overwrite = T)
+# create an empty list to store the cleaned data frames
+q_list <- lapply(seq_along(discharge_files$name), function(i) {
+  googledrive::drive_download(
+    file = discharge_files$id[i],
+    path = paste0("googledrive/", discharge_files$name[i]),
+    overwrite = TRUE
+  )
+  
+  # read the CSV file, skipping the first 11 rows (header is on row 12)
+  read.csv(paste0("googledrive/", discharge_files$name[i]), header = TRUE)
+})
 
-# load it into R
-Q = read.csv("googledrive/Q_DV.csv")
+# assign names to the list elements based on the file names
+names(q_list) <- discharge_files$name
 
-# convert the Date column to Date
-Q$Date <- as.Date(Q$Date, format = "%Y-%m-%d")
+# format date and time columns
+for (i in seq_along(q_list)) {
+  # access the current data frame
+  df <- q_list[[i]]
+  
+  # make date into date format
+  df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
+  # update the data frame in the list
+  q_list[[i]] <- df
+}
 
-# remove duplicate rows
-Q <- Q[ , -c(3, 4, 7, 8)]
-
-colnames(Q)
+######################
+#### Combine data ####
+######################
+# Bind and filter for unique site-date combinations
+Q_DV <- q_list %>%
+  bind_rows() %>%
+  # Correct way to specify multiple columns in distinct
+  distinct(DataID, Date, .keep_all = TRUE)
 
 #########################################
 #### Load flow status of the streams ####
 #########################################
 (st <- drive_get("https://docs.google.com/spreadsheets/d/1ig_BVOc9yp33Gkn-nLVaEA3rKy1TdgNnd69zbz4KOsQ/edit?gid=0#gid=0"))
-3
+
 # download the file as a csv file
 drive_download(as_id(st$id), path = "googledrive/flowstatus.csv", type = "csv", overwrite = T)
 
@@ -166,7 +184,7 @@ actual_water_depth <- actual_water_depth %>%
 ########################################
 #### Merge depth and discharge data ####
 ########################################
-discharge_depth <- merge(Q, salt, by = c("DataID", "Date"), all.x = TRUE)
+discharge_depth <- merge(Q_DV, salt, by = c("DataID", "Date"), all.x = TRUE)
 # round DateTime to the nearest 15-minute interval 
 discharge_depth$DateTime <- round_date(discharge_depth$DateTime, unit="15 mins")
 

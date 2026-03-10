@@ -43,6 +43,17 @@ DVNWT5$DateTime <- paste(DVNWT5$Date.x, DVNWT5$TimeOnly, sep = " ")
 # convert the DateTime column to POSIXct
 DVNWT5$DateTime <- as.POSIXct(DVNWT5$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
+
+####-----------------------------
+# change slug time for 2025-10-07
+####-----------------------------
+# use lag() to move the data "forward" in time (to the next hour row)
+# DVNWT5 <- DVNWT5 %>%
+#   arrange(DateTime) %>% # Crucial: ensure data is in chronological order first
+#   mutate(across(17:44, ~ lead(.x, n = 16)))
+# Note: The very first row for these columns will now be NA 
+# because there was no "previous" hour to pull from.
+
 # filter out rows with missing stage or discharge
 rating_data <- DVNWT5 %>% 
   filter(!is.na(Baro_Cor_Lvl), !is.na(Q))
@@ -174,6 +185,30 @@ subdf <- DVNWT5[DVNWT5$DateTime < Date2 & DVNWT5$DateTime > Date1,]
 ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-05-21 12:30:00"), linetype="dashed", color="red")
 
+Date1 <- as.Date("2025-08-01", "%Y-%m-%d")
+Date2 <- as.Date("2025-08-30", "%Y-%m-%d")
+subdf <- DVNWT5[DVNWT5$DateTime < Date2 & DVNWT5$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-08-13 12:00:00"), linetype="dashed", color="red")
+
+Date1 <- as.Date("2025-09-10", "%Y-%m-%d")
+Date2 <- as.Date("2025-09-15", "%Y-%m-%d")
+subdf <- DVNWT5[DVNWT5$DateTime < Date2 & DVNWT5$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-09-12 12:00:00"), linetype="dashed", color="red")
+
+Date1 <- as.Date("2025-10-06", "%Y-%m-%d")
+Date2 <- as.Date("2025-10-08", "%Y-%m-%d")
+subdf <- DVNWT5[DVNWT5$DateTime < Date2 & DVNWT5$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-10-07 16:00:00"), linetype="dashed", color="red")
+
+Date1 <- as.Date("2025-11-04", "%Y-%m-%d")
+Date2 <- as.Date("2025-11-05", "%Y-%m-%d")
+subdf <- DVNWT5[DVNWT5$DateTime < Date2 & DVNWT5$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-11-04 14:30:00"), linetype="dashed", color="red")
+
 ######################################################################
 #### Remove times where PT was out of the water and error section ####
 ######################################################################
@@ -185,6 +220,8 @@ time4 <- as.POSIXct("2025-06-04 11:45:00")
 time5 <- as.POSIXct("2025-06-04 11:30:00")
 time6 <- as.POSIXct("2025-06-04 11:15:00")
 time7 <- as.POSIXct("2025-04-18 12:15:00") 
+time8 <- as.POSIXct("2025-10-07 12:00:00")
+time9 <- as.POSIXct("2025-11-04 14:30:00")
 
 DVNWT5 <- DVNWT5 %>%
   mutate(Baro_Cor_Lvl = ifelse(DateTime == time1, NA, Baro_Cor_Lvl))
@@ -200,6 +237,10 @@ DVNWT5 <- DVNWT5 %>%
   mutate(Baro_Cor_Lvl = ifelse(DateTime == time6, NA, Baro_Cor_Lvl))
 DVNWT5 <- DVNWT5 %>%
   mutate(Baro_Cor_Lvl = ifelse(DateTime == time7, NA, Baro_Cor_Lvl))
+DVNWT5 <- DVNWT5 %>%
+  mutate(Baro_Cor_Lvl = ifelse(DateTime == time8, NA, Baro_Cor_Lvl))
+DVNWT5 <- DVNWT5 %>%
+  mutate(Baro_Cor_Lvl = ifelse(DateTime == time9, NA, Baro_Cor_Lvl))
 
 # remove first couple data points in start of data
 Date1 <- as.Date("2024-07-30", "%Y-%m-%d")
@@ -217,7 +258,7 @@ ggplot(DVNWT5, aes(x = DateTime, y = Baro_Cor_Lvl)) +
 #### Remove 2024 data ####
 ##########################
 Date1 <- as.Date("2025-01-01", "%Y-%m-%d")
-Date2 <- as.Date("2025-07-09", "%Y-%m-%d")
+Date2 <- as.Date("2026-01-09", "%Y-%m-%d")
 DVNWT5 <- DVNWT5[DVNWT5$DateTime < Date2 & DVNWT5$DateTime > Date1,]
 
 ###########################################################################
@@ -225,108 +266,84 @@ DVNWT5 <- DVNWT5[DVNWT5$DateTime < Date2 & DVNWT5$DateTime > Date1,]
 ###########################################################################
 # first move correction
 move_time1 <- as.POSIXct("2025-05-21 12:45:00")
-
 before_move1 <- DVNWT5 %>%
   filter(DateTime >= (move_time1 - hours(2)) & DateTime < move_time1) %>%
   summarize(mean_before1 = mean(Baro_Cor_Lvl, na.rm = TRUE))
-
 after_move1 <- DVNWT5 %>%
   filter(DateTime >= move_time1 & DateTime < (move_time1 + hours(2))) %>%
   summarize(mean_after1 = mean(Baro_Cor_Lvl, na.rm = TRUE))
-
 offset1 <-  after_move1$mean_after1 - before_move1$mean_before1
 print(paste("Offset 1:", offset1))
-
 # apply the first correction
 DVNWT5 <- DVNWT5 %>%
   mutate(Baro_Cor_offset1 = if_else(DateTime >= move_time1, Baro_Cor_Lvl - offset1, Baro_Cor_Lvl))
 
 # second move correction
 move_time2 <- as.POSIXct("2025-06-04 11:00:00")
-
 before_move2 <- DVNWT5 %>%
   filter(DateTime >= (move_time2 - hours(2)) & DateTime < move_time2) %>%
   summarize(mean_before2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
-
 after_move2 <- DVNWT5 %>%
   filter(DateTime >= move_time2 & DateTime < (move_time2 + hours(2))) %>%
   summarize(mean_after2 = mean(Baro_Cor_offset1, na.rm = TRUE)) # Use Baro_Cor_offset1
-
 offset2 <- after_move2$mean_after2 - before_move2$mean_before2
 print(paste("Offset 2:", offset2))
-
 # apply the second correction
 DVNWT5 <- DVNWT5 %>%
   mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
 
 # third move correction 
 move_time3 <- as.POSIXct("2025-04-25 12:00:00")
-
 before_move3 <- DVNWT5 %>%
   filter(DateTime >= (move_time3 - hours(2)) & DateTime < move_time3) %>%
   summarize(mean_before3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset2
-
 after_move3 <- DVNWT5 %>%
   filter(DateTime >= move_time3 & DateTime < (move_time3 + hours(2))) %>%
   summarize(mean_after3 = mean(Baro_Cor_offset2, na.rm = TRUE)) # Use Baro_Cor_offset2
-
 offset3 <- after_move3$mean_after3 - before_move3$mean_before3
 print(paste("Offset 3:", offset3))
-
 # apply the second correction
 DVNWT5 <- DVNWT5 %>%
   mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
 
 # fourth move correction 
 move_time4 <- as.POSIXct("2025-06-10 11:00:00")
-
 before_move4 <- DVNWT5 %>%
   filter(DateTime >= (move_time4 - hours(2)) & DateTime < move_time4) %>%
   summarize(mean_before4 = mean(Baro_Cor_offset3, na.rm = TRUE)) # Use Baro_Cor_offset3
-
 after_move4 <- DVNWT5 %>%
   filter(DateTime >= move_time4 & DateTime < (move_time4 + hours(2))) %>%
   summarize(mean_after4 = mean(Baro_Cor_offset3, na.rm = TRUE)) # Use Baro_Cor_offset3
-
 offset4 <- after_move4$mean_after4 - before_move4$mean_before4
 print(paste("Offset 4:", offset4))
-
 # apply the second correction
 DVNWT5 <- DVNWT5 %>%
   mutate(Baro_Cor_offset4 = if_else(DateTime >= move_time4, Baro_Cor_offset3 - offset4, Baro_Cor_offset3))
 
 # fifth move correction 
 move_time5 <- as.POSIXct("2025-07-08 11:00:00")
-
 before_move5 <- DVNWT5 %>%
   filter(DateTime >= (move_time5 - hours(2)) & DateTime < move_time5) %>%
   summarize(mean_before5 = mean(Baro_Cor_offset4, na.rm = TRUE)) # Use Baro_Cor_offset4
-
 after_move5 <- DVNWT5 %>%
   filter(DateTime >= move_time5 & DateTime < (move_time5 + hours(2))) %>%
   summarize(mean_after5 = mean(Baro_Cor_offset4, na.rm = TRUE)) # Use Baro_Cor_offset4
-
 offset5 <- after_move5$mean_after5 - before_move5$mean_before5
 print(paste("Offset 5:", offset5))
-
 # apply the second correction
 DVNWT5 <- DVNWT5 %>%
   mutate(Baro_Cor_offset5 = if_else(DateTime >= move_time5, Baro_Cor_offset4 - offset5, Baro_Cor_offset4))
 
-# # sixth move correction 
-# move_time6 <- as.POSIXct("2025-05-21 12:45:00")
-# 
+# # sixth move correction
+# move_time6 <- as.POSIXct("2025-10-07 12:15:00")
 # before_move6 <- DVNWT5 %>%
-#   filter(DateTime >= (move_time6 - hours(2)) & DateTime < move_time6) %>%
+#   filter(DateTime >= (move_time6 - hours(1)) & DateTime < move_time6) %>%
 #   summarize(mean_before6 = mean(Baro_Cor_offset5, na.rm = TRUE)) # Use Baro_Cor_offset5
-# 
 # after_move6 <- DVNWT5 %>%
-#   filter(DateTime >= move_time6 & DateTime < (move_time6 + hours(2))) %>%
+#   filter(DateTime >= move_time6 & DateTime < (move_time6 + hours(1))) %>%
 #   summarize(mean_after6 = mean(Baro_Cor_offset5, na.rm = TRUE)) # Use Baro_Cor_offset5
-# 
 # offset6 <- after_move6$mean_after6 - before_move6$mean_before6
 # print(paste("Offset 6:", offset6))
-# 
 # # apply the second correction
 # DVNWT5 <- DVNWT5 %>%
 #   mutate(Baro_Cor_offset6 = if_else(DateTime >= move_time6, Baro_Cor_offset5 - offset6, Baro_Cor_offset5))
@@ -356,11 +373,11 @@ ggplot(DVNWT5, aes(x = DateTime, y = Baro_Cor_offset4)) +
 
 ggplot(DVNWT5, aes(x = DateTime, y = Baro_Cor_offset5)) +
   geom_line() +
-  labs(title = "Corrected Baro_Cor Over Time (Fourth Correction)", x = "Date", y = "Water Level (m)")
+  labs(title = "Corrected Baro_Cor Over Time (Fifth Correction)", x = "Date", y = "Water Level (m)")
 
 # ggplot(DVNWT5, aes(x = DateTime, y = Baro_Cor_offset6)) +
 #   geom_line() +
-#   labs(title = "Corrected Baro_Cor Over Time (Fourth Correction)", x = "Date", y = "Water Level (m)")
+#   labs(title = "Corrected Baro_Cor Over Time (Sixth Correction)", x = "Date", y = "Water Level (m)")
 
 # discharge from L/s to m3/s in whole data set
 DVNWT5$Q..L.s. <- as.numeric(DVNWT5$Q..L.s.)
@@ -369,9 +386,9 @@ DVNWT5 <- DVNWT5 %>%
 
 # filter out rows with missing stage or discharge
 new_rating_data <- DVNWT5 %>% 
-  filter(!is.na(Baro_Cor_offset1), !is.na(Q.m3s))
+  filter(!is.na(Baro_Cor_Lvl), !is.na(Q.m3s))
 new_level_data <- DVNWT5 %>% 
-  filter(!is.na(Baro_Cor_offset1), !is.na(Actual_Water_Depth_m))
+  filter(!is.na(Baro_Cor_Lvl), !is.na(Actual_Water_Depth_m))
 
 ggplot(new_rating_data, aes(x = Baro_Cor_Lvl, y = Q.m3s)) +
   geom_point(color = "blue") +
@@ -406,7 +423,7 @@ ggplot(new_rating_data, aes(x = Baro_Cor_offset4, y = Q.m3s)) +
 ggplot(new_rating_data, aes(x = Baro_Cor_offset5, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +
-  labs(title = "Stage vs. Discharge (Fourth Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
+  labs(title = "Stage vs. Discharge (Fifth Correction)", x = "Stage (LEVEL m)", y = "Discharge (Q m3/s)") +
   theme_minimal()
 
 # ggplot(new_rating_data, aes(x = Baro_Cor_offset6, y = Q.m3s)) +
@@ -463,17 +480,17 @@ ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
 ggplot(data=subdf, aes(DateTime,Baro_Cor_offset5)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-07-08 11:00:00"), linetype="dashed", color="red")
 
-# #take the subset of the data for February when PT was moved
-# Date1 <- as.Date("2025-05-19", "%Y-%m-%d")
-# Date2 <- as.Date("2025-05-23", "%Y-%m-%d")
-# subdf <- DVNWT5[DVNWT5$DateTime < Date2 & DVNWT5$DateTime > Date1,]
-# ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
-#   geom_vline(xintercept = as.POSIXct("2025-05-21 12:00:00"), linetype="dashed", color="red")
-# ggplot(data=subdf, aes(DateTime,Baro_Cor_offset6)) + geom_line() +
-#   geom_vline(xintercept = as.POSIXct("2025-05-21 12:00:00"), linetype="dashed", color="red")
+#take the subset of the data for February when PT was moved
+Date1 <- as.Date("2025-10-06", "%Y-%m-%d")
+Date2 <- as.Date("2025-10-08", "%Y-%m-%d")
+subdf <- DVNWT5[DVNWT5$DateTime < Date2 & DVNWT5$DateTime > Date1,]
+ggplot(data=subdf, aes(DateTime,Baro_Cor_Lvl)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-10-07 12:15:00"), linetype="dashed", color="red")
+ggplot(data=subdf, aes(DateTime,Baro_Cor_offset6)) + geom_line() +
+  geom_vline(xintercept = as.POSIXct("2025-10-07 12:15:00"), linetype="dashed", color="red")
 
 ###################
-#### Save file ####
+#### Save file #### 
 ###################
 write.csv(DVNWT5, "data/offset_DVNWT5.csv")
 

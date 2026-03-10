@@ -79,7 +79,7 @@ ggplot(data=subdf, aes(DateTime,LEVEL.m)) + geom_line() +
   geom_vline(xintercept = as.POSIXct("2025-02-07 12:15:00"), linetype="dashed", color="red") 
 
 #### baro logger data ####
-# this is the merged days baro folder
+# this is the raw baro folder
 pt_air <- googledrive::as_id("https://drive.google.com/drive/folders/1XRKIeb4eKFngCjs2owqfjO0xzOOkZHQ6")
 # list all CSV files in the folder
 pt_csvs_air <- googledrive::drive_ls(path = pt_air, type = "csv")
