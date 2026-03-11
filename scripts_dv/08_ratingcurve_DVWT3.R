@@ -51,16 +51,19 @@ DVWT3$DateTime <- as.POSIXct(DVWT3$DateTime, format = "%Y-%m-%d %H:%M:%S")
 ########################################
 # filter out rows with missing stage or discharge
 rating_data <- DVWT3 %>% 
-  filter(!is.na(Baro_Cor_offset2), !is.na(Q), !Q == 0)
-rating_data <- rating_data %>% 
-  filter(slug_flag != "Bad")
-rating_data <- rating_data %>% 
-  filter(slug_flag != c("PW"))
+  filter(!is.na(Baro_Cor_offset3), !is.na(Q), !Q == 0)
+
+write.csv(rating_data, "DVWT3_rating.csv")
+
+# rating_data <- rating_data %>% 
+#   filter(slug_flag != "Bad")
+# rating_data <- rating_data %>% 
+#   filter(slug_flag != c("PW"))
 
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-ggplot(data = DVWT3, aes(x = DateTime, y = Baro_Cor_offset2)) +
+ggplot(data = DVWT3, aes(x = DateTime, y = Baro_Cor_offset3)) +
   geom_vline(xintercept = as.POSIXct("2025-06-23 12:00:00"), linetype="dashed") +
   geom_line() + ggtitle("DVWT3 compensated level data")
 
@@ -72,16 +75,16 @@ rating_data <- rating_data %>%
   mutate(Q.m3s = Q/1000)
 
 # plot with date info
-ggplot(rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
+ggplot(rating_data, aes(x = Baro_Cor_offset3, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+  labs(title = "Stage vs. Discharge - DVWT3", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
 
 ###########################################
 #### Check for Log-Linear Relationship ####
 ###########################################
-ggplot(rating_data, aes(x = log(Baro_Cor_offset2), y = log(Q.m3s))) +
+ggplot(rating_data, aes(x = log(Baro_Cor_offset3), y = log(Q.m3s))) +
   geom_point(color = "blue") +
   labs(title = "Log-Log Plot of Water Level vs. Discharge", 
        x = "Log(Water Level)", y = "Log(Discharge)") +
@@ -92,7 +95,7 @@ ggplot(rating_data, aes(x = log(Baro_Cor_offset2), y = log(Q.m3s))) +
 #### Log model? ####
 ####################
 rating_data <- rating_data %>%
-  mutate(Log_Stage = log(Baro_Cor_offset2),
+  mutate(Log_Stage = log(Baro_Cor_offset3),
          Log_Discharge = log(Q.m3s))
 log_model <- lm(Log_Discharge ~ Log_Stage, data = rating_data)
 
@@ -105,7 +108,7 @@ b <- coef(log_model)[2]       # Slope
 #######################
 #### Linear model? ####
 #######################
-linear_model <- lm(Q.m3s ~ Baro_Cor_offset2, data = rating_data)
+linear_model <- lm(Q.m3s ~ Baro_Cor_offset3, data = rating_data)
 
 summary(linear_model)
 
@@ -113,18 +116,18 @@ summary(linear_model)
 #### Visualize models ####
 ##########################
 # observed data
-plot(rating_data$Baro_Cor_offset2, rating_data$Q.m3s,
+plot(rating_data$Baro_Cor_offset3, rating_data$Q.m3s,
      main = "Stage vs. Discharge",
      xlab = "Water Level (m)", ylab = "Discharge (m³/s)",
      pch = 19, col = "blue")
 
 # log-transformed model predictions
 pred_log <- exp(predict(log_model, newdata = rating_data))
-lines(rating_data$Baro_Cor_offset2, pred_log, col = "red", lwd = 2)
+lines(rating_data$Baro_Cor_offset3, pred_log, col = "red", lwd = 2)
 
 # linear model predictions
 pred_linear <- predict(linear_model, newdata = rating_data)
-lines(rating_data$Baro_Cor_offset2, pred_linear, col = "green", lwd = 2)
+lines(rating_data$Baro_Cor_offset3, pred_linear, col = "green", lwd = 2)
 
 # legend
 legend("topleft", legend = c("Observed", "Log-Transformed", "Linear"),
@@ -139,7 +142,7 @@ b_log <- coef(log_model)[2]       # Slope
 
 # predict discharge for the entire dataset
 DVWT3 <- DVWT3 %>%
-  mutate(Predicted_Discharge_Log_m3s = a_log * (Baro_Cor_offset2 ^ b_log))
+  mutate(Predicted_Discharge_Log_m3s = a_log * (Baro_Cor_offset3 ^ b_log))
 
 ##########################
 #### Predicted linear ####
@@ -150,15 +153,15 @@ b_linear <- coef(linear_model)[2]  # Slope
 
 # predict discharge for the entire dataset
 DVWT3 <- DVWT3 %>%
-  mutate(Predicted_Discharge_Linear_m3s = a_linear + b_linear * Baro_Cor_offset2)
+  mutate(Predicted_Discharge_Linear_m3s = a_linear + b_linear * Baro_Cor_offset3)
 
 #############################
 #### Compare predictions ####
 #############################
 # visualize predictions
-plot(DVWT3$Baro_Cor_offset2, DVWT3$Predicted_Discharge_Log_m3s, col = "red", type = "l", lwd = 2,
+plot(DVWT3$Baro_Cor_offset3, DVWT3$Predicted_Discharge_Log_m3s, col = "red", type = "l", lwd = 2,
      xlab = "Stage (m)", ylab = "Discharge (m³/s)", main = "Discharge Predictions")
-lines(DVWT3$Baro_Cor_offset2, DVWT3$Predicted_Discharge_Linear_m3s, col = "green", lwd = 2)
+lines(DVWT3$Baro_Cor_offset3, DVWT3$Predicted_Discharge_Linear_m3s, col = "green", lwd = 2)
 legend("topleft", legend = c("Log-Transformed", "Linear"),
        col = c("red", "green"), lty = 1, lwd = 2)
 
@@ -186,7 +189,7 @@ DVWT3 <- DVWT3 %>%
     Residual_Linear = Q.m3s - Predicted_Discharge_Linear_m3s
   )
 
-ggplot(DVWT3, aes(x = Baro_Cor_offset2)) +
+ggplot(DVWT3, aes(x = Baro_Cor_offset3)) +
   geom_point(aes(y = Residual_Log, color = "Log Model")) +
   geom_point(aes(y = Residual_Linear, color = "Linear Model")) +
   labs(
@@ -203,8 +206,8 @@ ggplot(DVWT3, aes(x = Baro_Cor_offset2)) +
 DVWT3$DateTime <- as.POSIXct(DVWT3$DateTime)
 
 ggplot(DVWT3, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) +
-  geom_point(color = "blue") +
-  labs(title = "Predicted Discharge", x = "DateTime", y = "Discharge (m3/s)") +
+  geom_line(color = "blue") +
+  labs(title = "Predicted Discharge DVWT3", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
 
@@ -214,12 +217,6 @@ ggplot(DVWT3, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) +
   scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_y_continuous(trans = "log")
-
-ggplot(DVWT3, aes(x = DateTime, y = Predicted_Discharge_Linear_m3s)) +
-  geom_point(color = "blue") +
-  labs(title = "Predicted Discharge (Linear)", x = "DateTime", y = "Discharge (m3/s)") +
-  scale_x_datetime(date_breaks = "2 week") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ###################
 #### Save file ####

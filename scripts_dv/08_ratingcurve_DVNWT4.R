@@ -53,6 +53,8 @@ DVNWT4$DateTime <- as.POSIXct(DVNWT4$DateTime, format = "%Y-%m-%d %H:%M:%S")
 rating_data <- DVNWT4 %>% 
   filter(!is.na(Baro_Cor_offset1), !is.na(Q), !Q == 0)
 
+write.csv(rating_data, "DVNWT4_rating.csv")
+
 # check the structure of the cleaned data
 head(rating_data)
 
@@ -74,7 +76,7 @@ rating_data <- rating_data %>%
 ggplot(rating_data, aes(x = Baro_Cor_offset1, y = Q.m3s)) +
   geom_point(color = "blue") +
   geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
+  labs(title = "Stage vs. Discharge - DVNWT4", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
   theme_minimal()
 
 ###########################################
@@ -203,7 +205,7 @@ DVNWT4$DateTime <- as.POSIXct(DVNWT4$DateTime)
 
 ggplot(DVNWT4, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) +
   geom_point(color = "blue") +
-  labs(title = "Predicted Discharge", x = "DateTime", y = "Discharge (m3/s)") +
+  labs(title = "Predicted Discharge DVNWT4", x = "DateTime", y = "Discharge (m3/s)") +
   scale_x_datetime(date_breaks = "2 week") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
@@ -214,11 +216,6 @@ ggplot(DVNWT4, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_y_continuous(trans = "log")
 
-ggplot(DVNWT4, aes(x = DateTime, y = Predicted_Discharge_Linear_m3s)) +
-  geom_point(color = "blue") +
-  labs(title = "Predicted Discharge (Linear)", x = "DateTime", y = "Discharge (m3/s)") +
-  scale_x_datetime(date_breaks = "2 week") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ###################
 #### Save file ####
