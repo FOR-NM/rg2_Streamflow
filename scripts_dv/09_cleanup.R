@@ -132,21 +132,54 @@ DVNWT4 <- pt_list[["discharge_DVNWT4.csv"]]
 DVNWT5 <- pt_list[["discharge_DVNWT5.csv"]]
 DVWT3 <- pt_list[["discharge_DVWT3.csv"]]
 
+# clean up
+DVMS1 <- DVMS1[,-c(5,6,8,9:12,16)]
+DVMS5 <- DVMS5[,-c(5,6,8:13,17)]
+DVNWT4 <- DVNWT4[,-c(5,6,8:12,16)]
+DVNWT5 <- DVNWT5[,-c(5,6,8:14,18)]
+DVWT3 <- DVWT3[,-c(5,6,8,9:12,16)]
+
+# return to list
+pt_list <- list(
+  DVMS1 = DVMS1,
+  DVMS5 = DVMS5,
+  DVNWT4 = DVNWT4,
+  DVNWT5 = DVNWT5,
+  DVWT3 = DVWT3
+)
+
+#####################################
+#### Split data into water years ####
+#####################################
+# Function to filter for Water Year 2024
+filter_wy24 <- function(df) {
+  df %>% filter(DateTime >= "2023-10-01" & DateTime <= "2024-09-30")
+}
+
+# Function to filter for Water Year 2025
+filter_wy25 <- function(df) {
+  df %>% filter(DateTime >= "2024-10-01" & DateTime <= "2025-09-30")
+}
+
+# Create the two lists
+pt_list_wy24 <- lapply(pt_list, filter_wy24)
+pt_list_wy25 <- lapply(pt_list, filter_wy25)
+
 #######################################
 #### Save merged PT files to Drive ####
 #######################################
 # loop through each data frame in the list
-for (i in seq_along(pt_list)) {
+for (i in seq_along(pt_list_wy24)) {
   # Access the current data frame
-  df <- pt_list[[i]]
+  df <- pt_list_wy24[[i]]
   
   # save new data frame
-  write.csv(df, paste0("data/", names(pt_list)[i]), row.names=FALSE, quote=FALSE)
+  write.csv(df, paste0("data/", names(pt_list_wy24)[i]), row.names=FALSE, quote=FALSE)
   
   # define the local folder path and the target folder ID in Google Drive
-  file <- paste0("data/", names(pt_list)[i])
+  file <- paste0("data/", names(pt_list_wy24)[i])
   # this is the "smooth" folder
-  drive_folder_id <- "1RRtQMmBfUKfZ6qCYopo_cTZrxdJKs-fh"
+  drive_folder_id <- "1HYPLQ3rG80L1X2SK0ysu_I0RO-wlcxUN"
   
   # upload file to the specified Google Drive folder
   drive_put(

@@ -103,6 +103,21 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
 }
 
+######################################
+#### Change discharge column name ####
+######################################
+for (i in seq_along(pt_list)) {
+  # access the current data frame
+  df <- pt_list[[i]]
+  
+  # rename columns
+  df <- df %>%
+    dplyr::rename(Discharge_m3s = Predicted_Discharge_Log.m3s) %>%
+    mutate(Discharge_m3s = as.numeric(Discharge_m3s))
+  
+  pt_list[[i]] <-  df
+}
+
 # look at it
 SSM01 <- pt_list[["discharge_SSM01.csv"]]
 SST13 <- pt_list[["discharge_SST13.csv"]]
@@ -112,6 +127,51 @@ SST06 <- pt_list[["discharge_SST06.csv"]]
 SST07 <- pt_list[["discharge_SST07.csv"]]
 SST08 <- pt_list[["discharge_SST08.csv"]]
 SST09 <- pt_list[["discharge_SST09.csv"]]
+SST04 <- pt_list[["discharge_SST04.csv"]]
+SST03 <- pt_list[["discharge_SST03.csv"]]
+
+# clean up
+SSM01 <- SSM01[,-c(5:14,17:19)]
+SSM20 <- SSM20[,-c(5:14,16:19)]
+SST03 <- SST03[,-c(5:13,18:20)]
+SST04 <- SST04[,-c(5:13,15:18)]
+SST05 <- SST05[,-c(5:14,16:19)]
+SST06 <- SST06[,-c(5:12,14:17)]
+SST07 <- SST07[,-c(5:15,17:20)]
+SST08 <- SST08[,-c(5:14,16:19)]
+SST09 <- SST09[,-c(5:12,14:17)]
+SST13 <- SST13[,-c(5:14,16:19)]
+
+# return to list
+pt_list <- list(
+  SSM01 = SSM01,
+  SSM20 = SSM20,
+  SST03 = SST03,
+  SST04 = SST04,
+  SST05 = SST05,
+  SST06 = SST06,
+  SST07 = SST07,
+  SST08 = SST08,
+  SST09 = SST09,
+  SST13 = SST13
+)
+
+#####################################
+#### Split data into water years ####
+#####################################
+# Function to filter for Water Year 2024
+filter_wy24 <- function(df) {
+  df %>% filter(DateTime >= "2023-10-01" & DateTime <= "2024-09-30")
+}
+
+# Function to filter for Water Year 2025
+filter_wy25 <- function(df) {
+  df %>% filter(DateTime >= "2024-10-01" & DateTime <= "2025-09-30")
+}
+
+# Create the two lists
+pt_list_wy24 <- lapply(pt_list, filter_wy24)
+pt_list_wy25 <- lapply(pt_list, filter_wy25)
 
 #####################
 #### Plot curves ####
@@ -228,6 +288,27 @@ for (i in seq_along(pt_list)) {
   file <- paste0("data/", names(pt_list)[i])
   # this is the "smooth" folder
   drive_folder_id <- "1e3I99uqgBETgbxOeju2Ot-QhQAfb6GGq"
+  
+  # upload file to the specified Google Drive folder
+  drive_put(
+    media = file,
+    path = as_id(drive_folder_id)
+  )
+}
+
+
+# loop through each data frame in the list
+for (i in seq_along(pt_list_wy25)) {
+  # Access the current data frame
+  df <- pt_list_wy25[[i]]
+  
+  # save new data frame
+  write.csv(df, paste0("data/", names(pt_list_wy25)[i]), row.names=FALSE, quote=FALSE)
+  
+  # define the local folder path and the target folder ID in Google Drive
+  file <- paste0("data/", names(pt_list_wy25)[i])
+  # this is the "smooth" folder
+  drive_folder_id <- "16TMrwYROXIAKCbZKbWdkd_7F5ZKDi4GX"
   
   # upload file to the specified Google Drive folder
   drive_put(

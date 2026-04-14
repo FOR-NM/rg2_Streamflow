@@ -201,9 +201,9 @@ ggplot(DVNWT3, aes(x = DateTime, y = Baro_Cor_offset1)) +
   geom_line() +
   labs(title = "Corrected Baro_Cor Over Time (First Correction)", x = "Date", y = "Water Level (m)")
 
-# ggplot(DVNWT3, aes(x = DateTime, y = Baro_Cor_offset2)) +
-#   geom_line() +
-#   labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
+ggplot(DVNWT3, aes(x = DateTime, y = Baro_Cor_offset2)) +
+  geom_line() +
+  labs(title = "Corrected Baro_Cor Over Time (Second Correction)", x = "Date", y = "Water Level (m)")
 
 # discharge from L/s to m3/s in whole data set
 DVNWT3$Q..L.s. <- as.numeric(DVNWT3$Q..L.s.)

@@ -102,11 +102,76 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
 }
 
+######################################
+#### Change discharge column name ####
+######################################
+for (i in seq_along(pt_list)) {
+  # access the current data frame
+  df <- pt_list[[i]]
+  
+  # rename columns
+  df <- df %>%
+    dplyr::rename(Discharge_m3s = Predicted_Discharge_Log_m3s) %>%
+    mutate(Discharge_m3s = as.numeric(Discharge_m3s))
+  
+  pt_list[[i]] <-  df
+}
+
 # look at it
 USF03 <- pt_list[["discharge_USF03.csv"]]
+USF04 <- pt_list[["discharge_USF04.csv"]]
+USF05 <- pt_list[["discharge_USF05.csv"]]
+USF07 <- pt_list[["discharge_USF07.csv"]]
 USF20 <- pt_list[["discharge_USF20.csv"]]
 USF21 <- pt_list[["discharge_USF21.csv"]]
+USF13 <- pt_list[["discharge_USF19.csv"]]
+USF14 <- pt_list[["discharge_USF19.csv"]]
+USF16 <- pt_list[["discharge_USF19.csv"]]
 USF19 <- pt_list[["discharge_USF19.csv"]]
+
+# clean up
+USF03 <- USF03[,-c(5:16,20,21,22)]
+USF04 <- USF04[,-c(5:15,19:21)]
+USF05 <- USF05[,-c(5:14,18:20)]
+USF07 <- USF07[,-c(5:16,20,21,22)]
+USF13 <- USF13[,-c(5:15,18,20,21,22)]
+USF14 <- USF14[,-c(5:15,18,20,21,22)]
+USF16 <- USF16[,-c(5:15,18,20,21,22)]
+USF19 <- USF19[,-c(5:15,18,20,21,22)]
+USF20 <- USF20[,-c(5:16,20:22)]
+USF21 <- USF21[,-c(5:14,18)]
+
+# return to list
+pt_list <- list(
+  USF03 = USF03,
+  USF04 = USF04,
+  USF05 = USF05,
+  USF07 = USF07,
+  USF13 = USF13,
+  USF14 = USF14,
+  USF16 = USF16,
+  USF19 = USF19,
+  USF20 = USF20,
+  USF21 = USF21
+)
+
+#####################################
+#### Split data into water years ####
+#####################################
+# Function to filter for Water Year 2024
+filter_wy24 <- function(df) {
+  df %>% filter(DateTime >= "2023-10-01" & DateTime <= "2024-09-30")
+}
+
+# Function to filter for Water Year 2025
+filter_wy25 <- function(df) {
+  df %>% filter(DateTime >= "2024-10-01" & DateTime <= "2025-09-30")
+}
+
+# Create the two lists
+pt_list_wy24 <- lapply(pt_list, filter_wy24)
+pt_list_wy25 <- lapply(pt_list, filter_wy25)
+
 
 ###################################################
 #### Separate data in lower vs upper vs middle ####
@@ -240,6 +305,26 @@ for (i in seq_along(smooth_df)) {
   file <- paste0("data/", names(smooth_df)[i])
   # this is the "smooth" folder
   drive_folder_id <- "1y2bMWCS48cROq_BO5HkaNWmFIxdJUON0"
+  
+  # upload file to the specified Google Drive folder
+  drive_put(
+    media = file,
+    path = as_id(drive_folder_id)
+  )
+}
+
+# loop through each data frame in the list
+for (i in seq_along(pt_list_wy25)) {
+  # Access the current data frame
+  df <- pt_list_wy25[[i]]
+  
+  # save new data frame
+  write.csv(df, paste0("data/", names(pt_list_wy25)[i]), row.names=FALSE, quote=FALSE)
+  
+  # define the local folder path and the target folder ID in Google Drive
+  file <- paste0("data/", names(pt_list_wy25)[i])
+  # this is the "smooth" folder
+  drive_folder_id <- "1wX6RxDAORaBNrqskCKhHy0ajzWJmOT3s"
   
   # upload file to the specified Google Drive folder
   drive_put(
