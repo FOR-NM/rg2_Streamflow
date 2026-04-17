@@ -1,6 +1,6 @@
 # Streamflow
-Management for continuous flow estimates using Pressure Transducer (Level Logger) data
-You can find the scripts for each site in the scripts folders. Site two letter codes correspond to each five sites from the QuEST project. 
+Management for continuous flow estimates using Pressure Transducer (Level Logger) data.
+You can find the scripts for each site in the scripts folders. Site two letter codes correspond to each five sites from the QuEST project. Other folders like "googledrive" and "data" are temporary data storeing folders.
 - SS: Alabama - South Sandy
 - BR: Arkansas - Brush Creek
 - DV: Nevada - Dog Valley
