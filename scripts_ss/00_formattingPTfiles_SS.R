@@ -26,7 +26,7 @@ pt <- googledrive::as_id("https://drive.google.com/drive/folders/194hsX_kF8xMs-9
 # list and filter CSV files with "pt" in their names
 pt_files <- googledrive::drive_ls(path = pt, type = "csv")
 3
-# pt_files <- pt_files[!grepl("baro", pt_files$name), ]
+pt_files <- pt_files[!grepl("baro", pt_files$name), ]
 
 # create an empty list to store the cleaned data frames
 pt_list <- lapply(seq_along(pt_files$name), function(i) {
