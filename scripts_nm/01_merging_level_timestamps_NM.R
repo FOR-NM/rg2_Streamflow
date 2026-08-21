@@ -4,64 +4,42 @@
 ##==============================================================================
 
 library(readxl) #to read excel 
-library(googledrive)
 library(dplyr)
 
 ########################################
 #### Clear folders that we will use ####
 ########################################
 # list and delete all files in the folder
-files <- list.files(path = "googledrive", full.names = TRUE)
-file.remove(files)
+#files <- list.files(path = "googledrive", full.names = TRUE)
+#file.remove(files)
 
 ##########################
 #### Import scan data ####
 ##########################
 #### list and download all files in the folder ####
-# this is the "02_inuse" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1i7G-q7FV0_bszqeCdJ6Otz8b9xhpU1cx")
+# this is the "formatted" folder
+pt <- "data/PT/formatted/"
 # list all CSV files in the folder
-pt_files <- googledrive::drive_ls(path = pt)
-3
+pt_files <- list.files(path = pt, pattern = "\\.csv$")
+
 
 # create an empty list to store the cleaned data frames
-pt_list <- lapply(seq_along(pt_files$name), function(i) {
-  googledrive::drive_download(
-    file = pt_files$id[i],
-    path = paste0("googledrive/", pt_files$name[i]),
-    overwrite = TRUE
-  )
+pt_list <- lapply(seq_along(pt_files), function(i) {
   
-  # read the CSV file, skipping the first 11 rows (header is on row 12)
-  read.csv(paste0("googledrive/", pt_files$name[i]), header = TRUE)
+  read.csv(paste0(pt, pt_files[i]), header = TRUE)
 })
 
 # assign names to the list elements based on the file names
-names(pt_list) <- pt_files$name
+names(pt_list) <- pt_files
 
-USF20 <- pt_list[["2024-10-24_USF20_WaterLevel.csv"]]
+#USF20 <- pt_list[["2024-10-24_USF20_WaterLevel.csv"]]
 
-################################
-#### Format DateTime column ####
-################################
-# loop through each data frame in the list
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  # combine Date and Time columns into a new DateTime column
-  df$DateTime <- paste(df$Date, df$Time, sep = " ")
-  
-  # convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
-  # update the data frame in the list
-  pt_list[[i]] <- df
-}
 
 ####################################
 #### Combine data for each site ####
 ####################################
 # site names
-site_names <- c("USF03", "USF04", "USF05", "USF07", "USF20", "USF13", "USF14", "USF16", "USF19", "USF21")
+site_names <- c("USF24", "USF25", "USF40", "USF41")
 
 # group files in `pt_list` by matching `site_names` in file names
 pt_list_by_site <- lapply(site_names, function(site) {
@@ -84,23 +62,21 @@ combined_by_site <- lapply(pt_list_by_site, function(site_data_list) {
     distinct(DateTime, .keep_all = TRUE) # remove duplicates
 })
 
-USF03 <- combined_by_site[["USF03"]]
-USF07 <- combined_by_site[["USF07"]]
+USF24 <- combined_by_site[["USF24"]]
+
 
 ##############################
 #### Save combined files  ####
 ##############################
+
+### there need to only be a 'formatted' folder, no need for different folders and file when formatting
+## TO DO: fix this 
+
 # write files to local data folder
-lapply(names(combined_by_site), function(site) {
+#lapply(names(combined_by_site), function(site) {
   # define file path
-  file <- paste0("data/", site, ".csv")
+  #file <- paste0("data/", site, ".csv")
   # save each data frame
-  write.csv(combined_by_site[[site]], file, row.names = FALSE, quote = FALSE)
+  #write.csv(combined_by_site[[site]], file, row.names = FALSE, quote = FALSE)
   # this is the "merged_days" folder
-  drive_folder_id <- "1aUwQq19HnlyIxnMHMH3HtybzvA_Zcrwu"
-  # upload the file to Google Drive
-  drive_put(
-    media = file,
-    path = as_id(drive_folder_id)
-  )
-})
+#})

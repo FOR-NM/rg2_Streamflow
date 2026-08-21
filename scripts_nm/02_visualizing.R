@@ -1,11 +1,14 @@
 ##==============================================================================
-## Project: QuEST
+## Project: FOR-NM 
+
+# this script might not be necessary for us, should be an aid script for completing 
+#missing data from other PTs 
 ##==============================================================================
 
 ##################
 #### Packages ####
 ##################
-library(googledrive) 
+#ibrary(googledrive) 
 library(ggplot2)
 library(dplyr)
 library(lubridate) 
@@ -14,23 +17,21 @@ library(lubridate)
 ## Clear folders that we will use ##
 ####################################
 # list and delete all files in the folder
-files <- list.files(path = "googledrive", full.names = TRUE)
-file.remove(files)
+#files <- list.files(path = "googledrive", full.names = TRUE)
+#file.remove(files)
 
-files <- list.files(path = "merged", full.names = TRUE)
-file.remove(files)
+#files <- list.files(path = "merged", full.names = TRUE)
+#file.remove(files)
 
 #########################
 #### Import air data ####
 #########################
 # this is the merged days folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1BsASDFjFci_7mndSKj6T5uXKxW1UZoaP")
+pt <- "data/AirPT/formatted/"
 # list all CSV files in the folder
-pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
-3
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="AIR2.csv"], 
-                            path = "googledrive/AIR2.csv",
-                            overwrite = T)
+pt_csvs <- list.files(path = pt, pattern = "\\.csv$")
+
+
 air_upper <- read.csv("googledrive/AIR2.csv")
 
 googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="AIR3.csv"], 
@@ -116,7 +117,7 @@ ggplot(data = merged_air, aes(x = Level.air.kPa3, y = Level.air.kPa1)) +
   theme_minimal()
 
 ######################
-#### Linear model ####
+#### Linear model #### # you can run up to here , you don't need to "complete Air1" 
 ######################
 # create a linear model to predict Level.air.kPa1 based on Level.air.kPa3
 linear_model <- lm(Level.air.kPa1 ~ Level.air.kPa3, data = merged_air)
