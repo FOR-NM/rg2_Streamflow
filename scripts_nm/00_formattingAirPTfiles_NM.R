@@ -9,6 +9,7 @@
 ##############
 #library(googledrive)
 library(tidyverse)
+library(anytime)
 
 ########################################
 #### Clear folders that we will use ####
@@ -77,6 +78,7 @@ for (i in seq_along(pt_list)) {
   
   # Convert the DateTime column to POSIXct
   df$DateTime <-  as.POSIXct(df$DateTime, format = "%m/%d/%y %I:%M:%S %p")
+  
   # Update the data frame in the list
   pt_list[[i]] <- df
   
@@ -93,7 +95,8 @@ str(pt_list)
 for (i in seq_along(pt_list)) {
   # Access the current data frame
   df <- pt_list[[i]]
-  
+  # Convert the POSIXct column to a formatted character string to fix midnight issue 
+  df$DateTime <- format(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
   # save new data frame
   write.csv(df, paste0(output_path, pt_files[i]), row.names=FALSE, quote=FALSE)
   

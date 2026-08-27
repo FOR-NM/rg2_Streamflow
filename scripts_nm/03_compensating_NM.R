@@ -1,5 +1,16 @@
 ##==============================================================================
-## Project: QuEST
+## Project: FOR-NM 
+
+## Script 03: Barometric compensation for NM pressure transducer data —
+##
+## LEVEL -> LEVEL.kPa -> subtract Level_air.kPa -> Baro_Cor_Lvl.kPa -> back
+## to m. Compensation happens in kPa; conversion to meters happens once,
+## after. PTs reporting LEVEL in cm (converted
+## to m, then to kPa); 
+##
+## INPUT:  01_merge_timestamps_NM.R output ("merged_days" folder) + 02a_merge_timestamps_NM_air.R output
+##      
+## OUTPUT: "compensated" folder -> used by 05_merge_field_data_NM_*.R
 ## This script is to merge PT and barometric (air pressure) data for the New Mexico sites
 ## press Command+Option+O to collapse all sections and get an overview of the workflow!
 ##==============================================================================
@@ -7,7 +18,6 @@
 ##################
 #### Packages ####
 ##################
-library(googledrive) 
 library(ggplot2)
 library(dplyr)
 library(lubridate) 
@@ -17,45 +27,33 @@ library(hms)
 ## Clear folders that we will use ##
 ####################################
 # list and delete all files in the folder
-files <- list.files(path = "googledrive", full.names = TRUE)
-file.remove(files)
+#files <- list.files(path = "googledrive", full.names = TRUE)
+#file.remove(files)
 
 #####################
-#### Import data ####
+#### Import PT data ####
 #####################
-#### load data from Google drive ####
+#### load data from local folder ####
 # this is the merged days folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1aUwQq19HnlyIxnMHMH3HtybzvA_Zcrwu")
+pt<-"data/PT/formatted/"
 
 # list all CSV files in the folder
-pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
-3
+pt_files <- list.files(path = pt, pattern = "\\.csv$")
+
 ## call all the files in the salt slugs folder ##
 # create empty list to store data frames
 pt_list <- list()
 
 # loop over each file in the `pt_csvs` data frame
-for (i in seq_along(pt_csvs$id)) {
-  # define the local file path
-  local_path <- file.path("googledrive", pt_csvs$name[i])
+pt_list <- lapply(seq_along(pt_files), function(i) {
   
-  # download the file
-  googledrive::drive_download(
-    file = pt_csvs$id[i],
-    path = local_path,
-    overwrite = T
-  )
-  # read the CSV file and add it to the list
-  pt_list[[pt_csvs$name[i]]] <- read.csv(local_path)
-}
+  read.csv(paste0(pt, pt_files[i]), header = TRUE)
+})
+
 
 # check the contents of the list
 str(pt_list)
 
-# look at it
-USF21 <- pt_list[["USF21.csv"]]
-USF20 <- pt_list[["USF20.csv"]]
-USF07 <- pt_list[["USF07.csv"]]
 
 ##########################################################
 #### Combine and format Date and Time into one column #### 
@@ -64,13 +62,9 @@ USF07 <- pt_list[["USF07.csv"]]
 for (i in seq_along(pt_list)) {
   # access the current data frame
   df <- pt_list[[i]]
-  # combine Date and Time columns into a new DateTime column
-  df$DateTime <- paste(df$Date, df$Time, sep = " ")
   
   # convert the DateTime column to POSIXct
-  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
-  # update the data frame in the list
-  pt_list[[i]] <- df
+  df$DateTime <- as.POSIXct(df$DateTime, format = "%Y-%m-%d %H:%M:%S")
   
   # make date into date fomat
   df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
@@ -78,29 +72,27 @@ for (i in seq_along(pt_list)) {
   pt_list[[i]] <- df
 }
 
-#####################################
-#### Change all units to meters  ####
-#####################################
-## water level is in cm, change to m
-# loop through each data frame in the list
-for (i in seq_along(pt_list)) {
-  # access the current data frame
-  df <- pt_list[[i]]
-  
-  #cm to m
-  df <- df %>%
-    mutate(LELVEL.m = (.[[4]] * 0.01))
-  # update the data frame in the list
-  pt_list[[i]] <- df
+# assign names to the list elements based on the file names
+names(pt_list) <- pt_files
+
+############################################################
+#### Convert PT LEVEL cm -> m -> kPa ####
+############################################################
+#FOR-NM note: the raw files say m, but it makes more sense that they are in cm, please check w Alex
+# 1 m of water column ~ 9.80665 kPa (inverse of the 0.101972 kPa->m factor
+# used everywhere else in this pipeline)
+to_level_kpa_solinst <- function(df) {
+  df %>% mutate(
+    LEVEL.m   = LEVEL * 0.01, # Level is in cm in level loggers
+    LEVEL.kPa = LEVEL.m * 9.80665
+  )
 }
+
+pt_list <- lapply(pt_list, to_level_kpa_solinst)
 
 # check the contents of the list and make sure there are no NAs
 str(pt_list)
 
-# look at it
-USF21 <- pt_list[["USF21.csv"]]
-USF20 <- pt_list[["USF20.csv"]]
-USF07 <- pt_list[["USF07.csv"]]
 
 #####################
 #### Plot curves ####
@@ -111,7 +103,7 @@ for (i in seq_along(pt_list)) {
   df <- pt_list[[i]]
   # Plot
   p <- ggplot(data = df, aes(x = DateTime, y = LEVEL)) + 
-    geom_point() + ggtitle(paste(pt_csvs$name[i])) 
+    geom_point() + ggtitle(paste(pt_files[i])) 
   # save the plot as a PNG file
   #ggsave(paste0("pt_figs/", pt_csvs$name[i], ".png"), plot = p)
   # display the plot in the plot panel
@@ -121,268 +113,88 @@ for (i in seq_along(pt_list)) {
 ####################################################
 #### Prep data for merging PT with Air pressure ####
 ####################################################
-# list of site names
-uppersites <- c("USF21", "USF13", "USF14", "USF16", "USF19")
-middlesites <- c("USF09", "USF10", "USF11")
-lowersites <- c("USF03", "USF04", "USF05", "USF07", "USF20")
-
-# create an empty lists to store the files
-upper_list <- list()
-middle_list <- list()
-lower_list <- list()
-
-# separate sites in lists
-upper_list <- append(upper_list, c(pt_list["USF21.csv"], pt_list["USF13.csv"], pt_list["USF14.csv"], pt_list["USF16.csv"], pt_list["USF19.csv"]))
-middle_list <- append(middle_list, c(pt_list["USF09.csv"], pt_list["USF10.csv"], pt_list["USF11.csv"]))
-lower_list <- append(lower_list, c(pt_list["USF03.csv"], pt_list["USF04.csv"], pt_list["USF05.csv"], pt_list["USF07.csv"], pt_list["USF20.csv"]))
+#in for_nm case, the pt_list contains all sites we are interested in, there is only one airpt 
 
 #########################
 #### Get air pt data ####
 #########################
 # this is the merged days folder
-pt_air <- googledrive::as_id("https://drive.google.com/drive/folders/1BsASDFjFci_7mndSKj6T5uXKxW1UZoaP")
-# list all CSV files in the folder
-pt_csvs_air <- googledrive::drive_ls(path = pt_air, type = "csv")
+air_pt <- "data/AirPT/formatted/"
+# list all CSV files in the folder, only 1 file in folder 
+air_pt_files <- list.files(path = air_pt, pattern = "\\.csv$") 
 # call the specific file you want
-googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="AIR1_complete.csv"], 
-                            path = "googledrive/AIR1_complete.csv",
-                            overwrite = T)
-googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="AIR2.csv"], 
-                            path = "googledrive/AIR2.csv",
-                            overwrite = T)
-googledrive::drive_download(file = pt_csvs_air$id[pt_csvs_air$name=="AIR3.csv"], 
-                            path = "googledrive/AIR3.csv",
-                            overwrite = T)
-
-air_upper <- read.csv("googledrive/AIR2.csv")
-air_middle <-  read.csv("googledrive/AIR3.csv")
-air_lower <- read.csv("googledrive/AIR1_complete.csv")
-
-# changing some column names
-air_upper <- air_upper %>%
-  dplyr::rename(Date.air = Date,
-                Time.air = Time,
-                Level.air.kPa = LEVEL)
-
-air_lower <- air_lower %>%
-  dplyr::rename(Date.air = Date.air1,
-                Time.air = Time.air1,
-                Level.air.kPa = Level.air.kPa_use)
+air_fornm <- read.csv(paste0(air_pt, air_pt_files[1]), header = TRUE)  #only 1 file 
 
 ################################
 #### Format DateTime column ####
 ################################
-# for upper
-# check datetime format for upper air data
-air_upper$DateTime <- paste(air_upper$Date.air, air_upper$Time.air, sep = " ")
-# convert the DateTime column to POSIXct
-air_upper$DateTime <- as.POSIXct(air_upper$DateTime, format = "%Y-%m-%d %I:%M:%S %p")
-
-# for lower
-# DateTime at midnight is missing 00:00:00 time in lower air df, so filling in that time using grep
-air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)] <- paste(
-  air_lower$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$",air_lower$DateTime)],"00:00:00")
 
 # convert the DateTime column to POSIXct
-air_lower$DateTime <- as.POSIXct(air_lower$DateTime, format = "%Y-%m-%d %H:%M")
-str(air_lower$DateTime)
-
-# If you tried to make Date.air and Time.air before, check that code
-air_lower$Date.air_new <- as.Date(air_lower$DateTime) # Extracts date
-air_lower$Time.air <- format(air_lower$DateTime, "%H:%M:%S") # Extracts time as string
+air_fornm$DateTime <- as.POSIXct(air_fornm$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
 #################################################
 #### Rounding the time for some of the sites ####
 #################################################
-USF03 <- lower_list[["USF03.csv"]]
-USF04 <- lower_list[["USF04.csv"]]
-USF05 <- lower_list[["USF05.csv"]]
-USF07 <- lower_list[["USF07.csv"]]
-USF13 <- upper_list[["USF13.csv"]]
-USF14 <- upper_list[["USF14.csv"]]
-USF16 <- upper_list[["USF16.csv"]]
-USF19 <- upper_list[["USF19.csv"]]
-USF21 <- upper_list[["USF21.csv"]]
+#No need to do this with current FOR NM files, look at QUEST scripts if this becomes issue. 
 
-# transform to datetime format
-USF03$DateTime <- as.POSIXct(USF03$DateTime,format = "%Y-%m-%d %H:%M:%S")
-USF04$DateTime <- as.POSIXct(USF04$DateTime,format = "%Y-%m-%d %H:%M:%S")
-USF05$DateTime <- as.POSIXct(USF05$DateTime,format = "%Y-%m-%d %H:%M:%S")
-USF07$DateTime <- as.POSIXct(USF07$DateTime,format = "%Y-%m-%d %H:%M:%S")
-USF13$DateTime <- as.POSIXct(USF13$DateTime,format = "%Y-%m-%d %H:%M:%S")
-USF14$DateTime <- as.POSIXct(USF14$DateTime,format = "%Y-%m-%d %H:%M:%S")
-USF16$DateTime <- as.POSIXct(USF16$DateTime,format = "%Y-%m-%d %H:%M:%S")
-USF19$DateTime <- as.POSIXct(USF19$DateTime,format = "%Y-%m-%d %H:%M:%S")
-USF21$DateTime <- as.POSIXct(USF21$DateTime,format = "%Y-%m-%d %H:%M:%S")
-air_upper$DateTime <- as.POSIXct(air_upper$DateTime,format = "%Y-%m-%d %H:%M:%S")
+#############################
+#### Rename some columns ####
+#############################
+#  already on the 15-min grid; LEVEL is raw air pressure in kPa;
 
-#USF13$DateTimeNotRounded <- as.POSIXct(USF13$DateTimeNotRounded,format = "%Y-%m-%d %H:%M:%S")
+air_fornm <- air_fornm %>% 
+  rename(
+    Level_air.kPa = LEVEL,
+    Temperature_air.C = TEMPERATURE
+  )
+#######################
+#### Plot air data ####
+#######################
+ggplot(data = air_fornm, aes(x = DateTime, y = Level_air.kPa)) +
+  geom_line() + ggtitle("Air PT (AIR4)")
 
-# round DateTime to the nearest 15-minute interval 
-USF07$DateTime <- floor_date(USF07$DateTime, unit="minute")
-
-USF03$DateTime <- round_date(USF03$DateTime, unit="15 mins")
-USF04$DateTime <- round_date(USF04$DateTime, unit="15 mins")
-USF05$DateTime <- round_date(USF05$DateTime, unit="15 mins")
-USF07$DateTime <- round_date(USF07$DateTime, unit="15 mins")
-USF13$DateTime <- round_date(USF13$DateTime, unit="15 mins")
-USF14$DateTime <- round_date(USF14$DateTime, unit="15 mins")
-USF16$DateTime <- round_date(USF16$DateTime, unit="15 mins")
-USF19$DateTime <- round_date(USF19$DateTime, unit="15 mins")
-USF21$DateTime <- round_date(USF21$DateTime, unit="15 mins")
-air_upper$DateTime <- round_date(air_upper$DateTime, unit="15 mins")
-
-# return to list
-lower_list$USF03.csv <- USF03
-lower_list$USF04.csv <- USF04
-lower_list$USF05.csv <- USF05
-lower_list$USF07.csv <- USF07
-upper_list$USF13.csv <- USF13
-upper_list$USF14.csv <- USF14
-upper_list$USF16.csv <- USF16
-upper_list$USF19.csv <- USF19
-upper_list$USF21.csv <- USF21
-
-USF07 <- lower_list[["USF07.csv"]]
-
-#####################################
-#### Change all units to meters  ####
-#####################################
-### upper site
-## air pressure in kpa to m
-air_upper <- air_upper %>%
-  mutate(Level_air.m = (.[[4]] * 0.101972))
-
-### lower site
-## air pressure in kpa to m
-air_lower <- air_lower %>%
-  mutate(Level_air.m = (.[[11]] * 0.101972))
-
-#1 kPa = 0.101972 m in common barometric units to water column equivalent conversions
   
 ######################################
 #### Merging PT with Air pressure ####
 ######################################
-## upper
-# create a list to store merged results
-merged_upper <- list()
+# All  groups (level and air) are already on the same uniform 15-min
+# grid produced upstream in 02_merge_timestamps_NM.R / 02a_merge_timestamps_NM_air.R
 
-# loop through each site file in upper_list
-for (site in names(upper_list)) {
-  # merge each site data with air_upper on the DateTime column
-  merged_upper[[site]] <- merge(upper_list[[site]], air_upper, by = "DateTime", all.x = TRUE)
-}
-
-# check the contents of the list
-str(merged_upper)
-
-## lower
-# create a list to store merged results
-merged_lower <- list()
-
-# loop through each site file in upper_list
-for (site in names(lower_list)) {
-  # merge each site data with air_upper on the DateTime column
-  merged_lower[[site]] <- merge(lower_list[[site]], air_lower, by = "DateTime", all.x = TRUE)
-}
-
-# check the contents of the list
-str(merged_lower)
-
-# look at it
-USF21 <- merged_upper[["USF21.csv"]]
-USF20 <- merged_lower[["USF20.csv"]]
-USF07 <- merged_lower[["USF07.csv"]]
+merged_fornm <- lapply(pt_list, function(df) {
+  merge(df, air_fornm, by = "DateTime", all.x = TRUE)
+})
 
 ########################################
 #### Manual Barometric Compensation ####
 ########################################
-## once the units for each column are the same, subtract the barometric column from the Levelogger data 
-# to get the true net water level recorded by the Levelogger.
-
-## upper
-# create empty compensated list
-compensated_upper <- list()
-
-for (i in names(merged_upper)) {
-  # access the current data frame
-  df <- merged_upper[[i]]
-  
-  # compensate
-  df <- df %>%
-    mutate(Baro_Cor_Lvl = (LELVEL.m - Level_air.m))
-  
-  compensated_upper[[i]] <-  df
+compensate <- function(df) {
+  df %>% mutate(Baro_Cor_Lvl.kPa = LEVEL.kPa - Level_air.kPa)
 }
 
-## lower
-merged_lower[["USF07.csv"]][["DateTime"]] <- floor_date(merged_lower[["USF07.csv"]][["DateTime"]], unit="minute")
-USF07 <- merged_lower[["USF07.csv"]]
+compensated_fornm  <- lapply(merged_fornm, compensate)
 
-# create empty compensated list
-compensated_lower <- list()
 
-for (i in names(merged_lower)) {
-  # access the current data frame
-  df <- merged_lower[[i]]
-  
-  # compensate
-  df <- df %>%
-    mutate(Baro_Cor_Lvl = (.[[7]] - .[[19]]))
-  
-  compensated_lower[[i]] <-  df
+#### convert kPa -> m ####
+to_meters <- function(df) {
+  df %>% mutate(Baro_Cor_Lvl.m = Baro_Cor_Lvl.kPa * 0.101972)
 }
 
-isna <- is.na(compensated_lower$USF20)
+compensated_fornm  <- lapply(compensated_fornm, to_meters)
 
-# look at it
-USF21 <- compensated_upper[["USF21.csv"]]
-USF16 <- compensated_upper[["USF16.csv"]]
-USF20 <- compensated_lower[["USF20.csv"]]
-USF07 <- compensated_lower[["USF07.csv"]]
 
 ######################################
 #### Plot baro compensated curves ####
 ######################################
-# loop through each data frame in the list
-for (i in seq_along(compensated_upper)) {
-  # access the current data frame
-  df <- compensated_upper[[i]]
-  
-  # get the name of the current data frame (list element)**
-  df_name <- names(compensated_upper)[i]
-  
-  # plot
-  p <- ggplot(data = df, aes(x = DateTime, y = Baro_Cor_Lvl)) + 
-    geom_point() +
-    # **Add the title using the retrieved name**
-    labs(title = df_name)
-  
-  # save the plot as a PNG file
-  ggsave(paste0("pt_figs/", df_name, ".png"), plot = p)
-  # display the plot in the plot panel
+#to do , need to check logic here... 
+for (i in seq_along(pt_list)) {
+  df      <- pt_list[[i]]
+  df_name <- names(compensated_list)[i]
+  p <- ggplot(data = df, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
+    geom_line() + ggtitle(df_name)
+  ggsave(paste0("pt_figs/", df_name, "_notcorrected.png"), plot = p)
   print(p)
 }
 
-# loop through each data frame in the list
-for (i in seq_along(compensated_lower)) {
-  # access the current data frame
-  df <- compensated_lower[[i]]
-
-  # get the name of the current data frame (list element)**
-  df_name <- names(compensated_lower)[i]
-  
-  # lot
-  p <- ggplot(data = df, aes(x = DateTime, y = Baro_Cor_Lvl)) + 
-    geom_point() +
-    # **Add the title using the retrieved name**
-    labs(title = df_name)
-  
-  # save the plot as a PNG file
-  ggsave(paste0("pt_figs/", df_name, ".png"), plot = p)
-  # display the plot in the plot panel
-  print(p)
-}
 
 ####################################################
 #### Save merged and compensated slugs to Drive ####

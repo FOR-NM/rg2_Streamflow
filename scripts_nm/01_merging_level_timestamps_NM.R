@@ -25,14 +25,12 @@ pt_files <- list.files(path = pt, pattern = "\\.csv$")
 
 # create an empty list to store the cleaned data frames
 pt_list <- lapply(seq_along(pt_files), function(i) {
-  
   read.csv(paste0(pt, pt_files[i]), header = TRUE)
 })
 
 # assign names to the list elements based on the file names
 names(pt_list) <- pt_files
 
-#USF20 <- pt_list[["2024-10-24_USF20_WaterLevel.csv"]]
 
 
 ####################################
@@ -62,7 +60,7 @@ combined_by_site <- lapply(pt_list_by_site, function(site_data_list) {
     distinct(DateTime, .keep_all = TRUE) # remove duplicates
 })
 
-USF24 <- combined_by_site[["USF24"]]
+
 
 
 ##############################
