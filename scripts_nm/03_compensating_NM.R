@@ -186,58 +186,25 @@ compensated_fornm  <- lapply(compensated_fornm, to_meters)
 #### Plot baro compensated curves ####
 ######################################
 #to do , need to check logic here... 
-for (i in seq_along(pt_list)) {
-  df      <- pt_list[[i]]
-  df_name <- names(compensated_list)[i]
+for (i in seq_along(compensated_fornm)) {
+  df      <- compensated_fornm[[i]]
+  df_name <- names(compensated_fornm)[i]
   p <- ggplot(data = df, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
     geom_line() + ggtitle(df_name)
   ggsave(paste0("pt_figs/", df_name, "_notcorrected.png"), plot = p)
   print(p)
 }
 
+####################################################
+#### Save merged and compensated slugs to local folder ####
+####################################################
 
-####################################################
-#### Save merged and compensated slugs to Drive ####
-####################################################
-## upper
-# loop through each data frame in the list
-for (i in seq_along(compensated_upper)) {
-  # access the current data frame
-  df <- compensated_upper[[i]]
-  
-  # save new data frame
-  write.csv(df, paste0("data/", names(compensated_upper)[i]), row.names=FALSE, quote=FALSE)
-  
-  # define the local folder path and the target folder ID in Google Drive
-  file <- paste0("data/", names(compensated_upper)[i])
-  # this is the "compensated" folder
-  drive_folder_id <- "1VsT7hirl5OHIGhrrc3b7dxPpSqr1wNC0"
-  
-  # upload file to the specified Google Drive folder
-  drive_put(
-    media = file,
-    path = as_id(drive_folder_id)
-  )
+output_path<- "data/compensated/"
+dir.create(output_path)
+for (i in seq_along(compensated_fornm)) {
+  df   <- compensated_fornm[[i]]
+  file <- paste0(output_path, names(compensated_fornm)[i])
+  write.csv(df, file, row.names = FALSE, quote = FALSE)
 }
 
-## lower
-# loop through each data frame in the list
-for (i in seq_along(compensated_lower)) {
-  # access the current data frame
-  df <- compensated_lower[[i]]
-  
-  # save new data frame
-  write.csv(df, paste0("data/", names(compensated_lower)[i]), row.names=FALSE, quote=FALSE)
-  
-  # define the local folder path and the target folder ID in Google Drive
-  file <- paste0("data/", names(compensated_lower)[i])
-  # this is the "compensated" folder
-  drive_folder_id <- "1VsT7hirl5OHIGhrrc3b7dxPpSqr1wNC0"
-  
-  # upload file to the specified Google Drive folder
-  drive_put(
-    media = file,
-    path = as_id(drive_folder_id)
-  )
-}
 

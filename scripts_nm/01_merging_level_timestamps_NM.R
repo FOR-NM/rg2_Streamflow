@@ -1,5 +1,5 @@
 ##==============================================================================
-## Project: QuEST
+## Project: FOR-NM
 ## Script to merge same site PT sites in one file (using timestamp) for Santa Fe watershed
 ##==============================================================================
 

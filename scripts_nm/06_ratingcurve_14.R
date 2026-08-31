@@ -1,7 +1,17 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to calculate discharge from compensated pressure data for Santa Fe USF14 site
-## press Command+Option+O to collapse all sections and get an overview of the workflow
+## TO DO: Adapt this script for FOR-NM 
+## Script 06: PT offset corrections for NM USF14 (upper, AIR2 baro source)
+##
+## Sensor repositioning events shift the whole record by a constant jump.
+## For each known move: take the mean level before and after, subtract the
+## jump from everything after the move. Corrections are applied sequentially
+## into intermediate columns, then collapsed into one Final_Corrected_Lvl
+## column -- the intermediates are dropped before saving.
+## An additional NA date range (2024-12-06 to 2025-01-18, error section) is applied before the offset chain.
+##
+## INPUT:  "depth" folder (output of 05)
+## OUTPUT: "offset" folder -> used by 07_ratingcurve_USF14.R
 ##==============================================================================
 
 ##################
@@ -15,222 +25,158 @@ library(dplyr)
 ####################################
 ## Clear folders that we will use ##
 ####################################
-# list and delete all files in the folder
-files <- list.files(path = "googledrive", full.names = TRUE)
-file.remove(files)
+file.remove(list.files(path = "googledrive", full.names = TRUE))
+file.remove(list.files(path = "data", full.names = TRUE))
 
-files <- list.files(path = "data", full.names = TRUE)
-file.remove(files)
+#####################
+#### Import data ####
+#####################
+site <- "USF14"
 
-#################################
-#### Import & Visualize Data ####
-#################################
-#### load data from Google drive ####
-# this is the "offset" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1VIonkS5GXUsn34FEPu1lpkMgsgCvPXFw")
-
-# List all CSV files in the folder
+# this is the "depth" folder (output of 05)
+pt      <- googledrive::as_id("https://drive.google.com/drive/folders/1EswIfUWCK6bsdcs-ZrAMGW1oYKs4B0Eh")
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
 3
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name == paste0(site, ".csv")],
+                            path = file.path("googledrive", paste0(site, ".csv")),
+                            overwrite = TRUE)
+USF14 <- read.csv(file.path("googledrive", paste0(site, ".csv")))
 
-#USF14
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="offset_USF14.csv"], 
-                            path = "googledrive/offset_USF14.csv",
-                            overwrite = T)
-# load file
-USF14 <- read.csv("googledrive/offset_USF14.csv")
-
-# convert Date column to Date type if not already
-USF14$Date <- as.Date(USF14$Date.x)
-# combine Date and Time columns into a new DateTime column
-USF14$DateTime <- paste(USF14$Date, USF14$Time, sep = " ")
-# convert the DateTime column to POSIXct
+# DateTime at midnight is missing 00:00:00 time in this file, so fill it in
+USF14$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$", USF14$DateTime)] <- paste(
+  USF14$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$", USF14$DateTime)], "00:00:00")
 USF14$DateTime <- as.POSIXct(USF14$DateTime, format = "%Y-%m-%d %H:%M:%S")
-
-# filter out rows with missing stage or discharge
-rating_data <- USF14 %>% 
-  filter(!is.na(Baro_Cor_offset2), !is.na(Q))
-
-# check the structure of the cleaned data
-head(rating_data)
 
 ########################################
 #### Plot pressure compensated data ####
 ########################################
-ggplot(data = USF14, aes(x = DateTime, y = Baro_Cor_offset2)) +
-  geom_line() + ggtitle("USF14 compensated level data")
+ggplot(USF14, aes(x = DateTime, y = Baro_Cor_Lvl.m)) +
+  geom_line() +
+  geom_vline(xintercept = as.POSIXct(c("2024-10-29 10:30:00", "2025-06-05 11:00:40")),
+             linetype = "dashed", color = "red") +
+  labs(title = paste(site, "compensated level, pre-correction"), x = "Date", y = "Water Level (m)")
 
-##################################
-#### Plot Stage vs. Discharge ####
-##################################
-ggplot(rating_data, aes(x = Baro_Cor_offset2, y = Q)) +
-  geom_point(color = "blue") +
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.m)", y = "Discharge (Q)") +
-  theme_minimal()
+###################################################################
+#### Remove times where PT was out of the water / clear errors ####
+###################################################################
+out_of_water_times <- as.POSIXct(c("2024-10-29 11:00:00", "2024-10-29 10:45:00", "2025-06-05 10:45:00"))
 
-
-# discharge from L/s to m3/s
-rating_data <- rating_data %>%
-  mutate(Q.m3s = Q/1000)
-
-ggplot(rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
-  geom_point(color = "blue") +
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL.m)", y = "Discharge (Q)") +
-  theme_minimal()
-
-# plot with date info
-ggplot(rating_data, aes(x = Baro_Cor_offset2, y = Q.m3s)) +
-  geom_point(color = "blue") +
-  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
-  theme_minimal()
-
-###########################################
-#### Check for Log-Linear Relationship ####
-###########################################
-ggplot(rating_data, aes(x = log(Baro_Cor_offset2), y = log(Q))) +
-  geom_point(color = "blue") +
-  labs(title = "Log-Log Plot of Water Level vs. Discharge", 
-       x = "Log(Water Level)", y = "Log(Discharge)") +
-  theme_minimal()
-
-####################
-#### Log model? ####
-####################
-rating_data <- rating_data %>%
-  mutate(Log_Stage = log(Baro_Cor_offset2),
-         Log_Discharge = log(Q.m3s))
-
-log_model <- lm(Log_Discharge ~ Log_Stage, data = rating_data)
-
-summary(log_model)
-
-a <- exp(coef(log_model)[1])  # Back-transform intercept
-b <- coef(log_model)[2]       # Slope
-
-#######################
-#### Linear model? ####
-#######################
-linear_model <- lm(Q.m3s ~ Baro_Cor_offset2, data = rating_data)
-
-summary(linear_model)
-
-###########################
-#### Visualize models  ####
-###########################
-# observed data
-plot(rating_data$Baro_Cor_offset2, rating_data$Q.m3s,
-     main = "Stage vs. Discharge",
-     xlab = "Water Level (m)", ylab = "Discharge (m³/s)",
-     pch = 19, col = "blue")
-
-# log-transformed model predictions
-pred_log <- exp(predict(log_model, newdata = rating_data))
-lines(rating_data$Baro_Cor_offset2, pred_log, col = "red", lwd = 2)
-
-# linear model predictions
-pred_linear <- predict(linear_model, newdata = rating_data)
-lines(rating_data$Baro_Cor_offset2, pred_linear, col = "green", lwd = 2)
-
-# legend
-legend("topleft", legend = c("Observed", "Log-Transformed", "Linear"),
-       col = c("blue", "red", "green"), pch = c(19, NA, NA, NA), lty = c(NA, 1, 1, 1), lwd = c(NA, 2, 2, 2))
-
-#######################
-#### Predicted log ####
-#######################
-# log-transformed model parameters
-a_log <- exp(coef(log_model)[1])  # Intercept
-b_log <- coef(log_model)[2]       # Slope
-
-# predict discharge for the entire dataset
 USF14 <- USF14 %>%
-  mutate(Predicted_Discharge_Log_m3s = a_log * (Baro_Cor_offset2 ^ b_log))
+  mutate(Baro_Cor_Lvl.m = ifelse(DateTime %in% out_of_water_times, NA, Baro_Cor_Lvl.m))
 
-##########################
-#### Predicted linear ####
-##########################
-# linear model parameters
-a_linear <- coef(linear_model)[1]  # Intercept
-b_linear <- coef(linear_model)[2]  # Slope
+#####################################################
+#### Sequential sensor-repositioning corrections ####
+#####################################################
+apply_offset <- function(df, level_col, before_time, after_time = before_time,
+                         window_hours = 2, before_window_hours = window_hours,
+                         after_window_hours = window_hours) {
+  before <- df %>% filter(DateTime >= (before_time - hours(before_window_hours)), DateTime < before_time) %>%
+    summarize(m = mean(.data[[level_col]], na.rm = TRUE)) %>% pull(m)
+  after  <- df %>% filter(DateTime >= after_time, DateTime < (after_time + hours(after_window_hours))) %>%
+    summarize(m = mean(.data[[level_col]], na.rm = TRUE)) %>% pull(m)
+  offset <- after - before
+  cat(sprintf("  before = %s | after = %s | offset = %.4f m\n", before_time, after_time, offset))
+  offset
+}
 
-# predict discharge for the entire dataset
+USF14$Baro_Cor_offset0 <- USF14$Baro_Cor_Lvl.m
+
+move_time1 <- as.POSIXct("2024-10-29 10:30:00")
+offset1 <- apply_offset(USF14, "Baro_Cor_offset0", move_time1)
 USF14 <- USF14 %>%
-  mutate(Predicted_Discharge_Linear_m3s = a_linear + b_linear * Baro_Cor_offset2)
+  mutate(Baro_Cor_offset1 = if_else(DateTime >= move_time1, Baro_Cor_offset0 - offset1, Baro_Cor_offset0))
 
-#############################
-#### Compare predictions ####
-#############################
-# visualize predictions
-plot(USF14$Baro_Cor_offset2, USF14$Predicted_Discharge_Log_m3s, col = "red", type = "l", lwd = 2,
-     xlab = "Stage (m)", ylab = "Discharge (m³/s)", main = "Discharge Predictions")
-lines(USF14$Baro_Cor_offset2, USF14$Predicted_Discharge_Linear_m3s, col = "green", lwd = 2)
-legend("topleft", legend = c("Log-Transformed", "Linear"),
-       col = c("red", "green"), lty = 1, lwd = 2)
-
-
-# discharge from L/s to m3/s for entire dataset
+move_time2 <- as.POSIXct("2025-06-05 11:00:00")
+offset2 <- apply_offset(USF14, "Baro_Cor_offset1", move_time2)
 USF14 <- USF14 %>%
-  mutate(Q.m3s = Q/1000)
+  mutate(Baro_Cor_offset2 = if_else(DateTime >= move_time2, Baro_Cor_offset1 - offset2, Baro_Cor_offset1))
 
-# compare Predicted vs. Observed Discharge
-ggplot(USF14, aes(x = Q.m3s)) +
-  geom_point(aes(y = Predicted_Discharge_Log_m3s, color = "Log Model")) +
-  geom_point(aes(y = Predicted_Discharge_Linear_m3s, color = "Linear Model")) +
-  labs(
-    title = "Comparison of Observed vs Predicted Discharge",
-    x = "Observed Discharge (m³/s)",
-    y = "Predicted Discharge (m³/s)"
-  ) +
-  scale_color_manual(values = c("red", "green")) +
+move_time3 <- as.POSIXct("2025-10-18 10:45:00")
+offset3 <- apply_offset(USF14, "Baro_Cor_offset1", move_time3)
+USF14 <- USF14 %>%
+  mutate(Baro_Cor_offset3 = if_else(DateTime >= move_time3, Baro_Cor_offset2 - offset3, Baro_Cor_offset2))
+
+# move_time4 <- as.POSIXct("2024-07-26 12:15:00")
+# offset4 <- apply_offset(USF14, "Baro_Cor_offset0", move_time4)
+# USF14 <- USF14 %>%
+#   mutate(Baro_Cor_offset4 = if_else(DateTime >= move_time4, Baro_Cor_offset3 - offset4, Baro_Cor_offset3))
+
+move_time4 <- as.POSIXct("2024-07-26 14:29:00")
+offset4 <- - 0.025  # m offset from field notes
+USF14 <- USF14 %>%
+  mutate(Baro_Cor_offset4 = if_else(DateTime >= move_time4, Baro_Cor_offset3 - offset4, Baro_Cor_offset3))
+
+move_time5 <- as.POSIXct("2024-08-08 12:45:00")
+offset5 <- apply_offset(USF14, "Baro_Cor_offset0", move_time5)
+USF14 <- USF14 %>%
+  mutate(Baro_Cor_offset5 = if_else(DateTime >= move_time5, Baro_Cor_offset4 - offset5, Baro_Cor_offset4))
+
+#############################################
+#### Final zero-datum shift and cleanup ####
+#############################################
+USF14 <- USF14 %>%
+  mutate(Final_Corrected_Lvl = Baro_Cor_offset5) %>%
+  select(-starts_with("Baro_Cor_offset"))
+
+##############################
+#### Plot with correction ####
+##############################
+ggplot(USF14, aes(x = DateTime, y = Final_Corrected_Lvl)) +
+  geom_line() +
+  labs(title = paste(site, "- Final_Corrected_Lvl"), x = "Date", y = "Water Level (m)")
+ggsave(filename = paste0("figures/", site, "_final_corrected.png"),
+       plot = last_plot(), width = 8, height = 6, dpi = 300)
+
+###################################################
+#### Plot Stage vs. Discharge after correction ####
+###################################################
+rating_data <- USF14 %>%
+  filter(!is.na(Final_Corrected_Lvl), !is.na(Q_m3s)) %>%
+  mutate(Month = month(DateTime),
+         Season = case_when(
+           Month %in% c(12, 1, 2) ~ "Winter",
+           Month %in% c(3, 4, 5)  ~ "Spring",
+           Month %in% c(6, 7, 8)  ~ "Summer",
+           Month %in% c(9, 10, 11) ~ "Fall"
+         ))
+
+p <- ggplot(rating_data, aes(x = Final_Corrected_Lvl, y = Q_m3s, color = Season)) +
+  geom_point(size = 3) +
+  geom_text(aes(label = as.Date(DateTime)), vjust = -0.5, size = 3, show.legend = FALSE) +
+  labs(title = paste(site, "- Stage vs. Discharge by season"),
+       x = "Final_Corrected_Lvl (m)", y = "Discharge (m3/s)", color = "Season") +
   theme_minimal()
+print(p)
+ggsave(filename = paste0("figures/", site, "_season.png"), plot = p, width = 8, height = 6, dpi = 300)
 
-# residuals
-USF14 <- USF14 %>%
-  mutate(
-    Residual_Log = Q.m3s - Predicted_Discharge_Log_m3s,
-    Residual_Linear = Q.m3s - Predicted_Discharge_Linear_m3s
-  )
+#####################################
+#### Dry/flowing classification ####
+#####################################
+# set to TRUE for sites that go dry; FALSE for ones that don't go dry 
+site_goes_dry <- FALSE
 
-ggplot(USF14, aes(x = Baro_Cor_offset2)) +
-  geom_point(aes(y = Residual_Log, color = "Log Model")) +
-  geom_point(aes(y = Residual_Linear, color = "Linear Model")) +
-  labs(
-    title = "Residuals for Different Models",
-    x = "Barometric Corrected Level (m)",
-    y = "Residuals (Observed - Predicted)"
-  ) +
-  scale_color_manual(values = c("red", "green")) +
-  theme_minimal()
+# dates where PT was frozen
+frozen_start <- as.POSIXct("2024-12-05 00:00:00")  # set to NA if no frozen period
+frozen_end   <- as.POSIXct("2025-01-06 00:00:00")
 
-######################################
-#### Plot and compare predictions ####
-######################################
-USF14$DateTime <- as.POSIXct(USF14$DateTime)
-
-ggplot(USF14, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) +
-  geom_point(color = "blue") +
-  labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
-  scale_x_datetime(date_breaks = "2 week") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-ggplot(USF14, aes(x = DateTime, y = Predicted_Discharge_Linear_m3s)) +
-  geom_point(color = "blue") +
-  labs(title = "Predicted Discharge (Linear)", x = "DateTime", y = "Discharge (m3/s)") +
-  scale_x_datetime(date_breaks = "2 week") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+if (site_goes_dry) {
+  # ... dry threshold and scoring code ...
+} else {
+  USF14 <- USF14 %>%
+    mutate(
+      dry = "no",
+      flow_confidence = case_when(
+        !is.na(frozen_start) & DateTime >= frozen_start & DateTime <= frozen_end ~ "frozen PT — excluded",
+        TRUE ~ "no dry classification"
+      )
+    )
+}
 
 ###################
 #### Save file ####
 ###################
-write.csv(USF14, "data/discharge_USF14.csv")
+write.csv(USF14, paste0("data/offset_", site, ".csv"), row.names = FALSE, quote = FALSE)
 
-# this is the "predicted" folder 
-drive_folder_id <- "1fPDNinUQ3pCFFQXJ1dtLGbqEawyTmPUx"
-
-# upload file to the specified Google Drive folder
-drive_put(
-  media = "data/discharge_USF14.csv",
-  path = as_id(drive_folder_id)
-)
-
+# this is the "offset" folder
+drive_folder_id <- "1VIonkS5GXUsn34FEPu1lpkMgsgCvPXFw"
+drive_put(media = paste0("data/offset_", site, ".csv"), path = as_id(drive_folder_id))

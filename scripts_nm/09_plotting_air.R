@@ -1,5 +1,7 @@
 ##==============================================================================
 ## Project: QuEST
+## TO DO: Adapt this script for FOR-NM 
+
 ## This script is to plot predicted discharge for NM
 ##==============================================================================
 
@@ -54,7 +56,7 @@ for (i in seq_along(pt_csvs$id)) {
 str(pt_list)
 
 ############################
-#### Format date column #### 
+#### Format date column ####
 ############################
 # loop through each data frame in the list
 for (i in seq_along(pt_list)) {
@@ -72,14 +74,14 @@ Air2 <- pt_list[["AIR2.csv"]]
 Air3 <- pt_list[["AIR3.csv"]]
 
 ####################################################
-#### Plot discharge data together for all sites #### 
+#### Plot discharge data together for all sites ####
 ####################################################
 # plot the data
 ggplot(Air1, aes(x = DateTime, y = TEMPERATURE)) +
   geom_line() +
   labs(title = "Air 1",
-    x = "Date",
-    y = "Temperature (C)",
+       x = "Date",
+       y = "Temperature (C)",
   ) +
   theme_minimal() +
   theme(legend.position = "right")
@@ -88,8 +90,8 @@ ggplot(Air1, aes(x = DateTime, y = TEMPERATURE)) +
 ggplot(Air2, aes(x = DateTime, y = TEMPERATURE)) +
   geom_line() +
   labs(title = "Air 2",
-    x = "Date",
-    y = "Temperature (C)",
+       x = "Date",
+       y = "Temperature (C)",
   ) +
   theme_minimal() +
   theme(legend.position = "right")
@@ -98,8 +100,8 @@ ggplot(Air2, aes(x = DateTime, y = TEMPERATURE)) +
 ggplot(Air3, aes(x = DateTime, y = TEMPERATURE)) +
   geom_line() +
   labs(title = "Air 3",
-    x = "Date",
-    y = "Temperature (C)",
+       x = "Date",
+       y = "Temperature (C)",
   ) +
   theme_minimal() +
   theme(legend.position = "right")

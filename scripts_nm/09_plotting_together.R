@@ -1,5 +1,7 @@
 ##==============================================================================
 ## Project: QuEST
+## TO DO: Adapt this script for FOR-NM 
+
 ## This script is to plot predicted discharge for NM
 ##==============================================================================
 
@@ -54,7 +56,7 @@ for (i in seq_along(pt_csvs$id)) {
 str(pt_list)
 
 ############################
-#### Format date column #### 
+#### Format date column ####
 ############################
 # loop through each data frame in the list
 for (i in seq_along(pt_list)) {
@@ -81,7 +83,7 @@ USF03 <- pt_list[["discharge_USF03.csv"]]
 USF05 <- pt_list[["discharge_USF05.csv"]]
 
 ####################################################
-#### Plot discharge data together for all sites #### 
+#### Plot discharge data together for all sites ####
 ####################################################
 # combine all data frames into one
 combined_df <- pt_list %>%
@@ -122,9 +124,9 @@ start.date <- "2024-05-07"
 end.date <- "2025-10-18"
 
 USGS <- readNWISuv(siteNumbers = siteNo,
-                       parameterCd = pCode,
-                       startDate = start.date,
-                       endDate = end.date)
+                   parameterCd = pCode,
+                   startDate = start.date,
+                   endDate = end.date)
 
 USGS <- renameNWISColumns(USGS)
 # parameter_units: ft3/s
@@ -189,7 +191,7 @@ for (i in seq_along(da_csvs$id)) {
 str(da_list)
 
 ############################
-#### Format date column #### 
+#### Format date column ####
 ############################
 # loop through each data frame in the list
 for (i in seq_along(da_list)) {
@@ -198,7 +200,7 @@ for (i in seq_along(da_list)) {
   
   # convert the DateTime column to POSIXct
   df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
-
+  
   # update the data frame in the list
   da_list[[i]] <- df
 }
@@ -209,7 +211,7 @@ USF20 <- da_list[["discharge_USF20.csv"]]
 USF03 <- da_list[["discharge_USF03.csv"]]
 
 ####################################################
-#### Plot discharge data together for all sites #### 
+#### Plot discharge data together for all sites ####
 ####################################################
 # combine all data frames into one
 combined_df <- da_list %>%
@@ -240,5 +242,3 @@ ggplot(combined_df_filtered, aes(x = Date, y = smooth_dailyaverage.m3s, color = 
   ) +
   theme_minimal() +
   theme(legend.position = "right")
-
-

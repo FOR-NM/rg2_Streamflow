@@ -1,7 +1,14 @@
 ##==============================================================================
 ## Project: QuEST
-## This script is to calculate discharge from compensated pressure data for Santa Fe USF21 site
-## press Command+Option+O to collapse all sections and get an overview of the workflow
+## TO DO: Adapt this script for FOR-NM 
+
+## Script 07: Rating curve and discharge prediction for NM USF21 (upper, AIR2 baro source)
+##
+## Fits Q = a * Final_Corrected_Lvl^b via a log-log linear model on the
+## offset-corrected level record and applies it to the full timeseries.
+##
+## INPUT:  "offset" folder (output of 06)
+## OUTPUT: "predicted" folder -> used by 07b_cleanup_NM.R
 ##==============================================================================
 
 ##################
@@ -11,219 +18,142 @@ library(googledrive)
 library(ggplot2)
 library(lubridate)
 library(dplyr)
+library(ggpmisc)
 
 ####################################
 ## Clear folders that we will use ##
 ####################################
-# list and delete all files in the folder
-files <- list.files(path = "googledrive", full.names = TRUE)
-file.remove(files)
+file.remove(list.files(path = "googledrive", full.names = TRUE))
+file.remove(list.files(path = "data", full.names = TRUE))
 
-files <- list.files(path = "data", full.names = TRUE)
-file.remove(files)
+#####################
+#### Import data ####
+#####################
+site <- "USF21"
 
-#################################
-#### Import & Visualize Data ####
-#################################
-#### load data from Google drive ####
-# this is the "offset" folder
-pt <- googledrive::as_id("https://drive.google.com/drive/folders/1VIonkS5GXUsn34FEPu1lpkMgsgCvPXFw")
-
-# List all CSV files in the folder
+# this is the "offset" folder (output of 06)
+pt      <- googledrive::as_id("https://drive.google.com/drive/folders/1VIonkS5GXUsn34FEPu1lpkMgsgCvPXFw")
 pt_csvs <- googledrive::drive_ls(path = pt, type = "csv")
-3
 
-#USF21
-googledrive::drive_download(file = pt_csvs$id[pt_csvs$name=="offset_USF21.csv"], 
-                            path = "googledrive/offset_USF21.csv",
-                            overwrite = T)
-# load file
-USF21 <- read.csv("googledrive/offset_USF21.csv")
+googledrive::drive_download(file = pt_csvs$id[pt_csvs$name == paste0("offset_", site, ".csv")],
+                            path = file.path("googledrive", paste0("offset_", site, ".csv")),
+                            overwrite = TRUE)
+USF21 <- read.csv(file.path("googledrive", paste0("offset_", site, ".csv")))
 
-# convert Date column to Date type if not already
-USF21$Date <- as.Date(USF21$Date.x)
-# combine Date and Time columns into a new DateTime column
-USF21$DateTime <- paste(USF21$Date, USF21$Time, sep = " ")
-# convert the DateTime column to POSIXct
+# DateTime at midnight is missing 00:00:00 time in this file, so fill it in
+USF21$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$", USF21$DateTime)] <- paste(
+  USF21$DateTime[grep("[0-9]{4}-[0-9]{2}-[0-9]{2}$", USF21$DateTime)], "00:00:00")
 USF21$DateTime <- as.POSIXct(USF21$DateTime, format = "%Y-%m-%d %H:%M:%S")
 
-# filter out rows with missing stage or discharge
-rating_data <- USF21 %>% 
-  filter(!is.na(Baro_Cor_offset1), !is.na(Q))
+#######################################
+#### Filter to calibration points ####
+#######################################
+rating_data <- USF21 %>%
+  filter(!is.na(Final_Corrected_Lvl), Final_Corrected_Lvl > 0, !is.na(Q_m3s), Q_m3s > 0)
 
-# check the structure of the cleaned data
-head(rating_data)
-
-########################################
-#### Plot pressure compensated data ####
-########################################
-ggplot(data = USF21, aes(x = DateTime, y = Baro_Cor_offset1)) +
-  geom_line() + ggtitle("USF21 compensated level data")
-
-##################################
-#### Plot Stage vs. Discharge ####
-##################################
-# discharge from L/s to m3/s
 rating_data <- rating_data %>%
-  mutate(Q.m3s = Q/1000)
+  mutate(Q_m3s = if_else(date %in% c("2025-07-01", "2025-06-13"), NA_real_, Q_m3s),
+         Final_Corrected_Lvl = if_else(date %in% c("2025-07-01", "2025-06-13"), NA_real_, Final_Corrected_Lvl))
 
-# plot with date info
-ggplot(rating_data, aes(x = Baro_Cor_offset1, y = Q.m3s)) +
-  geom_point(color = "blue") +
-  geom_text(aes(label = Date.x), vjust = -0.5, size = 3) +  # Adds date labels above points
-  labs(title = "Stage vs. Discharge", x = "Stage (LEVEL m)", y = "Discharge (Q m³/s)") +
-  theme_minimal()
 
-# Remove two discharge data that were calculated wrong
-rating_data <- USF21 %>% 
-  filter(!(Date.y == c("2025-06-13", "2025-07-01")), !is.na(Q))
+cat("Rating curve calibration points:", nrow(rating_data), "
+")
 
-###########################################
-#### Check for Log-Linear Relationship ####
-###########################################
-ggplot(rating_data, aes(x = log(Baro_Cor_offset1), y = log(Q))) +
-  geom_point(color = "blue") +
-  labs(title = "Log-Log Plot of Water Level vs. Discharge", 
-       x = "Log(Water Level)", y = "Log(Discharge)") +
-  theme_minimal()
-
-####################
-#### Log model? ####
-####################
-rating_data <- rating_data %>%
-  mutate(Log_Stage = log(Baro_Cor_offset1),
-         Log_Discharge = log(Q.m3s))
-
-log_model <- lm(Log_Discharge ~ Log_Stage, data = rating_data)
-
+###########################
+#### Fit rating curve ####
+###########################
+log_model <- lm(log(Q_m3s) ~ log(Final_Corrected_Lvl), data = rating_data)
 summary(log_model)
 
-a <- exp(coef(log_model)[1])  # Back-transform intercept
-b <- coef(log_model)[2]       # Slope
+a <- exp(coef(log_model)[1])
+b <- coef(log_model)[2]
+cat(sprintf("Rating curve: Q_m3s = %.6f * Final_Corrected_Lvl ^ %.4f
+", a, b))
 
-#######################
-#### Linear model? ####
-#######################
-linear_model <- lm(Q.m3s ~ Baro_Cor_offset1, data = rating_data)
-
-summary(linear_model)
-
-###########################
-#### Visualize models  ####
-###########################
-# observed data
-plot(rating_data$Baro_Cor_offset1, rating_data$Q.m3s,
-     main = "Stage vs. Discharge",
-     xlab = "Water Level (m)", ylab = "Discharge (m³/s)",
-     pch = 19, col = "blue")
-
-# log-transformed model predictions
-pred_log <- exp(predict(log_model, newdata = rating_data))
-lines(rating_data$Baro_Cor_offset1, pred_log, col = "red", lwd = 2)
-
-# linear model predictions
-pred_linear <- predict(linear_model, newdata = rating_data)
-lines(rating_data$Baro_Cor_offset1, pred_linear, col = "green", lwd = 2)
-
-# legend
-legend("topleft", legend = c("Observed", "Log-Transformed", "Linear"),
-       col = c("blue", "red", "green"), pch = c(19, NA, NA, NA), lty = c(NA, 1, 1, 1), lwd = c(NA, 2, 2, 2))
-
-#######################
-#### Predicted log ####
-#######################
-# log-transformed model parameters
-a_log <- exp(coef(log_model)[1])  # Intercept
-b_log <- coef(log_model)[2]       # Slope
-
-# predict discharge for the entire dataset
+############################################
+#### Apply rating curve to full record ####
+############################################
 USF21 <- USF21 %>%
-  mutate(Predicted_Discharge_Log_m3s = a_log * (Baro_Cor_offset1 ^ b_log))
+  mutate(Q_m3s_pred = ifelse(Final_Corrected_Lvl > 0, a * (Final_Corrected_Lvl ^ b), NA))
 
-##########################
-#### Predicted linear ####
-##########################
-# linear model parameters
-a_linear <- coef(linear_model)[1]  # Intercept
-b_linear <- coef(linear_model)[2]  # Slope
-
-# predict discharge for the entire dataset
-USF21 <- USF21 %>%
-  mutate(Predicted_Discharge_Linear_m3s = a_linear + b_linear * Baro_Cor_offset1)
-
-#############################
-#### Compare predictions ####
-#############################
-# visualize predictions
-plot(USF21$Baro_Cor_offset1, USF21$Predicted_Discharge_Log, col = "red", type = "l", lwd = 2,
-     xlab = "Stage (m)", ylab = "Discharge (m³/s)", main = "Discharge Predictions")
-lines(USF21$Baro_Cor_offset1, USF21$Predicted_Discharge_Linear, col = "green", lwd = 2)
-legend("topleft", legend = c("Log-Transformed", "Linear"),
-       col = c("red", "green"), lty = 1, lwd = 2)
-
-
-# discharge from L/s to m3/s for entire dataset
-USF21 <- USF21 %>%
-  mutate(Q.m3s = Q/1000)
-
-# compare Predicted vs. Observed Discharge
-ggplot(USF21, aes(x = Q.m3s)) +
-  geom_point(aes(y = Predicted_Discharge_Log, color = "Log Model")) +
-  geom_point(aes(y = Predicted_Discharge_Linear, color = "Linear Model")) +
-  labs(
-    title = "Comparison of Observed vs Predicted Discharge",
-    x = "Observed Discharge (m³/s)",
-    y = "Predicted Discharge (m³/s)"
-  ) +
-  scale_color_manual(values = c("red", "green")) +
-  theme_minimal()
-
-# residuals
 USF21 <- USF21 %>%
   mutate(
-    Residual_Log = Q.m3s - Predicted_Discharge_Log_m3s,
-    Residual_Linear = Q.m3s - Predicted_Discharge_Linear_m3s
+    # raw prediction from rating curve regardless of dry/frozen
+    Q_m3s_pred_raw = case_when(
+      is.na(Final_Corrected_Lvl)    ~ NA_real_,
+      Final_Corrected_Lvl <= 0      ~ NA_real_,
+      TRUE                          ~ a * (Final_Corrected_Lvl ^ b)
+    ),
+    Q_m3s_pred_raw = if_else(is.finite(Q_m3s_pred_raw), Q_m3s_pred_raw, NA_real_),
+    
+    # final prediction with dry and frozen periods zeroed/NA'd
+    Q_m3s_pred = case_when(
+      flow_confidence == "frozen PT — excluded"  ~ NA_real_,  # NA for frozen
+      dry == "yes"                               ~ 0,          # zero for dry
+      TRUE                                       ~ Q_m3s_pred_raw
+    )
   )
 
-ggplot(USF21, aes(x = Baro_Cor_offset1)) +
-  geom_point(aes(y = Residual_Log, color = "Log Model")) +
-  geom_point(aes(y = Residual_Linear, color = "Linear Model")) +
-  labs(
-    title = "Residuals for Different Models",
-    x = "Barometric Corrected Level (m)",
-    y = "Residuals (Observed - Predicted)"
-  ) +
-  scale_color_manual(values = c("red", "green")) +
-  theme_minimal()
 
-######################################
-#### Plot and compare predictions ####
-######################################
-USF21$DateTime <- as.POSIXct(USF21$DateTime)
+########################################
+#### Diagnostic plot: equation + R2 ####
+########################################
+p_rating_real <- ggplot(rating_data, aes(x = Final_Corrected_Lvl, y = Q_m3s)) +
+  geom_point() +
+  stat_poly_line() +
+  stat_poly_eq(aes(label = paste(after_stat(eq.label), after_stat(rr.label), after_stat(p.value.label), sep = "*\", \"*"))) +
+  labs(title = paste(site, "rating curve -- real space (reference only)"),
+       subtitle = "Line/R2 here are a plain linear fit on raw units, NOT the power-law model -- see log-log plot for the real fit",
+       x = "Final_Corrected_Lvl (m)", y = "Observed Q (m3/s)") +
+  theme_classic(base_size = 15)
+print(p_rating_real)
+ggsave(paste0("figures/", site, "_ratingcurve_realspace.png"), plot = p_rating_real, width = 8, height = 6, dpi = 300)
 
-ggplot(USF21, aes(x = DateTime, y = Predicted_Discharge_Log_m3s)) +
-  geom_point(color = "blue") +
-  labs(title = "Predicted Discharge (Log)", x = "DateTime", y = "Discharge (m3/s)") +
-  scale_x_datetime(date_breaks = "2 week") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+#################################################################
+#### Diagnostic plot 2: log-log space -- this IS the model fit ####
+#################################################################
+# log_model was fit as log(Q_m3s) ~ log(Final_Corrected_Lvl), so plotting the
+# same log-transformed axes and overlaying that model's own coefficients
+# (geom_abline, not a re-fit stat_poly_line) guarantees the line and R2 shown
+# here are exactly the model actually used downstream -- a straight line here
+# is what "the power-law assumption holds" looks like.
+r2_log_val <- summary(log_model)$r.squared
+p_rating_log <- ggplot(rating_data, aes(x = log(Final_Corrected_Lvl), y = log(Q_m3s))) +
+  geom_point() +
+  geom_abline(intercept = coef(log_model)[1], slope = coef(log_model)[2],
+              color = "steelblue", linewidth = 1) +
+  annotate("text", x = -Inf, y = Inf, hjust = -0.05, vjust = 1.3, size = 4,
+           label = sprintf("log(Q) = %.4f + %.4f*log(Level)\nR2 (log-log) = %.3f",
+                           coef(log_model)[1], coef(log_model)[2], r2_log_val)) +
+  labs(title = paste(site, "rating curve -- log-log space"),
+       x = "log( Final_Corrected_Lvl )", y = "log( Observed Q )") +
+  theme_classic(base_size = 15)
+print(p_rating_log)
+ggsave(paste0("figures/", site, "_ratingcurve_loglog.png"), plot = p_rating_log, width = 8, height = 6, dpi = 300)
 
-ggplot(USF21, aes(x = DateTime, y = Predicted_Discharge_Linear_m3s)) +
-  geom_point(color = "blue") +
-  labs(title = "Predicted Discharge (Linear)", x = "DateTime", y = "Discharge (m3/s)") +
-  scale_x_datetime(date_breaks = "2 week") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+#############################################
+#### Time series: predicted vs. observed ####
+#############################################
+p_ts <- ggplot() +
+  geom_line(data = USF21, aes(x = DateTime, y = Q_m3s_pred), linewidth = 1.0, color = "black") +
+  geom_point(data = rating_data, aes(x = DateTime, y = Q_m3s), color = "blue", size = 2) +
+  labs(x = "", y = "Q (m3/s)", title = paste(site, "predicted discharge")) +
+  theme_classic(base_size = 15)
+print(p_ts)
+ggsave(paste0("figures/", site, "_predicted_Q.png"), plot = p_ts, width = 8, height = 4, dpi = 300)
+
+##################################################################
+#### Rating curve diagnostics: extrapolation flag + real R2 ####
+##################################################################
+source("00_rating_diagnostics_helpers.R")
+diag  <- add_rating_diagnostics(USF21, rating_data, log_model)
+USF21 <- diag$df
 
 ###################
 #### Save file ####
 ###################
-write.csv(USF21, "data/discharge_USF21.csv")
+write.csv(USF21, paste0("data/discharge_", site, ".csv"), row.names = FALSE, quote = FALSE)
 
-# this is the "predicted" folder 
+# this is the "predicted" folder
 drive_folder_id <- "1fPDNinUQ3pCFFQXJ1dtLGbqEawyTmPUx"
-
-# upload file to the specified Google Drive folder
-drive_put(
-  media = "data/discharge_USF21.csv",
-  path = as_id(drive_folder_id)
-)
-
+drive_put(media = paste0("data/discharge_", site, ".csv"), path = as_id(drive_folder_id))
