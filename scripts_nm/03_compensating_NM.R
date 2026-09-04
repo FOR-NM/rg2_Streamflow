@@ -83,7 +83,7 @@ names(pt_list) <- pt_files
 # used everywhere else in this pipeline)
 to_level_kpa_solinst <- function(df) {
   df %>% mutate(
-    LEVEL.m   = LEVEL * 0.01, # Level is in cm in level loggers
+    LEVEL.m   = LEVEL, # Level is already in m in  level loggers
     LEVEL.kPa = LEVEL.m * 9.80665
   )
 }
@@ -185,7 +185,6 @@ compensated_fornm  <- lapply(compensated_fornm, to_meters)
 ######################################
 #### Plot baro compensated curves ####
 ######################################
-#to do , need to check logic here... 
 for (i in seq_along(compensated_fornm)) {
   df      <- compensated_fornm[[i]]
   df_name <- names(compensated_fornm)[i]
